@@ -1,52 +1,102 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 #include "Disco.h"
 
 using namespace std;
 
 int main(){
-    long long int capacidad;
+    int opcion; std::string archivo = "", criterio ="", registro = "";
+    int n, R; std::string relacion;
+    std::string nd;
+
+    Disco* Disco1;
     int platos, pistas, sectores, bloques, tamSector, tamBloque;
-    /*
-    std::cout<<"\n Cantidad de platos> ";cin>>platos;
-    std::cout<<"\n Cantidad de pistas> ";cin>>pistas;
-    std::cout<<"\n Cantidad de Sectores> ";cin>>sectores;
-    std::cout<<"\n Capacidad de sector> ";cin>>tamSector;
-    //std::cout<<"\n Cantidad de bloques> ";cin>>bloques;*/
-    //std::cout<<"\n Capacidad de bloque> ";cin>>tamBloque;
+    cout << " > Crear DISCO " << endl;
+    cout << " DEFAULT (0) o MANUAL (1) > ";cin>>opcion;
+    if(opcion == 0) {  Disco1 = new Disco(); }
+    else if(opcion == 1) {
+        
+        std::cout<<" Cantidad de platos> ";cin>>platos;
+        std::cout<<" Cantidad de pistas> ";cin>>pistas;
+        std::cout<<" Cantidad de Sectores> ";cin>>sectores;
+        std::cout<<" Capacidad de sector> ";cin>>tamSector;
+        std::cout<<" Capacidad de bloque> ";cin>>tamBloque;
+        Disco1 = new Disco(platos, pistas, sectores, tamSector, tamBloque);
+    }
+    std::cout<<" DISCO  CREADO >>\n";
+    Disco1->printDisco();
 
-    Disco Disco1;
-    Disco1.printDisco();
 
-    //Disco Disco1(platos, pistas, sectores, tamSector, tamBloque);
+    do {
+        // Presentación del menú
+        cout << "=== Menu ===" << endl;
+        cout << "1. Adicionar relacion desde archivo " << endl;
+        cout << "2. Adicionar N registros " << endl;
+        cout << "3. Adicionar todo CSV " << endl;
+        cout << "4. Eliminar registro "<<endl;
+        cout << "5. Consultar registros " << endl;
+        cout << "6. Imprimir Disco "<< endl;
+        cout << "7. Consultar Bloque "<< endl;
+        cout << "8. Salir del Menu ..."<< endl;
+        cout << "Ingrese su opcion: ";
+        
+        // Capturar la opción del usuario
+        cin >> opcion;
 
+        // Manejar la opción seleccionada
+        switch(opcion) {
+            case 1:
+                cout << " Nombre del Archivo > ";cin>>archivo;
+                //Disco1->adicRelacion(archivo);
+                Disco1->guardarBloqueSector(1);
+                break;
+            case 2:
+                std::cout<<" Adicionando (n) registros de LV(0) LF(1) del (archivo) a la (Relacion) >\n";
+                std::cout<<" n> ";cin>>n; 
+                std::cout<<" Archivo > ";cin>>archivo;
+                std::cout<<" Relacion > ";cin>>relacion;
+                std::cout<<" Registro Long FIJA (1) O Varible(0) > ";cin>>R;
+                Disco1->adicionarReg(n, archivo, relacion, R);
+                break;
+            case 3:
+                std::cout<<" Adicionando todos los registros del (archivo) a la (Relacion) >\n";
+                std::cout<<" Archivo > ";cin>>archivo;
+                std::cout<<" Relacion > ";cin>>relacion;
+                std::cout<<" Registro Long FIJA (1) O Variable(0) > ";cin>>R;
+                Disco1->adicionarCSV(archivo, relacion, R);
+                break;
+            case 4:
+                std::cout<<" Eliminar (registro) de la (relacion) >\n";
+                std::cout<<" Registros> ";cin>>registro;
+                std::cout<<" Relacion> ";cin>>relacion;
+                break;
+            case 5:
+                cout << " Consultando (N) registros de la (Relacion) con este (criterio) >\n";
+                std::cout<<" N (int o *) > ";cin>>nd;
+                std::cout<<" Relacion > ";cin>>relacion;
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                std::cout<<" Criterio (0 = sin criterio) > ";getline(cin, criterio);
+                Disco1->consulta(nd, relacion, criterio);
+                break;
+            case 6: 
+                Disco1->printDisco();
+                break;
+            case 7: 
+                std::cout<<" Que bloque quiere consultar? > ";cin>>n;
+                consultarBloque(n);
+                break;
+            case 8: 
+                std::cout<<" SALIENDO DEL MENU //";
+                break;
+            default:
+                cout << "Opcion invalida. Por favor, seleccione una opción valida." << endl;
+        }
+    } while(opcion != 8);
 
-    // ADICIONANDO RELACION POR ARCHIVO
-    Disco1.adicRelacion("Titanic.csv");
-    Disco1.adicRelacion("Housing.csv");
-
-    // ADICIONAN REGITROS (1, N, TODO EL ARCHIVO)
-    //Disco1.adicionarReg("1;0;3;Braund, Mr. Owen Harris;male;22;1;0;A/5 21171;7.25;;S", "Titanic", 0);
-    //Disco1.adicionarReg("13300000;7420;4;2;3;yes;no;no;no;yes;2;yes;furnished", "Housing", 0);
-    //Disco1.adicionarReg("2;1;1;Cumings, Mrs. John Bradley (Florence Briggs Thayer);female;38;1;0;PC 17599;71.2833;C85;C", "Titanic");
-        Disco1.adicionarReg(10, "Titanic.csv", "Titanic");
-        Disco1.adicionarReg(10, "Housing.csv", "Housing");
-        Disco1.adicionarReg(10, "Titanic.csv", "Titanic");
-        Disco1.adicionarReg(10, "Housing.csv", "Housing");
-    //Disco1.adicionarCSV("Housing.csv", "Housing");
-    Disco1.adicionarCSV("Titanic.csv", "Titanic");
-
-    consultarBloque(1);
-
-    Disco1.consulta("10", "Titanic", " ");
-    Disco1.consulta("*", "Titanic", "PassengerId = 5");
-    
-    //Disco1.adicionarReg("01;Vanessa", "Tabla1");
-    Disco1.printDisco();
-
-    //capacMaxRegistro("Titanic.csv");
-
-    
+    return 0;
 }

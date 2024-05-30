@@ -1,0 +1,32 @@
+- Paginas/Bloques solo pueden contener RLV O RLF
+    Un registro puede estar en 2 sectores
+
+    
+1. Modificar la Página:
+    Esto implica realizar cambios en el contenido de una página de datos.
+2. Guardar los Cambios:
+    Pregunta al Usuario: Antes de guardar los cambios, se preguntará al usuario si desea guardar los cambios realizados.
+    Modificar Bloque: Si el usuario decide guardar los cambios, el bloque correspondiente debe ser modificado.
+    Guardar en Disco: Luego de modificar el bloque, los cambios deben ser guardados físicamente en el disco.
+3. Tipos de Modificaciones:
+    Adicionar Registros: Añadir nuevos registros a la página.
+    Eliminar Registros: Quitar registros existentes de la página.
+    Modificar Registros: Cambiar el contenido de los registros existentes.
+
+Posible Implementación
+
+A continuación, un plan paso a paso para implementar estas tareas:
+
+Paso 1: Cargar la Página
+    Leer una página de datos desde el disco a la memoria.
+    Mostrar los registros actuales al usuario.
+Paso 2: Modificar la Página
+    Permitir al usuario seleccionar una opción: adicionar, eliminar o modificar registros.
+    Realizar la modificación seleccionada:
+    Adicionar: Pedir al usuario los detalles del nuevo registro y añadirlo a la página.
+    Eliminar: Pedir al usuario que seleccione el registro a eliminar.
+    Modificar: Pedir al usuario que seleccione el registro a modificar y que proporcione los nuevos detalles.
+Paso 3: Confirmar Guardado
+
+    Preguntar al usuario si desea guardar los cambios.
+    Si la respuesta es afirmativa, proceder a modificar el bloque correspondiente y guardar los cambios en el disco.

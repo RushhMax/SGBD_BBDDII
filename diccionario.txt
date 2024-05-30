@@ -1,2 +1,2 @@
-Titanic#PassengerId#int#4#Survived#int#4#Pclass#int#4#Name#string#20#Sex#string#20#Age#int#4#SibSp#int#4#Parch#int#4#Ticket#string#20#Fare#float#4#Cabin#int#4#Embarked#string#20
-Housing#price#int#4#area#int#4#bedrooms#int#4#bathrooms#int#4#stories#int#4#mainroad#string#20#guestroom#string#20#basement#string#20#hotwaterheating#string#20#airconditioning#string#20#parking#int#4#prefarea#string#20#furnishingstatus#string#20
+Titanic#PassengerId#int#2_F#Survived#int#1_F#Pclass#int#1_F#Name#string#57_V#Sex#string#6_F#Age#int#2_F#SibSp#int#1_F#Parch#int#1_F#Ticket#strin#10_V#Fare#float#7_F#Cabin#string#4_V#Embarked#string#1_F
+Housing#price#int#8#area#int#5#bedrooms#int#1#bathrooms#int#1#stories#int#1#mainroad#string#3#guestroom#string#3#basement#string#3#hotwaterheating#strinh#3#airconditioning#string#3#parking#int#1#prefarea#string#3#furnishingstatus#string#14
