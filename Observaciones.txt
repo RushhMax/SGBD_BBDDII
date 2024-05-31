@@ -1,1 +1,4 @@
 1. Actualizar capacidad de Disco cuando se agrega desde Buffer
+2. Si un registro no entra en una pagina llamar otra?
+3. Funcion modificar registro
+
