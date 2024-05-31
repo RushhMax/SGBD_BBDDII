@@ -6,9 +6,9 @@
 #include <memory>
 #include <direct.h>
 
-#include "Fauxiliares.cpp"
+//#include "Fauxiliares.cpp"
+#include "Disco.cpp"
 
-#include "LRU.h"
 using namespace std;
 
 class Page {
@@ -73,6 +73,7 @@ struct Frame {
 
 class Buffer {
     private:
+        Disco* Disco1;
         vector<Frame> BufferPool;
         int Buf_size;
         unordered_map<int, int> PageTable; // ID PAGINA - ID FRAME
@@ -84,27 +85,6 @@ class Buffer {
         int request_count;
 
         void Delete_LRU() { // FREE PAGE
-            /*for(int j=0; j<BufferPool.size(); j++){
-                int IDP = replacer.getLRU(j);
-                
-                auto it = PageTable.find(IDP);
-                if (it != PageTable.end()) { // SI ESTA
-                    if( 0 == BufferPool[it->second].page->getPinCount()) { 
-                        if(BufferPool[it->second].page->getDirtyBit() == 1){ // si la pagina fue modificada
-                            flushPage(BufferPool[it->second].page->getIdPage()); 
-                        }
-                        remove(BufferPool[it->second].page->getDirPage().c_str()); // ARCHIVOS !!
-                        PageTable.erase(BufferPool[it->second].page->getIdPage()); 
-                        BufferPool[it->second].releaseFrame();
-
-                        replacer.deletePage(IDP);
-                        return;
-                    }
-                }   
-            }
-            std::cout<<" ERROR! No podemos eliminar ninguna pagina! \n"; 
-            return;*/
-
             int mayorLU = 0; int idF = 0;
             for( auto &Frame : BufferPool){
                 if(Frame.page.get()){
@@ -125,7 +105,7 @@ class Buffer {
 
     public:
         // Constructor de Buffer
-        Buffer(int _Buf_size, int _page_size) : Buf_size(_Buf_size), hit_count(0), miss_count(0), request_count(0) {
+        Buffer(int _Buf_size, int _page_size, Disco* & _Disco) : Buf_size(_Buf_size), Disco1(_Disco), hit_count(0), miss_count(0), request_count(0) {
             // Crear n frames de acuerdo a cuántos bloques (páginas puedan entrar)
             int nFrames = _Buf_size / _page_size;
             for (int i = 0; i < nFrames; ++i) { BufferPool.push_back(Frame(i));}
@@ -227,6 +207,7 @@ class Buffer {
             while (getline(page, line)){ block<<line<<endl;}
             page.close();
             block.close();
+            Disco1->guardarBloqueSector(_idPage);
         }
 
         void FlushAllPages(){}
@@ -296,10 +277,10 @@ void displayMenu() {
     cout << "Elija una opcion: ";
 }
 
-int main() {
-    int bufferSize = 8000;
-    int pageSize = 2000;
-    Buffer buffer(bufferSize, pageSize);
+void MenuBuffer(Disco* &Disco1) {
+    //int bufferSize = 8000;
+    //int pageSize = 2000;
+    Buffer buffer(Disco1->getCapacidadBloque() *5, Disco1->getCapacidadBloque(), Disco1);
 
     int choice;
     do {
@@ -371,5 +352,4 @@ int main() {
         }
     } while (choice != 8);
 
-    return 0;
 }

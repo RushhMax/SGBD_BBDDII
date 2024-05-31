@@ -32,7 +32,6 @@ void consultarBloque(int _nroBloque){
     dirBloque.close();
 }
 
-
 // FUNCION EXTRA  DE ADIC_RELACION(1/2) 
 char is_IntFlo(std::string _dato){ //T ENTERO F FLOAT S STRING;
     for(int i=0; i<_dato.size();i++){
@@ -232,7 +231,7 @@ void adicionarRegistroArchivo(std::string _registro, string _archivo){
     archiv.close();
 }   
 
-string dirSector(string dir){
+string getdirSector(string dir){
     std::stringstream ss(dir);
     std::vector<std::string> ubi;
     std::string token = "";
@@ -493,6 +492,7 @@ void modificarRegistroPage(int _idPage, string _relacion, string _atributo, stri
             // SI CUMPLE CONDICION
             if(cumpleCondicion(registro, _condicion, _relacion, _tipoR)){
                 std::cout<<"\n CUMPLE CONDICION! registro <<"<<registro.size()<<">  \n"; 
+                // EDITAR LINEA CON ATRIBUTO
                 modificarRegistroPage(_idPage, nroregistro, _atributo);
                 //espacioPageINT += registro.size();
                 //std::cout<<" ESPACIO "<<espacioPageINT<<endl;
@@ -502,4 +502,20 @@ void modificarRegistroPage(int _idPage, string _relacion, string _atributo, stri
         }
     }
     pagina.close();
+}
+
+// FUNCION PUNTUAL REGISTRO EN SECTOR.TXT
+void escribirReg(std::string _registro, std::string _archivo){
+    std::cout<<" ESCRIBIENDO >"<<_registro<<" en "<<_archivo<<endl;
+    std::stringstream ss(_archivo);
+    std::vector<std::string> ubi;
+    std::string token = "";
+    while(std::getline(ss, token, '/')){ ubi.push_back(token);}
+    
+    std::string dirSector = "DISCO/Plato" + ubi[0] + "/S" + ubi[1] + "/Pista" + ubi[2] + "/Sector" + ubi[3] + ".txt";
+
+    std::ofstream sector(dirSector, std::ios::app);
+    //std::ofstream sector(dirSector, std::ios::out); // Abrir para reescribir
+    sector<<_registro<<"\n";
+    sector.close();
 }

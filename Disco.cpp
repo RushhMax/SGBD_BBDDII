@@ -1,10 +1,9 @@
-#ifndef __DISCO_H__
-#define __DISCO_H__
-
+#include <iostream>
+#include <vector>
 #include <fstream>
 #include <direct.h>
 #include <sstream> // para mis stringsteam
-#include "Bloque.h"
+#include <filesystem>
 
 #include "Fauxiliares.cpp"
 
@@ -30,18 +29,16 @@ class Disco{
         void crearBloques(); // FUERA DE CLASE
         ~Disco(){ };
 
+        int getCapacidadBloque(){ return capacBloque; };
+
         void adicRelacion(std::string _archivo);
 
-        //std::string crearRLF(std::string _registro, std::string _relacion, int _long);
-        //std::string crearRLV(std::string _registro);
-
-        void escribirReg(std::string _registro, std::string _archivo);
-        //void editarDirectorio(int linea, int posicion, std::string _nRelacion, std::string Ndato, std::string _archivo);
-
+        //void escribirReg(std::string _registro, std::string _archivo);
         void adicionarReg(std::string _registro, std::string _tabla, int _longMax);
         void adicionarReg(int n, std::string _archivo, std::string _tabla, bool _tipoR);
         void adicionarCSV(std::string _archivo, std::string _tabla, bool _tipoR);
         
+        void adicionarRegSECTOR(std::string _registro, std::string _archivo);
         void adicionarRegBLOQUE(std::string _registro, int _nroBloque);
 
         void guardarBloqueSector(int nBloque);
@@ -53,8 +50,7 @@ class Disco{
 
 // CONSTRUCTOR DISCO DEFAULT // BIEN
 Disco::Disco(){
-    std::string comando = "rm -r DISCO";
-    std::system(comando.c_str());  
+    _mkdir("DISCO");
     this->nombre = "DISCO";
     this->nroPlatos = 4;
     this->nroPistas = 8;  
@@ -196,8 +192,15 @@ void Disco::adicRelacion(std::string _archivo){
     archivo.close();
 }
 
-// FUNCION PUNTUAL REGISTRO EN SECTOR.TXT
-void Disco::escribirReg(std::string _registro, std::string _archivo){
+// FUNCION PUNTUAL REGISTRO EN BLOQUE N
+void Disco::adicionarRegBLOQUE(std::string _registro, int _nroBloque){
+    std::string dir = "DISCO/BLOQUES/Bloque" + std::to_string(_nroBloque) + ".txt"; 
+    std::ofstream bloque(dir, std::ios::app);
+    bloque<<_registro<<"\n";
+    bloque.close();
+}   
+
+void Disco::adicionarRegSECTOR(std::string _registro, std::string _archivo){
     std::cout<<" ESCRIBIENDO >"<<_registro<<" en "<<_archivo<<endl;
     std::stringstream ss(_archivo);
     std::vector<std::string> ubi;
@@ -207,17 +210,11 @@ void Disco::escribirReg(std::string _registro, std::string _archivo){
     std::string dirSector = "DISCO/Plato" + ubi[0] + "/S" + ubi[1] + "/Pista" + ubi[2] + "/Sector" + ubi[3] + ".txt";
 
     std::ofstream sector(dirSector, std::ios::app);
+    //std::ofstream sector(dirSector, std::ios::out); // Abrir para reescribir
     sector<<_registro<<"\n";
     sector.close();
-}
-
-// FUNCION PUNTUAL REGISTRO EN BLOQUE N
-void Disco::adicionarRegBLOQUE(std::string _registro, int _nroBloque){
-    std::string dir = "DISCO/BLOQUES/Bloque" + std::to_string(_nroBloque) + ".txt"; 
-    std::ofstream bloque(dir, std::ios::app);
-    bloque<<_registro<<"\n";
-    bloque.close();
 }   
+
 
 // FUNCION PARA ADICIONAR UN REGISTRO EN UNA TABLA ESPECIFICA
 void Disco::adicionarReg(std::string _registro, std::string _relacion, int _longMax){
@@ -283,7 +280,8 @@ void Disco::adicionarReg(std::string _registro, std::string _relacion, int _long
                     if(_longMax != 0) R = _nroR + "#1#" + R; // RLF
                     else R = _nroR + "#0#" + R; // RLV
                     adicionarRegBLOQUE(R, NBloque); // ESCRIBIRMOS EN BLOQUE
-                    escribirReg(R, dato); // ESCRIBIMOS
+                    adicionarRegSECTOR(R, dato);
+                    //escribirReg(R, dato); // ESCRIBIMOS
 
                     bloques.close();
                     return;
@@ -326,7 +324,7 @@ void Disco::adicionarCSV(std::string _archivo, std::string _tabla, bool _TipoR){
     }
     data.close(); 
 }
-
+ 
 void Disco::guardarBloqueSector(int nBloque){
     // ACTUALIZAR DIRECTORIO
     ifstream Bloque("DISCO/BLOQUES/Bloque" + to_string(nBloque) + ".txt");
@@ -354,31 +352,51 @@ void Disco::guardarBloqueSector(int nBloque){
         sectores.push_back(R);
     }
     sectores.pop_back();
-    
+
     for(int i=0; i<sectores.size(); i++){
+        std::string dirSector = getdirSector(sectores[i]);
+        //std::ofstream sector(dirSector, std::ios::app);
+        std::ofstream sector(dirSector, std::ios::out); // Abrir para reescribir
+        sector.close();
         std::cout<<" SECTOR >"<<sectores[i]<<endl;
     }
 
     // RECORRER CADA REGISTRO y si puede entrar en sector ingresarlo
     // actulizar SECTOR CABECERA
     int nSector = 0, capacidadSectori = capacidadS;
+    
     while(getline(Bloque, R)){
         std::string s(1, R[2]);
         editarCabeceras(nBloque, 0, s ,to_string(capacidadBloque), directorioBloques);
-        tam = R.size() - 4;
+        
+        tam = R.size() - 4; // 50 10
         if(tam <= capacidadSectori){ // 1/1/1/1
             escribirReg(R, sectores[nSector]);
             capacidadSectori -= tam;
             std::string s(1, R[2]);
             editarCabeceras(nBloque, nSector+1, s ,to_string(capacidadSectori), directorioBloques);
         }else{
+            string R1 = R.substr(0, capacidadSectori+4);
+            string R2 = R.substr(capacidadSectori+4, R.size());
+            //std::cout<<" PARTIENDO REGISTRO >"<<R<<"> por que capacidad es "<<capacidadSectori<<">\n";
+            //std::cout<<" Registro >"<<R1<<">"<<R2<<">\n";
+            escribirReg(R1, sectores[nSector]);
+            capacidadSectori -= R1.size() - 4;
+            std::string s(1, R1[2]);
+            editarCabeceras(nBloque, nSector+1, s ,to_string(capacidadSectori), directorioBloques);        
+
             capacidadSectori = capacidadS;
             nSector++; 
-            escribirReg(R, sectores[nSector]);
-            capacidadSectori -= tam;
-            std::string s(1, R[2]);
+            escribirReg(R2, sectores[nSector]);
+            capacidadSectori -= R2.size();
             editarCabeceras(nBloque, nSector+1, s ,to_string(capacidadSectori), directorioBloques);
         }
+    }
+    std::string s(1, R[2]);
+    while(nSector < sectores.size()-1){
+        nSector++;
+        editarCabeceras(nBloque, nSector+1, s , to_string(capacidadS), directorioBloques);
+        
     }
 
 }
@@ -518,4 +536,92 @@ void Disco::printDisco(){
     std::cout<<"  >  Capacidad del Bloque "<<capacBloque<<std::endl;
 }
 
-#endif 
+void MenuDisco(Disco* &Disco1){
+    int opcion; 
+    std::string archivo = "", criterio ="", registro = "";
+    int n, R; std::string relacion;
+    std::string nd;
+
+    /*int platos, pistas, sectores, bloques, tamSector, tamBloque;
+    cout << " > Crear DISCO " << endl;
+    cout << " DEFAULT (0) o MANUAL (1) > ";cin>>opcion;
+    if(opcion == 0) {  Disco1 = new Disco(); }
+    else if(opcion == 1) {
+        
+        std::cout<<" Cantidad de platos> ";cin>>platos;
+        std::cout<<" Cantidad de pistas> ";cin>>pistas;
+        std::cout<<" Cantidad de Sectores> ";cin>>sectores;
+        std::cout<<" Capacidad de sector> ";cin>>tamSector;
+        std::cout<<" Capacidad de bloque> ";cin>>tamBloque;
+        Disco1 = new Disco(platos, pistas, sectores, tamSector, tamBloque);
+    }
+    std::cout<<" DISCO  CREADO >>\n";
+    Disco1->printDisco();*/
+
+
+    do {
+        // Presentación del menú
+        cout << "=== Menu DISCO ===" << endl;
+        cout << "1. Adicionar relacion desde archivo " << endl;
+        cout << "2. Adicionar N registros " << endl;
+        cout << "3. Adicionar todo CSV " << endl;
+        cout << "4. Eliminar registro "<<endl;
+        cout << "5. Consultar registros " << endl;
+        cout << "6. Imprimir Disco "<< endl;
+        cout << "7. Consultar Bloque "<< endl;
+        cout << "8. Salir del Menu ..."<< endl;
+        cout << "Ingrese su opcion: ";
+        
+        // Capturar la opción del usuario
+        cin >> opcion;
+
+        // Manejar la opción seleccionada
+        switch(opcion) {
+            case 1:
+                cout << " Nombre del Archivo > ";cin>>archivo;
+                //Disco1->adicRelacion(archivo);
+                Disco1->guardarBloqueSector(1);
+                break;
+            case 2:
+                std::cout<<" Adicionando (n) registros de LV(0) LF(1) del (archivo) a la (Relacion) >\n";
+                std::cout<<" n> ";cin>>n; 
+                std::cout<<" Archivo > ";cin>>archivo;
+                std::cout<<" Relacion > ";cin>>relacion;
+                std::cout<<" Registro Long FIJA (1) O Varible(0) > ";cin>>R;
+                Disco1->adicionarReg(n, archivo, relacion, R);
+                break;
+            case 3:
+                std::cout<<" Adicionando todos los registros del (archivo) a la (Relacion) >\n";
+                std::cout<<" Archivo > ";cin>>archivo;
+                std::cout<<" Relacion > ";cin>>relacion;
+                std::cout<<" Registro Long FIJA (1) O Variable(0) > ";cin>>R;
+                Disco1->adicionarCSV(archivo, relacion, R);
+                break;
+            case 4:
+                std::cout<<" Eliminar (registro) de la (relacion) >\n";
+                std::cout<<" Registros> ";cin>>registro;
+                std::cout<<" Relacion> ";cin>>relacion;
+                break;
+            case 5:
+                cout << " Consultando (N) registros de la (Relacion) con este (criterio) >\n";
+                std::cout<<" N (int o *) > ";cin>>nd;
+                std::cout<<" Relacion > ";cin>>relacion;
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                std::cout<<" Criterio (0 = sin criterio) > ";getline(cin, criterio);
+                Disco1->consulta(nd, relacion, criterio);
+                break;
+            case 6: 
+                Disco1->printDisco();
+                break;
+            case 7: 
+                std::cout<<" Que bloque quiere consultar? > ";cin>>n;
+                consultarBloque(n);
+                break;
+            case 8: 
+                std::cout<<" SALIENDO DEL MENU //";
+                break;
+            default:
+                cout << "Opcion invalida. Por favor, seleccione una opción valida." << endl;
+        }
+    } while(opcion != 8);
+}
