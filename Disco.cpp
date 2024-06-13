@@ -37,14 +37,9 @@ class Disco{
         void adicionarReg(std::string _registro, std::string _tabla, int _longMax);
         void adicionarReg(int n, std::string _archivo, std::string _tabla, bool _tipoR);
         void adicionarCSV(std::string _archivo, std::string _tabla, bool _tipoR);
-        
-        void adicionarRegSECTOR(std::string _registro, std::string _archivo);
-        void adicionarRegBLOQUE(std::string _registro, int _nroBloque);
 
         void guardarBloqueSector(int nBloque);
 
-        void consulta(std::string n, std::string _relacion, std::string _criterio);
-        void consultaS(std::string _relacion, std::string _dirS, int &_contR, int _n, std::string _criterio);
         void printDisco();
 };
 
@@ -192,30 +187,6 @@ void Disco::adicRelacion(std::string _archivo){
     archivo.close();
 }
 
-// FUNCION PUNTUAL REGISTRO EN BLOQUE N
-void Disco::adicionarRegBLOQUE(std::string _registro, int _nroBloque){
-    std::string dir = "DISCO/BLOQUES/Bloque" + std::to_string(_nroBloque) + ".txt"; 
-    std::ofstream bloque(dir, std::ios::app);
-    bloque<<_registro<<"\n";
-    bloque.close();
-}   
-
-void Disco::adicionarRegSECTOR(std::string _registro, std::string _archivo){
-    std::cout<<" ESCRIBIENDO >"<<_registro<<" en "<<_archivo<<endl;
-    std::stringstream ss(_archivo);
-    std::vector<std::string> ubi;
-    std::string token = "";
-    while(std::getline(ss, token, '/')){ ubi.push_back(token);}
-    
-    std::string dirSector = "DISCO/Plato" + ubi[0] + "/S" + ubi[1] + "/Pista" + ubi[2] + "/Sector" + ubi[3] + ".txt";
-
-    std::ofstream sector(dirSector, std::ios::app);
-    //std::ofstream sector(dirSector, std::ios::out); // Abrir para reescribir
-    sector<<_registro<<"\n";
-    sector.close();
-}   
-
-
 // FUNCION PARA ADICIONAR UN REGISTRO EN UNA TABLA ESPECIFICA
 void Disco::adicionarReg(std::string _registro, std::string _relacion, int _longMax){
     std::ifstream bloques(directorioBloques); // abrimos directorio
@@ -228,7 +199,7 @@ void Disco::adicionarReg(std::string _registro, std::string _relacion, int _long
     
     std::string _nroR = std::to_string(NroRelacion(_relacion));
     std::string R = ""; 
-    if(_longMax != 0) {R +=  crearRLF(_registro, _relacion, _longMax);  }
+    if(_longMax != 0) {R +=  crearRLF(_registro, _relacion);  }
     else{ R += crearRLV(_registro); } // REGISTRO LONGITUD VARIABLE
     
     this->capaclibre -= R.size();  
@@ -279,8 +250,9 @@ void Disco::adicionarReg(std::string _registro, std::string _relacion, int _long
                     // AGREGAMOS 
                     if(_longMax != 0) R = _nroR + "#1#" + R; // RLF
                     else R = _nroR + "#0#" + R; // RLV
-                    adicionarRegBLOQUE(R, NBloque); // ESCRIBIRMOS EN BLOQUE
-                    adicionarRegSECTOR(R, dato);
+                    adicionarRegistroArchivo(R, getdirBloque(NBloque));
+                    adicionarRegistroArchivo(R, getdirSector(dato));
+                    
                     //escribirReg(R, dato); // ESCRIBIMOS
 
                     bloques.close();
@@ -325,6 +297,7 @@ void Disco::adicionarCSV(std::string _archivo, std::string _tabla, bool _TipoR){
     data.close(); 
 }
  
+ // ESTA FUNCION!! 
 void Disco::guardarBloqueSector(int nBloque){
     // ACTUALIZAR DIRECTORIO
     ifstream Bloque("DISCO/BLOQUES/Bloque" + to_string(nBloque) + ".txt");
@@ -340,6 +313,7 @@ void Disco::guardarBloqueSector(int nBloque){
     stringstream cabecerabloque(R);
     getline(cabecerabloque, R, '#');
     int capacidadBloque = stoi(R);
+    
     // RECOGER ESTE R Y ACTULIZAR EN DIRECTORIO
 
     for(int i=0; i<nBloque; i++) { getline(directorio,R);}
@@ -371,7 +345,8 @@ void Disco::guardarBloqueSector(int nBloque){
         
         tam = R.size() - 4; // 50 10
         if(tam <= capacidadSectori){ // 1/1/1/1
-            escribirReg(R, sectores[nSector]);
+            adicionarRegistroArchivo(R, getdirSector(sectores[nSector]));
+            //escribirReg(R, sectores[nSector]);
             capacidadSectori -= tam;
             std::string s(1, R[2]);
             editarCabeceras(nBloque, nSector+1, s ,to_string(capacidadSectori), directorioBloques);
@@ -380,14 +355,16 @@ void Disco::guardarBloqueSector(int nBloque){
             string R2 = R.substr(capacidadSectori+4, R.size());
             //std::cout<<" PARTIENDO REGISTRO >"<<R<<"> por que capacidad es "<<capacidadSectori<<">\n";
             //std::cout<<" Registro >"<<R1<<">"<<R2<<">\n";
-            escribirReg(R1, sectores[nSector]);
+            adicionarRegistroArchivo(R1, getdirSector(sectores[nSector]));
+            //escribirReg(R1, sectores[nSector]);
             capacidadSectori -= R1.size() - 4;
             std::string s(1, R1[2]);
             editarCabeceras(nBloque, nSector+1, s ,to_string(capacidadSectori), directorioBloques);        
 
             capacidadSectori = capacidadS;
             nSector++; 
-            escribirReg(R2, sectores[nSector]);
+            adicionarRegistroArchivo(R2, getdirSector(sectores[nSector]));
+            //escribirReg(R2, sectores[nSector]);
             capacidadSectori -= R2.size();
             editarCabeceras(nBloque, nSector+1, s ,to_string(capacidadSectori), directorioBloques);
         }
@@ -396,128 +373,6 @@ void Disco::guardarBloqueSector(int nBloque){
     while(nSector < sectores.size()-1){
         nSector++;
         editarCabeceras(nBloque, nSector+1, s , to_string(capacidadS), directorioBloques);
-        
-    }
-
-}
-
-void Disco::consultaS(std::string _relacion, std::string _dirS, int &_contR, int _n, std::string _criterio){
-    std::cout<<" EN CONSULTAS S >"<<_relacion<<">"<<_dirS<<">"<<_contR<<">"<<_n<<">"<<_criterio<<"\n";
-    std::stringstream dirS(_dirS); std::stringstream cr(_criterio);
-    std::vector<std::string> ubi, criterio;
-    std::string token = "";
-    while(std::getline(dirS, token, '/')){ ubi.push_back(token);}
-    if(_criterio != "0") while(std::getline(cr, token, ' ' )){ criterio.push_back(token);}
-
-    int nAtributo = 0;
-    if(_criterio != "0"){
-        std::ifstream dicc(diccionario);
-        for(int i=0; i<stoi(_relacion); i++){getline(dicc, token);}
-        std::stringstream relac(token);
-        while(getline(relac, token, '#')){ 
-            if(token == criterio[0]) break; 
-            nAtributo++;
-        }
-    }
-    
-    std::string dirSector = "DISCO/Plato" + ubi[0] + "/S" + ubi[1] + "/Pista" + ubi[2] + "/Sector" + ubi[3] + ".txt";
-    std::ifstream sector(dirSector);
-
-
-    std::string _registro; int contAT = 1;
-    while (getline(sector, _registro)){
-        std::stringstream STR(_registro); std::string r;
-        getline(STR, r, '#');
-        if(_relacion == r){
-            if(_criterio == "0"){
-                _registro = _registro.substr(2);
-                std::cout<<_registro<<"\n";
-                _contR++;
-                if(_n == _contR){sector.close(); return;} 
-            }else{
-                bool critCUM = false;
-                while(getline(STR, r, ' ')){
-                    //std::cout<<" nAtributo >"<<nAtributo<<" CONTAT "<<contAT;    
-                    if(contAT == nAtributo){
-                        std::cout<<" COMPARANDO >"<<r<<"> con >"<<criterio[2]<<">\n";
-
-                        //if(is_IntFlo(criterio[2]) == 'T'){ criterio[2] = std::stoi(criterio[2]); r = std::stoi(r);}
-                        //else if(is_IntFlo(criterio[2]) == 'F'){ criterio[2] = std::stof(criterio[2]); r = std::stof(r);} 
-                        //std::cout<<_registro<<"\n";
-                        if(criterio[1] == "="){ if(r == criterio[2] ) critCUM = true;}
-                        else if(criterio[1] == ">="){ if(r >= criterio[2] ) critCUM = true;}
-                        else if(criterio[1] == "<="){ if(r <= criterio[2] ) critCUM = true;}
-                        else if(criterio[1] == "<"){ if(r < criterio[2] ) critCUM = true;}
-                        else if(criterio[1] == ">"){ if(r >criterio[2] ) critCUM = true;}
-                        break;
-                    }
-                    contAT++;
-                }
-                if(critCUM){
-                    _registro = _registro.substr(2);
-                    std::cout<<_registro<<"\n";
-                    _contR++;
-                    if(_n == _contR){sector.close(); return;} 
-                }
-            }
-        } 
-    }
-    sector.close();
-}
-
-void Disco::consulta(std::string _n, std::string _relacion, std::string _criterio){
-    std::ifstream dir(directorioBloques);
-    std::vector<std::string> dirRegistros;
-
-    int n;
-    if(_n == "*") { n = 1000; }
-    else{ n = stoi(_n); }
-
-    int nroR =NroRelacion(_relacion);
-    int contR = 0;
-
-    std::string bloque, sector , lineaAUX;
-    while (getline(dir, bloque)){
-        std::stringstream b(bloque);
-        for(int i=0; i<5; i++){getline(b, lineaAUX, '#');}
-        if(lineaAUX == "") break;
-        std::stringstream strR(lineaAUX);
-        bool encontrado = false;
-        while (getline(strR, lineaAUX, '/') && !encontrado){
-            if(lineaAUX == std::to_string(nroR)){
-                std::stringstream s(bloque);
-                getline(s, lineaAUX, '_'); // Nos pasamos bloque
-                while (getline(s, lineaAUX, '_')){
-                    std::stringstream s(lineaAUX);
-                    getline(s, lineaAUX, '#');
-                    getline(s, lineaAUX, '#');
-                    std::string dirS = lineaAUX;
-                    getline(s, lineaAUX, '#');
-                    std::stringstream strR(lineaAUX);
-                    while (getline(strR, lineaAUX, '/')){
-                        if(lineaAUX == std::to_string(nroR)){
-                            dirRegistros.push_back(dirS);
-                            //int antes = contR;
-                            consultaS(std::to_string(nroR), dirS, contR, n, _criterio);
-                            //for(int j=1; j<contR-antes; j++){dirRegistros.push_back(dirS);}
-                            dirRegistros.push_back(dirS);
-                            if(contR >= n){
-                                std::cout<<" REGISTROS EN >\n";
-                                for(int k=0; k<dirRegistros.size(); k++){
-                                    std::cout<<dirRegistros[k]<<"\n";
-                                }
-                                return;
-                            }
-                        }
-                    }   
-                }
-                encontrado = true;
-            }
-        }
-    }
-    std::cout<<" REGISTROS EN >\n";
-    for(int k=0; k<dirRegistros.size(); k++){
-        std::cout<<dirRegistros[k]<<"\n";
     }
 
 }
@@ -565,10 +420,10 @@ void MenuDisco(Disco* &Disco1){
         cout << "1. Adicionar relacion desde archivo " << endl;
         cout << "2. Adicionar N registros " << endl;
         cout << "3. Adicionar todo CSV " << endl;
-        cout << "4. Eliminar registro "<<endl;
-        cout << "5. Consultar registros " << endl;
+        cout << "! 4. Eliminar registro "<<endl;
+        cout << "! 5. Consultar registros " << endl;
         cout << "6. Imprimir Disco "<< endl;
-        cout << "7. Consultar Bloque "<< endl;
+        cout << "! 7. Consultar Bloque "<< endl;
         cout << "8. Salir del Menu ..."<< endl;
         cout << "Ingrese su opcion: ";
         
@@ -608,7 +463,7 @@ void MenuDisco(Disco* &Disco1){
                 std::cout<<" Relacion > ";cin>>relacion;
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 std::cout<<" Criterio (0 = sin criterio) > ";getline(cin, criterio);
-                Disco1->consulta(nd, relacion, criterio);
+                //Disco1->consulta(nd, relacion, criterio);
                 break;
             case 6: 
                 Disco1->printDisco();

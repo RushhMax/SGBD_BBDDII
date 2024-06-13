@@ -1,6 +1,5 @@
 #include <iostream>
 
-//#include "Disco.cpp"
 #include "Buffer.cpp"
 
 using namespace std;

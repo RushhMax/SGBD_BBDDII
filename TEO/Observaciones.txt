@@ -1,0 +1,4 @@
+1. Actualizar capacidad de Disco cuando se agrega desde Buffer
+2. Adicionar Funcion MODIFICAR 
+3. Si adicionar no entra en pagina llamar otra?
+4. PAGINA CON REGISTROS DE RLV O RLF
