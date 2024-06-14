@@ -200,7 +200,7 @@ void Disco::adicionarReg(std::string _registro, std::string _relacion, int _long
     std::string _nroR = std::to_string(NroRelacion(_relacion));
     std::string R = ""; 
     if(_longMax != 0) {R +=  crearRLF(_registro, _relacion);  }
-    else{ R += crearRLV(_registro); } // REGISTRO LONGITUD VARIABLE
+    else{ R += crearRLV(_registro, _relacion); } // REGISTRO LONGITUD VARIABLE
     
     this->capaclibre -= R.size();  
 

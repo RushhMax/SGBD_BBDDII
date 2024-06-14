@@ -153,7 +153,7 @@ class Buffer {
             // FUNCIONES ELIMINAR
             int frameVictima ;
             if(choice_replacer == 0){
-                frameVictima = my_LRU->victima(0);
+                frameVictima = my_LRU->victima();
                 my_LRU->deletePage(frameVictima);
                 auto it = PageTable.find(frameVictima);
                 if (it != PageTable.end()) {

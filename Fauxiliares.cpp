@@ -44,27 +44,21 @@ string getdirSector(string dir){
     std::string dirSector = "DISCO/Plato" + ubi[0] + "/S" + ubi[1] + "/Pista" + ubi[2] + "/Sector" + ubi[3] + ".txt";
     return dirSector;
 }
-
 // retorna PATH BLOQUE desde  1/1/1/1
 string getdirBloque(int _nBloque){
     std::string dir = "DISCO/BLOQUES/Bloque" + std::to_string(_nBloque) + ".txt"; 
     return dir;
 }
-
 string getdirPage(int _nPage){
     std::string dir = "BUFFERPOOL/Page" + to_string(_nPage) + ".txt";
     return dir;
 }
-
-
-
 // FUNCION PUNTUAL Adiciona registro en un archvo 
 void adicionarRegistroArchivo(std::string _registro, string _archivo){
     std::ofstream archiv(_archivo, std::ios::app);
     archiv<<_registro<<"\n";
     archiv.close();
 }   
-
 // FUNCION EXTRA  DE ADIC_RELACION(1/2) 
 char is_IntFlo(std::string _dato){ //T ENTERO F FLOAT S STRING;
     for(int i=0; i<_dato.size();i++){
@@ -90,7 +84,6 @@ int NroRelacion(std::string _relacion){
     }
     return 0; 
 }
-
 string getEsquema(string _relacion){
     ifstream relaciones("diccionario.txt");
     string _esquema;
@@ -100,7 +93,6 @@ string getEsquema(string _relacion){
     relaciones.close();
     return _esquema;
 }
-
 // Funcion devuelve cap max del registro
 int capacMaxRegistro(std::string _archivo){
     std::ifstream archivo(_archivo);
@@ -117,12 +109,34 @@ int capacMaxRegistro(std::string _archivo){
 ////////////////////////// RLV //////////////////////////////7
 
 // Funcion para crear un registro de longitud variable
-std::string crearRLV(std::string _registro){
+std::string crearRLV(std::string _registro, std::string _relacion){
+    stringstream esquema(getEsquema(_relacion));
+    string atributo;
+    cout<<esquema.str()<<endl;
+    getline(esquema, atributo, '#'); // nombre de la relacion
+    //getline(esquema, atributo, '#');
+        //Tabla1# ID#int#4#Name#String#10#Edad#int#2
+
     std::string RN = "", aux, mapa=""; // 2 strings RN y mapa
     int desplazamiento = 0;
     std::stringstream R(_registro); // return _registro
     while(getline(R, aux, ';')){ // Leemos registros separados por ;
-        mapa += std::to_string(desplazamiento) + "|"; // agregamos en nuestro mapa donde comienza
+        for(int i=0; i<2; i++)getline(esquema, atributo, '#'); // nombre atributo
+        //std::cout<<atributo<<" "<<aux<<endl;
+        if(atributo == "varchar") { 
+            mapa += std::to_string(desplazamiento) + "|";
+            getline(esquema, atributo, '#'); 
+            //getline(esquema, atributo, '#'); 
+        }
+        else { 
+            getline(esquema, atributo, '#');  // tamaño
+            if (stoi(atributo) > aux.size()) {
+                aux.append(stoi(atributo) - aux.size(), ' ');
+            }
+            //getline(esquema, atributo, '#');
+        }
+         // agregamos en nuestro mapa donde comienza
+        //std::cout<<";"<<aux<<";";
         desplazamiento += aux.size();  
         RN += aux; 
     }
@@ -147,7 +161,7 @@ std::vector<int> longMaxEsquema(string _relacion) {
             int n=1; //Tabla1#ID#int#4#Name#String#10#Edad#int#2
             while(std::getline(lin, linea, '#')){
                 std::stringstream longAtr(linea);
-                getline(longAtr, linea, '_');
+                //getline(longAtr, linea, '_');
                 if(n%3 == 0){ longMax.push_back(std::stoi(linea));}
                 n++;
             }
@@ -173,7 +187,10 @@ std::string crearRLF(std::string _registro, std::string _relacion){
         registroN += _atributo;
         if(_atributo.size() < longMax[it]) {// contamos la long del registro 
             // funcion para agregar espacios
-            for(int i=0; i< longMax[it]-_atributo.size(); i++){ registroN += " "; }
+            if (longMax[it] > _atributo.size()) {
+                registroN.append(longMax[it] - _atributo.size(), ' ');
+            }
+            //for(int i=0; i< longMax[it]-_atributo.size(); i++){ registroN += " "; }
         } // else{  for(int j=0; j<_atributo.size() - longMax[it] ;j++){ registroN.pop_back(); } }
         registroN += " ";
         it++;
@@ -256,7 +273,7 @@ bool adicionarRegistroP(int idPage, std::string _registro, std::string _relacion
     // CREAMOS RLV O RLF
     std::string R = ""; 
     if(_longMax != 0) {R +=  crearRLF(_registro, _relacion);  }
-    else{ R += crearRLV(_registro); } // REGISTRO LONGITUD VARIABLE
+    else{ R += crearRLV(_registro, _relacion); } // REGISTRO LONGITUD VARIABLE
 
     int espacLibrePage = getcapacLibrePagina(idPage); 
     // este codigo no respeta el espac sectores quiere decir un registro puede partirse
@@ -529,7 +546,7 @@ void modificarNRegistroPage(int _idPage, int _nroRegistro, string _relacion, str
                 nuevoRegistro = lineaAUX.substr(0,4) + nuevoRegistro;
             } 
             else{ // VARIABLE
-                nuevoRegistro = crearRLV(nuevoRegistro);
+                nuevoRegistro = crearRLV(nuevoRegistro, _relacion);
             }
 
             //std::cout<<" Nueva linea es "<<nuevalinea<<">\n";

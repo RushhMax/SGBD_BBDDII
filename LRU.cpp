@@ -61,7 +61,7 @@ class LRU {
                 }
             }    
         }
-        int victima(int i){ // 0 ...
+        int victima(){ // 0 ...
             for(int i=0; i<Pages.size(); i++){
                 if(Pages[i].dirtyBit == 0 && !Pages[i].pinned){
                     return Pages[i].idPage;
