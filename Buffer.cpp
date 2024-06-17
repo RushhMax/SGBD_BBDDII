@@ -5,10 +5,12 @@
 #include <unordered_map>
 #include <memory>
 #include <direct.h>
+#include <deque>
 
 #include "Disco.cpp"
 #include "Clock.cpp"
 #include "LRU.cpp"
+#include "Structs.cpp"
 
 using namespace std;
 
@@ -19,8 +21,9 @@ class Page {
         bool dirty_bit;
         int pin_count;
         bool pinned;
-
     public:
+        deque<pair<char,bool>> requerimientos;
+        
         Page(int _id, bool _pinned) :idPage(_id), dirty_bit(false), pin_count(1), pinned(_pinned){
             dir_page = "BUFFERPOOL/Page" + to_string(_id) + ".txt";
             ifstream block("DISCO/BLOQUES/Bloque" + to_string(_id) + ".txt"); 
@@ -35,11 +38,23 @@ class Page {
         string getDirPage() { return dir_page; }
         bool getDirtyBit() { return dirty_bit; }
         int getPinCount() { return pin_count; }
+        bool getPinned() {return pinned; }
+
         void Pinned() { pinned =true; }
         void unPinned() { pinned = false; }
         void turnDirtyBit() { dirty_bit = true;}
         void incrementPinCount() { pin_count++;} 
-        void decrementPinCount() { if (pin_count > 0) pin_count--; }      
+        void decrementPinCount() { if (pin_count > 0) pin_count--; }  
+        void setDirtyBit(bool _dirtyBit){ dirty_bit = _dirtyBit; }
+
+        void actualizarDirtyBit() {
+            for(int i=requerimientos.size()-1; i>0; i--){
+                if(requerimientos[i].second == 1){
+                    requerimientos[i-1].second = 1;
+                }
+            }
+            dirty_bit = requerimientos[0].second;
+        }
 };
 
 struct Frame {
@@ -55,6 +70,8 @@ struct Frame {
     } 
 };
 
+
+
 class Buffer {
     private:
         Disco* my_disk;
@@ -69,14 +86,25 @@ class Buffer {
         int miss_count;
         int request_count;
 
-        void Delete_Page(int idFrame){
-            if(BufferPool[idFrame].page->getDirtyBit() == 1){ // si la pagina fue modificada
-                cout<<" Devolviendo pagina "<<BufferPool[idFrame].page->getIdPage()<<" a Disco . . . \n";
-                //flushPage(BufferPool[idFrame].page->getIdPage()); 
+        bool Delete_Page(){
+            int frameVictima, pagevictima = my_LRU->victima();
+            if(choice_replacer == 0 && pagevictima != -1) frameVictima = PageTable[pagevictima];
+            else if(choice_replacer == 1) frameVictima = my_clock->victima();
+            
+            if(frameVictima == -1 || pagevictima == -1) {  cout<<" No podemos eliminar ninguna pagina! Eliminar manualmente! \n ";return false;}
+            
+            while(BufferPool[frameVictima].page->getPinCount() > 0){
+                int choice;
+                cout<<" Desea liberar el frame "<<BufferPool[frameVictima].idFrame<<" ? (Y = 1 | N = 0)  ";cin>> choice;
+                if(choice == 1) unpinPage(BufferPool[frameVictima].page->getIdPage());
+                else {cout<< " No podemos eliminar ninguna pagina! Eliminar manualmente! \n"; return false;}//return victima();
             }
-            remove(BufferPool[idFrame].page->getDirPage().c_str()); // ARCHIVOS !!
-            PageTable.erase(BufferPool[idFrame].page->getIdPage()); 
-            BufferPool[idFrame].releaseFrame();  
+            my_LRU->deletePage(pagevictima);
+
+            remove(BufferPool[frameVictima].page->getDirPage().c_str()); // ARCHIVOS !!
+            PageTable.erase(BufferPool[frameVictima].page->getIdPage()); 
+            BufferPool[frameVictima].releaseFrame();  
+            return true;
         }
 
     public:
@@ -89,15 +117,30 @@ class Buffer {
             else if(_choice == 0)my_LRU = new LRU();
             _mkdir("BUFFERPOOL");
         }
+    
+        void flushPage(int _idPage){
+            string dirPage = "BUFFERPOOL/Page" + to_string(_idPage) + ".txt";
+            ofstream block("DISCO/BLOQUES/Bloque" + to_string(_idPage) + ".txt"); 
+            ifstream page(dirPage);
+            string line = "";
+            while (getline(page, line)){ block<<line<<endl;}
+            page.close();
+            block.close();
+            my_disk->guardarBloqueSector(_idPage);
+        }
 
         // Indicar que la pagina esta en uso
         void pinPage(int idPage, char func, bool pinned) {
             //request_count++;
+            int dirtyHelp = changeFuncInt(func);
             auto it = PageTable.find(idPage);
             if (it != PageTable.end()) { // SI ESTA
                 //hit_count++;
                 BufferPool[it->second].page->incrementPinCount(); // PINNING
-                if(func == 'W') BufferPool[it->second].page->turnDirtyBit();
+
+                BufferPool[it->second].page->requerimientos.push_back(make_pair(func, dirtyHelp));
+                BufferPool[it->second].page->actualizarDirtyBit();
+
                 if(pinned) BufferPool[it->second].page->Pinned();
                 if(choice_replacer == 1)my_clock->pin(BufferPool[it->second].idFrame, func, pinned);
                 else if(choice_replacer == 0) my_LRU->pin(idPage, func, pinned);
@@ -114,6 +157,19 @@ class Buffer {
             auto it = PageTable.find(idPage);
             if (it != PageTable.end()) {
                 BufferPool[it->second].page->decrementPinCount();
+
+                if(BufferPool[it->second].page->requerimientos[0].first == 'W' ){
+                    cout << "\n Liberando proceso de Escritura >> \n";
+                    char guardar;
+                    cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
+                    if (guardar == 'S' || guardar == 's') { this->flushPage(idPage); }   
+                }
+
+                BufferPool[it->second].page->requerimientos.pop_front();
+                
+                if(BufferPool[it->second].page->requerimientos.size() > 0) BufferPool[it->second].page->actualizarDirtyBit();
+                else BufferPool[it->second].page->setDirtyBit(0);
+                
                 if(choice_replacer == 1)my_clock->unpin(BufferPool[it->second].idFrame);
                 else if(choice_replacer == 0) my_LRU->unpin(idPage);
             }
@@ -129,42 +185,25 @@ class Buffer {
                 if(Frame.page.get()){  // si la pag del frame existe
                     if(Frame.page->getIdPage() == idPage){ // SI ENCUENTRA LA PAGINA
                         hit_count++;
-
-                        Frame.page->incrementPinCount();
-                        if(func == 'W') Frame.page->turnDirtyBit();
-                        if(_pinned) Frame.page->Pinned();
-                        if(choice_replacer == 1)my_clock->pin(Frame.idFrame, func, _pinned);
-                        else if(choice_replacer == 0) my_LRU->pin(idPage, func, _pinned);
+                        pinPage(idPage, func, _pinned);
                         return Frame.page.get();
                     }
                 }
                 if(!Frame.page.get()){ // SI EL FRAME ESTA VACIO COLOCA AHI LA PAG
                     miss_count++;
-
+                    //int dirtyHelp = 
                     Page* NewPage = new Page(idPage, _pinned);
-                    if(func == 'W') NewPage->turnDirtyBit();
                     Frame.setPage(NewPage);
+                    Frame.page->requerimientos.push_back(make_pair(func, changeFuncInt(func)));
+                    Frame.page->actualizarDirtyBit();
                     PageTable[idPage] = Frame.idFrame;
                     if(choice_replacer == 1)my_clock->newPage(Frame.idFrame, func, _pinned);
                     else if(choice_replacer == 0) my_LRU->newPage(idPage, func, _pinned);
                     return NewPage;
                 }
             }
-            // FUNCIONES ELIMINAR
-            int frameVictima ;
-            if(choice_replacer == 0){
-                frameVictima = my_LRU->victima();
-                my_LRU->deletePage(frameVictima);
-                auto it = PageTable.find(frameVictima);
-                if (it != PageTable.end()) {
-                    frameVictima = BufferPool[it->second].idFrame;
-                }
-            }
-            else if(choice_replacer == 1){ frameVictima = my_clock->victima();}
-            if(frameVictima == -1) {  cout<<" No podemos eliminar ninguna pagina!\n ";return nullptr;}
-            Delete_Page(frameVictima);
-            std::cout<<" Frame liberado>  "<<frameVictima<<endl;
-            return newPage(idPage, func, _pinned);
+            if(Delete_Page()) return newPage(idPage, func, _pinned);
+            return nullptr;
         }
 
         // OBTENER PAGINA SOLICITADA POR ID
@@ -172,7 +211,8 @@ class Buffer {
             auto it = PageTable.find(_idPage);
             if (it != PageTable.end()) {
                 BufferPool[it->second].page->incrementPinCount(); // PINNING
-                if(func == 'W') BufferPool[it->second].page->turnDirtyBit();
+                BufferPool[it->second].page->requerimientos.push_back(make_pair(func, changeFuncInt(func)));
+                BufferPool[it->second].page->actualizarDirtyBit();
                 if(pinned) BufferPool[it->second].page->Pinned();
                 if(choice_replacer == 1)my_clock->pin(BufferPool[it->second].idFrame, func, pinned);
                 else if(choice_replacer == 0) my_LRU->pin(_idPage, func, pinned);
@@ -181,22 +221,13 @@ class Buffer {
             return newPage(_idPage, func, pinned);
         }
 
-        void flushPage(int _idPage){
-            string dirPage = "BUFFERPOOL/Page" + to_string(_idPage) + ".txt";
-            ofstream block("DISCO/BLOQUES/Bloque" + to_string(_idPage) + ".txt"); 
-            ifstream page(dirPage);
-            string line = "";
-            while (getline(page, line)){ block<<line<<endl;}
-            page.close();
-            block.close();
-            my_disk->guardarBloqueSector(_idPage);
-        }
 
-        void FlushAllPages(){}
+
+        void FlushAllPages(){}        
 
         void printBuffer() const {
             for (const auto& frame : BufferPool) {
-                if (frame.page) { cout<<"Frame ID: "<<frame.idFrame<<", Page ID: "<<frame.page->getIdPage()<< ", Dity bit: "<< frame.page->getDirtyBit() << ", Pin Count: " << frame.page->getPinCount() << " \n";
+                if (frame.page) { cout<<"Frame ID: "<<frame.idFrame<<", Page ID: "<<frame.page->getIdPage()<< ", Dity bit: "<< frame.page->getDirtyBit() << ", Pin Count: " << frame.page->getPinCount() << ", Pinned: " <<frame.page->getPinned()<< " \n";
                 }else{ cout<<"Frame ID: "<<frame.idFrame<<" > FRAME VACIO! \n";}
             }
             if(choice_replacer == 1)my_clock->printClock();
@@ -316,7 +347,7 @@ void MenuBuffer(Disco* &my_disk) {
     cout << " > Metodo de reemplazo " << endl;
     cout << " LRU (0) o CLOCK (1) > ";cin>>choice;
 
-    Buffer buffer(my_disk->getCapacidadBloque() *4, my_disk->getCapacidadBloque(), my_disk, choice);
+    Buffer buffer(my_disk->getCapacidadBloque() *3, my_disk->getCapacidadBloque(), my_disk, choice);
     // PREGUNTAR METODO DE REEMPLAZO
 
 
@@ -335,6 +366,7 @@ void MenuBuffer(Disco* &my_disk) {
             cout << " R/W? ";cin>>funcion;
             cout << "PINNED? ";cin>>pinned;
             buffer.newPage(pageId, funcion, pinned);
+            
             break;
         }
         case 2: {
@@ -394,7 +426,6 @@ void MenuBuffer(Disco* &my_disk) {
         default: {
             cout << "Opción no válida. Intente de nuevo.\n";
         }
-        
         }
     } while (choice != 8);
 

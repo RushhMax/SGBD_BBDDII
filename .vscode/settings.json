@@ -51,6 +51,9 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "cstring": "cpp",
+        "buffer": "cpp",
+        "netfwd": "cpp"
     }
 }

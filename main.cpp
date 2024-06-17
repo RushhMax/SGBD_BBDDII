@@ -42,6 +42,7 @@ int main(){
         case 2: {
             MenuBuffer(Disco1);
             break;
+            
         }
         case 3: {
             cout << "Saliendo...\n";

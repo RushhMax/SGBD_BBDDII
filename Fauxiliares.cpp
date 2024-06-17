@@ -603,3 +603,5 @@ void modificarRegistroPage(int _idPage, string _relacion, string _atributo, stri
     }
     pagina.close();
 }
+
+
