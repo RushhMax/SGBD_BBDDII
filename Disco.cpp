@@ -32,16 +32,8 @@ class Disco{
         ~Disco(){ };
 
         int getCapacidadBloque(){ return capacBloque; };
-
         void adicRelacion(std::string _archivo);
-
-        //void escribirReg(std::string _registro, std::string _archivo);
-        void adicionarReg(std::string _registro, std::string _tabla, bool _tipoR);
-        void adicionarReg(int n, std::string _archivo, std::string _tabla, bool _tipoR);
-        void adicionarCSV(std::string _archivo, std::string _tabla, bool _tipoR);
-
         void guardarBloqueSector(int nBloque);
-
         void printDisco();
 };
 
@@ -187,76 +179,6 @@ void Disco::adicRelacion(std::string _archivo){
     archivo.close();
 }
 
-// FUNCION PARA ADICIONAR UN REGISTRO EN UNA TABLA ESPECIFICA
-void Disco::adicionarReg(std::string _registro, std::string _relacion, bool _tipoR){
-    std::ifstream bloques(directorioBloques); // abrimos directorio
-    // variables que nos serviran
-    std::string lineaBloque = "", lineaSector ="", dato = ""; 
-    char delimitador = '_'; 
-    int NBloque = 0, NSector = 0;
-    int espacLibreINTB = 0, espacLibreINTS = 0;
-    int nroSectBLOQUE = capacBloque / capacidadS; // NRO DE SECTORES EN BLOQUE
-    
-    std::string _nroR = std::to_string(NroRelacion(_relacion));
-    std::string R = ""; 
-    if(_tipoR) {R +=  crearRLF(_registro, _relacion);  }
-    else{ R += crearRLV(_registro, _relacion); } // REGISTRO LONGITUD VARIABLE
-    
-    this->capaclibre -= R.size();  
-
-    while (std::getline(bloques, lineaBloque)){ // LEE PRIMERA LINEA DE BLOQUE
-        NBloque++; 
-        
-        std::stringstream _linea(lineaBloque);
-        // OBTENEMOS ESPACIO LIBRE BLOQUE
-        std::getline(_linea, dato, '#'); 
-        espacLibreINTB = std::stoi(dato);
-        std::cout<<NBloque<<"-"<<espacLibreINTB<<"\n";
-        // TIPO DE BLOQUE RLV O RLF
-        std::getline(_linea, dato, '#'); 
-        if(espacLibreINTB > R.size() && (stoi(dato) == _tipoR || dato == "2")){
-            R = _nroR + "#" +  R;
-            adicionarRLFArchivo(R, getdirBloque(NBloque));
-            std::cout<<"\n 1! ";
-            //std::cout<<" CAPACIDAD >"<<espacLibreINTB <<" y "<<R.size()<<endl;
-            bloques.close();
-            editarCabeceras(1, 0, _nroR, to_string(espacLibreINTB - R.size()), _tipoR, getdirBloque(NBloque));
-            std::cout<<"\n 2! ";
-            guardarBloqueSector(NBloque);
-            std::cout<<"\n INSERTADO! ";
-            return;
-        }
-    }
-    //std::cout<<" TODOS LOS BLOQUES OCUPADOS! Lo siento! \n"; 
-    //bloques.close();
-}
-
-// FUNCION ADICIONAR N REGISTROS DE UN CSV
-void Disco::adicionarReg(int n, std::string _archivo, std::string _tabla, bool _TipoR){
-    std::ifstream data(_archivo);
-    std::string registro;
-    std::getline(data, registro); // saltandonos encabezado
-    for(int i=0; i<n; i++){
-        std::getline(data, registro); // rLF = 1 funcion RLV = 0
-        adicionarReg(registro, _tabla, _TipoR);
-    }
-    data.close();
-}
-
-// FUNCION PARA ADICIONAR TODOS LOS REGISTROS DE UN CSV.
-void Disco::adicionarCSV(std::string _archivo, std::string _tabla, bool _TipoR){
-    std::ifstream data(_archivo);
-    std::string registro;
-    std::getline(data, registro); // saltandonos encabezado
-    int capMax =0;
-    if(_TipoR) {capMax = capacMaxRegistro(_archivo);} //IF VARIABLE
-    while(std::getline(data, registro)){
-        if(_TipoR) adicionarReg(registro, _tabla, capMax);
-        else{adicionarReg(registro, _tabla, 0);}
-    }
-    data.close(); 
-}
- 
  // ESTA FUNCION!!  
 void Disco::guardarBloqueSector(int nBloque){
     std::ifstream directorio(directorioBloques);
@@ -359,13 +281,9 @@ void MenuDisco(Disco* &Disco1){
         // Presentación del menú
         cout << "=== Menu DISCO ===" << endl;
         cout << "1. Adicionar relacion desde archivo " << endl;
-        cout << "|2. Adicionar N registros " << endl;
-        cout << "|3. Adicionar todo CSV " << endl;
-        cout << "! 4. Eliminar registro "<<endl;
-        cout << "! 5. Consultar registros " << endl;
-        cout << "6. Imprimir Disco "<< endl;
-        cout << "7. Consultar Bloque "<< endl;
-        cout << "8. Salir del Menu ..."<< endl;
+        cout << "2. Imprimir Disco "<< endl;
+        cout << "3. Consultar Bloque "<< endl;
+        cout << "4. Salir del Menu ..."<< endl;
         cout << "Ingrese su opcion: ";
         
         // Capturar la opción del usuario
@@ -378,45 +296,17 @@ void MenuDisco(Disco* &Disco1){
                 Disco1->adicRelacion(archivo);
                 break;
             case 2:
-                std::cout<<" Adicionando (n) registros de LV(0) LF(1) del (archivo) a la (Relacion) >\n";
-                std::cout<<" n> ";std::cin>>n; 
-                std::cout<<" Archivo > ";std::cin>>archivo;
-                std::cout<<" Relacion > ";std::cin>>relacion;
-                std::cout<<" RLF(1) O RLV(0) > ";std::cin>>R;
-                Disco1->adicionarReg(n, archivo, relacion, R);
-                break;
-            case 3:
-                std::cout<<" Adicionando todos los registros del (archivo) a la (Relacion) >\n";
-                std::cout<<" Archivo > ";std::cin>>archivo;
-                std::cout<<" Relacion > ";std::cin>>relacion;
-                std::cout<<" RLF(1) O RLV(0) > ";std::cin>>R;
-                Disco1->adicionarCSV(archivo, relacion, R);
-                break;
-            case 4:
-                std::cout<<" Eliminar (registro) de la (relacion) >\n";
-                std::cout<<" Registros> ";std::cin>>registro;
-                std::cout<<" Relacion> ";std::cin>>relacion;
-                break;
-            case 5:
-                cout << " Consultando (N) registros de la (Relacion) con este (criterio) >\n";
-                std::cout<<" N (int o *) > ";std::cin>>nd;
-                std::cout<<" Relacion > ";std::cin>>relacion;
-                std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                std::cout<<" Criterio (0 = sin criterio) > ";std::getline(std::cin, criterio);
-                //Disco1->consulta(nd, relacion, criterio);
-                break;
-            case 6: 
                 Disco1->printDisco();
                 break;
-            case 7: 
+            case 3: 
                 std::cout<<" Que bloque quiere consultar? > ";std::cin>>n;
                 consultarBloque(n);
                 break;
-            case 8: 
+            case 4: 
                 std::cout<<" SALIENDO DEL MENU //";
                 break;
             default:
                 cout << "Opcion invalida. Por favor, seleccione una opción valida." << endl;
         }
-    } while(opcion != 8);
+    } while(opcion != 4);
 }

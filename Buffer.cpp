@@ -69,8 +69,6 @@ struct Frame {
     } 
 };
 
-
-
 class Buffer {
     private:
         Disco* my_disk;
@@ -335,7 +333,6 @@ void MenuBuffer(Disco* &my_disk) {
         buffer.printBuffer();
         displayMenu();
         cin >> choice;
-
 
         switch (choice) {
         case 1: {
