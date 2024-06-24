@@ -33,7 +33,17 @@ void consultarBloque(int _nroBloque){
     }
     dirBloque.close();
 }
-
+void imprimirArchivo(string _string){
+    cout<<"\nImprimiendo archivo . . . \n\n";
+    std::ifstream archivo(_string);
+    archivo.seekg(0);
+    std::string cap = "";
+    while(getline(archivo, cap)){
+        cout<<cap;
+    }
+    cout<<endl;
+    archivo.close();
+}
 // retorna PATH SECTOR desde  1/1/1/1
 string getdirSector(string dir){
     std::stringstream ss(dir);
@@ -44,7 +54,7 @@ string getdirSector(string dir){
     std::string dirSector = "DISCO/Plato" + ubi[0] + "/S" + ubi[1] + "/Pista" + ubi[2] + "/Sector" + ubi[3] + ".txt";
     return dirSector;
 }
-// retorna PATH BLOQUE desde  1/1/1/1
+
 string getdirBloque(int _nBloque){
     std::string dir = "DISCO/BLOQUES/Bloque" + std::to_string(_nBloque) + ".txt"; 
     return dir;
@@ -53,12 +63,119 @@ string getdirPage(int _nPage){
     std::string dir = "BUFFERPOOL/Page" + to_string(_nPage) + ".txt";
     return dir;
 }
+
+// DEVUELVE LA CAPACIDAD LIBRE DE LA PAGINA
+int getcapacLibrePagina(int idPage){
+    std::ifstream pagina(getdirPage(idPage));
+    std::string cap = "";
+    getline(pagina, cap, '#');
+    pagina.close();
+    return stoi(cap);
+}
+int getCapacPagina(int idPage){
+    std::ifstream pagina(getdirPage(idPage));
+    std::string cap = "";
+    getline(pagina, cap, '#');
+    getline(pagina, cap, '#');
+    getline(pagina, cap, '#');
+    getline(pagina, cap, '#');
+    getline(pagina, cap, '#');
+    pagina.close();
+    return stoi(cap);
+}
+int getTipoPagina(int idPage){
+    std::ifstream pagina(getdirPage(idPage));
+    std::string tipo = "";
+    getline(pagina, tipo, '#');
+    getline(pagina, tipo, '#');
+    pagina.close();
+    return stoi(tipo);
+}
 // FUNCION PUNTUAL Adiciona registro en un archvo 
-void adicionarRegistroArchivo(std::string _registro, string _archivo){
+void adicionarRLFArchivo(std::string _registro, string _archivo){
     std::ofstream archiv(_archivo, std::ios::app);
-    archiv<<_registro<<"\n";
+    archiv<<_registro;
     archiv.close();
 }   
+void editarSLOTS(int idPage, int slot){
+    std::fstream archiv(getdirPage(idPage), std::ios::in | std::ios::out);
+    string lineaAux = "";
+    string nuevaLinea = "";
+    getline(archiv, lineaAux); // HEADER
+    getline(archiv, lineaAux); // SLOTS
+    stringstream slots(lineaAux);
+    while (getline(slots, lineaAux, '|')){
+        if(lineaAux == "_") { nuevaLinea += to_string(slot) + "|_|"; break; } 
+        nuevaLinea += lineaAux + "|"; 
+    }
+    archiv.seekg(0);
+    std::ostringstream nuevo_contenido;
+    getline(archiv, lineaAux);
+    nuevo_contenido<<lineaAux;
+    getline(archiv, lineaAux);;
+    nuevo_contenido<<endl<<nuevaLinea<<endl;
+    getline(archiv, lineaAux);
+    nuevo_contenido<<lineaAux;
+    archiv.close(); 
+    archiv.open(getdirPage(idPage), std::ios::out | std::ios::trunc);
+    archiv<<nuevo_contenido.str();
+    archiv.close();
+}
+bool esNumero(const std::string& str) {
+    for (char const &c : str) {
+        if (std::isdigit(c) == 0) return false;
+    }
+    return true;
+}
+void adicionarRLVArchivo(std::string _registro, int idPage){
+    imprimirArchivo(getdirPage(idPage));
+    std::fstream archiv(getdirPage(idPage), std::ios::in | std::ios::out );
+    archiv.seekg(0);
+    archiv.seekp(0);
+
+    std::string lineaAux;
+
+    // Leer el HEADER
+    std::getline(archiv, lineaAux);
+    std::cout << "HEADER: " << lineaAux << std::endl;
+
+    // Leer SLOTS
+    std::getline(archiv, lineaAux);
+    std::cout << "SLOTS: " << lineaAux << std::endl;
+
+    std::stringstream slots(lineaAux);
+    int contSlots = 0;
+    int slot = getCapacPagina(idPage);
+
+    while (std::getline(slots, lineaAux, '|')) {
+        if (lineaAux == "_") {
+            break;
+        }
+        if (esNumero(lineaAux)) {
+            contSlots++;
+            slot = std::stoi(lineaAux);
+        } else {
+            std::cerr << "Valor inválido en los slots: " << lineaAux << std::endl;
+        }
+    }
+    slot -= _registro.size();
+
+
+    archiv.seekg(0, std::ios::end);
+    std::streampos length = archiv.tellg();
+    archiv.seekg(0);
+
+    if (length < slot) {
+        archiv.seekp(0, std::ios::end);
+        for (std::streamoff i = length; i < slot; ++i) {
+            archiv.put('_');
+        }
+    }
+    archiv.seekp(slot, std::ios::beg);
+    archiv << _registro;
+    archiv.close();
+    //editarSLOTS(idPage, slot);
+}
 // FUNCION EXTRA  DE ADIC_RELACION(1/2) 
 char is_IntFlo(std::string _dato){ //T ENTERO F FLOAT S STRING;
     for(int i=0; i<_dato.size();i++){
@@ -112,36 +229,27 @@ int capacMaxRegistro(std::string _archivo){
 std::string crearRLV(std::string _registro, std::string _relacion){
     stringstream esquema(getEsquema(_relacion));
     string atributo;
-    cout<<esquema.str()<<endl;
     getline(esquema, atributo, '#'); // nombre de la relacion
-    //getline(esquema, atributo, '#');
-        //Tabla1# ID#int#4#Name#String#10#Edad#int#2
-
     std::string RN = "", aux, mapa=""; // 2 strings RN y mapa
     int desplazamiento = 0;
     std::stringstream R(_registro); // return _registro
     while(getline(R, aux, ';')){ // Leemos registros separados por ;
         for(int i=0; i<2; i++)getline(esquema, atributo, '#'); // nombre atributo
-        //std::cout<<atributo<<" "<<aux<<endl;
         if(atributo == "varchar") { 
             mapa += std::to_string(desplazamiento) + "|";
             getline(esquema, atributo, '#'); 
-            //getline(esquema, atributo, '#'); 
         }
         else { 
             getline(esquema, atributo, '#');  // tamaño
             if (stoi(atributo) > aux.size()) {
                 aux.append(stoi(atributo) - aux.size(), ' ');
             }
-            //getline(esquema, atributo, '#');
         }
-         // agregamos en nuestro mapa donde comienza
-        //std::cout<<";"<<aux<<";";
         desplazamiento += aux.size();  
         RN += aux; 
     }
     mapa += std::to_string(desplazamiento) + "|";
-    //mapa.pop_back();
+
     mapa.push_back('#');
     RN = mapa + RN; // UNIMOS nuestro mapa con Registro
     return RN;
@@ -172,7 +280,6 @@ std::vector<int> longMaxEsquema(string _relacion) {
     if(!relacionEncontrada){std::cout<<" RELACION NO ENCONTRADA! "; return longMax;}
     return longMax;
 } 
-
 // Funcion para crear un registro de longitud fija de acuerdo a su relcion
 std::string crearRLF(std::string _registro, std::string _relacion){
     std::vector<int> longMax = longMaxEsquema(_relacion);
@@ -192,36 +299,29 @@ std::string crearRLF(std::string _registro, std::string _relacion){
             }
             //for(int i=0; i< longMax[it]-_atributo.size(); i++){ registroN += " "; }
         } // else{  for(int j=0; j<_atributo.size() - longMax[it] ;j++){ registroN.pop_back(); } }
-        registroN += " ";
         it++;
     }
     //std::cout<<"Registro Nuevo de LONG FIJA >"<<registroN<<">";
     return registroN;
 }
 
-// DEVUELVE LA CAPACIDAD LIBRE DE LA PAGINA
-int getcapacLibrePagina(int idPage){
-    std::ifstream pagina(getdirPage(idPage));
-    std::string cap = "";
-    getline(pagina, cap, '#');
-    pagina.close();
-    return stoi(cap);
-}
-
 // EDITA EL DIRECTORIO O CABEZALES DE ARCHIVOS
-void editarCabeceras(int Linea, int Posicion, std::string _nRelacion,std::string Ndato, std::string _archivo){
+void editarCabeceras(int Linea, int Posicion, std::string _nRelacion,std::string _capacLibre, int _tipoB, std::string _archivo){
+    //(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(idPage))
     std::fstream archivo(_archivo, std::ios::binary | std::ios::in | std::ios::out);
     std::string nuevaLinea = "", lineaAUX = "";
 
     // OBTENEMOS la linea a editar
     for(int i=0; i<Linea; i++){ getline(archivo, lineaAUX);}  
     std::stringstream str(lineaAUX);
-    for(int i=0; i<Posicion; i++){getline(str, lineaAUX, '_'); nuevaLinea += lineaAUX + '_';}
+    for(int i=0; i<Posicion; i++){ getline(str, lineaAUX, '_'); nuevaLinea += lineaAUX + '_';}
 
     getline(str, lineaAUX, '#'); // nos pasamos el dato que quiero borrar
-    nuevaLinea += Ndato + "#"; // agregarmos el dato nuevo
+    nuevaLinea += _capacLibre + "#"; // agregarmos el dato nuevo
 
     if(Posicion == 0) {
+        getline(str, lineaAUX, '#');
+        nuevaLinea += to_string(_tipoB) + "#";
         for(int i=0; i<3;i++){
             getline(str, lineaAUX, '#');
             nuevaLinea += lineaAUX + "#";
@@ -235,8 +335,12 @@ void editarCabeceras(int Linea, int Posicion, std::string _nRelacion,std::string
     std::stringstream relaciones(lineaAUX);
 
     std::string r; bool encontrado = false;
+    if ( _nRelacion == "|" ) {
+        nuevaLinea += lineaAUX + "#";
+        encontrado = true;
+    }
     while (getline(relaciones, r, '/')  && !encontrado){
-        if(r == _nRelacion){
+        if(r == _nRelacion ){
             nuevaLinea += lineaAUX + "#";
             encontrado = true;
             break;
@@ -247,21 +351,20 @@ void editarCabeceras(int Linea, int Posicion, std::string _nRelacion,std::string
     // AGREGAMOS EL RESTO
     getline(str, lineaAUX);
     nuevaLinea += lineaAUX;
-    nuevaLinea.pop_back(); // eliminamos salto de linea
+    //nuevaLinea.pop_back(); // eliminamos salto de linea
 
     // 2 PARTE / REESCRIBIMOS EL ARCHIVO
     archivo.seekg(0);
     std::ostringstream nuevo_contenido;
-    int BloqueActual = 0;
+    int BloqueActual = 0; lineaAUX = "";
     // Leer el archivo y escribir en un stringstream todas las líneas excepto la línea a eliminar
     while (getline(archivo, lineaAUX)) {
         BloqueActual++;
-        lineaAUX.pop_back();
-
         // Si no es la línea que queremos eliminar, la añadimos al nuevo contenido
-        if (BloqueActual != Linea) { nuevo_contenido << lineaAUX << std::endl;
-        }else{ nuevo_contenido << nuevaLinea << std::endl;}
+        if (BloqueActual != Linea) { nuevo_contenido << lineaAUX;}
+        else{ nuevo_contenido << nuevaLinea;}
     }
+    //nuevo_contenido.str().pop_back();
     archivo.close(); 
     archivo.open(_archivo, std::ios::out | std::ios::trunc);
     archivo<<nuevo_contenido.str();
@@ -269,60 +372,35 @@ void editarCabeceras(int Linea, int Posicion, std::string _nRelacion,std::string
 }
 
 // FUNCION PARA ADICIONAR UN REGISTRO EN UNA TABLA ESPECIFICA
-bool adicionarRegistroP(int idPage, std::string _registro, std::string _relacion, int _longMax){
+bool adicionarRegistroP(int idPage, std::string _registro, std::string _relacion, bool tipoR){
     // CREAMOS RLV O RLF
     std::string R = ""; 
-    if(_longMax != 0) {R +=  crearRLF(_registro, _relacion);  }
+    if(tipoR) {R +=  crearRLF(_registro, _relacion);  }
     else{ R += crearRLV(_registro, _relacion); } // REGISTRO LONGITUD VARIABLE
 
     int espacLibrePage = getcapacLibrePagina(idPage); 
+    
     // este codigo no respeta el espac sectores quiere decir un registro puede partirse
-    if(R.size() <= espacLibrePage){
+    if(R.size() <= espacLibrePage && (tipoR == getTipoPagina(idPage) || getTipoPagina(idPage) == 2)){  // y si es del mismo tipo de R
         espacLibrePage -= R.size();
         std::string _nroR = std::to_string(NroRelacion(_relacion));
-        if(_longMax != 0) R = _nroR + "#1#" + R; // REGISTRO DE LONG F
-        else R = _nroR + "#0#" + R; // REGSITRP LONG V
-        adicionarRegistroArchivo(R, "BUFFERPOOL/Page" + std::to_string(idPage) + ".txt");
-        editarCabeceras(1, 0, _nroR ,  std::to_string(espacLibrePage),  "BUFFERPOOL/Page" + std::to_string(idPage) + ".txt");
+        if(tipoR) {
+            adicionarRLFArchivo
+            (R, getdirPage(idPage));
+            editarCabeceras(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(idPage));
+        }else{
+            if(getTipoPagina(idPage) == 2){
+                cout<<" REGISTRO EN PAGINA TIPO 2 ACTUALIZANDO!";
+                adicionarRLFArchivo("_|\n", getdirPage(idPage));
+            }
+            adicionarRLFArchivo(R, getdirPage(idPage));
+            editarCabeceras(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(idPage)); 
+            //editarSLOTS(idPage, R.size());
+        }
         return true;
-    }else { 
-        // CONSEGUIR PROX PAGE DE BUFFER
-        //cout << " No hay espacio suficiente! \n"; 
+    }else 
         return false;
-    }
 }
-
-// FUNCION ADICIONAR N REGISTROS DE UN CSV
-/*void adicionarRegistrosPage(int idPage, string n, std::string _archivo, std::string _relacion, bool _TipoR){
-    std::ifstream data(_archivo);
-    std::string registro;
-    std::getline(data, registro); // saltandonos encabezado
-    bool insertado = false;
-    // CAPACIDAD MAXIMA DE REGISTRO calcular si TIPO DE DATO 1(Variable)
-    int capMax =0;
-    if(_TipoR == 1) {capMax = capacMaxRegistro(_archivo);} //IF VARIABLE
-    //std::cout<<" CAP MAX ES>"<<capMax<<"\n";
-    //std::cout<<"n>"<<n<<"\n";
-    if(n == "*"){
-        while(std::getline(data, registro)){
-            if(_TipoR){ insertado = adicionarRegistroP(idPage, registro, _relacion, capMax); }
-            else{insertado = adicionarRegistroP(idPage, registro, _relacion, 0);}
-            // CONSEGUIR OTRO IDPAGE
-        }
-        data.close(); 
-    }
-    else{
-        for(int i=0; i< stoi(n) ; i++){
-            std::getline(data, registro);
-            // rLF = funcion RLV = 0
-            if(_TipoR){ insertado = adicionarRegistroP(idPage,registro, _relacion, capMax);}
-            else{ insertado = adicionarRegistroP( idPage, registro, _relacion, 0);}
-            // CONSEGUIR OTRO IDPAGE
-        }
-        data.close();
-    }
-}
-*/
 
 bool cumpleCondicion(string _registro, string _condicion, string _relacion, bool _tipoR){
     std::cout<<" EN FUUNCION CUMPLE ! con registro <<"<<_registro<<"> RL>"<<_tipoR<<"\n";
@@ -426,7 +504,7 @@ void eliminarNLineaPage(int _idPage, int _nRegistro){
 
 // FUNCION PARA ELIMINAR UN REGISTRO DE LA PAGINA
 void eliminarRegistroPage(int _idPage, string _relacion, string _condicion){
-    std::cout<<" EN FUUNCION ELIMINAR !\n";
+    std::cout<<" EN FUNCION ELIMINAR !\n";
     fstream pagina("BUFFERPOOL/Page" + std::to_string(_idPage) + ".txt", std::ios::in | std::ios::out);
     pagina.seekg(0);
     if (!pagina) { std::cerr << "Error al abrir el archivo! "<< std::endl; return;}
@@ -459,7 +537,7 @@ void eliminarRegistroPage(int _idPage, string _relacion, string _condicion){
                 nroregistro--;
                 espacioPageINT += registro.size();
                 //std::cout<<" ESPACIO "<<espacioPageINT<<endl;
-                editarCabeceras(1, 0, std::to_string(nroRelac) , std::to_string(espacioPageINT),  "BUFFERPOOL/Page" + std::to_string(_idPage) + ".txt");
+                //editarCabeceras(1, 0, std::to_string(nroRelac) , std::to_string(espacioPageINT),  "BUFFERPOOL/Page" + std::to_string(_idPage) + ".txt");
             }
 
         }

@@ -10,7 +10,6 @@
 #include "Disco.cpp"
 #include "Clock.cpp"
 #include "LRU.cpp"
-#include "Structs.cpp"
 
 using namespace std;
 
@@ -126,7 +125,7 @@ class Buffer {
             while (getline(page, line)){ block<<line<<endl;}
             page.close();
             block.close();
-            my_disk->guardarBloqueSector(_idPage);
+            //my_disk->guardarBloqueSector(_idPage); !!!!!!!!!!!!!
         }
 
         // Indicar que la pagina esta en uso
@@ -145,8 +144,7 @@ class Buffer {
                 if(choice_replacer == 1)my_clock->pin(BufferPool[it->second].idFrame, func, pinned);
                 else if(choice_replacer == 0) my_LRU->pin(idPage, func, pinned);
 
-            } else { // NO ESTA
-                //miss_count++;
+            } else { 
                 newPage(idPage, func, pinned);
             }
         }
@@ -221,10 +219,6 @@ class Buffer {
             return newPage(_idPage, func, pinned);
         }
 
-
-
-        void FlushAllPages(){}        
-
         void printBuffer() const {
             for (const auto& frame : BufferPool) {
                 if (frame.page) { cout<<"Frame ID: "<<frame.idFrame<<", Page ID: "<<frame.page->getIdPage()<< ", Dity bit: "<< frame.page->getDirtyBit() << ", Pin Count: " << frame.page->getPinCount() << ", Pinned: " <<frame.page->getPinned()<< " \n";
@@ -237,7 +231,6 @@ class Buffer {
             cout << "Total Requests: " << request_count << "\n";
             cout << "Hit Count: " << hit_count << "\n";
             cout << "Miss Count: " << miss_count << "\n";
-            //cout << "Hit Ratio: " << (request_count ? static_cast<double>(hit_count) / request_count : 0) << "\n";
         }
         void printPageTable() {
             for (const auto& pair : PageTable) {
@@ -265,47 +258,38 @@ class Buffer {
                 std::getline(data, registro); // saltandonos encabezado
                 bool insertado = false;
                 // CAPACIDAD MAXIMA DE REGISTRO calcular si TIPO DE DATO 1(Variable)
-                int capMax =0;
-                if(R == 1) {capMax = capacMaxRegistro(archivo);} //IF VARIABLE
-                //std::cout<<" CAP MAX ES>"<<capMax<<"\n";
                 std::cout<<"n>"<<n<<"\n";
                 if(n == "*"){
                     while(std::getline(data, registro)){
-                        if(R){ insertado = adicionarRegistroP(_idPage, registro, relacion, capMax); }
-                        else{insertado = adicionarRegistroP(_idPage, registro, relacion, 0);}
-                        if(!insertado) {
-                                                    // CONSEGUIR OTRO IDPAGE
+                        if(!adicionarRegistroP(_idPage, registro, relacion, R)) {
                             for (const auto& frame : BufferPool) {
                                 if (frame.page) { 
-                                    if(R){ insertado = adicionarRegistroP(frame.page->getIdPage(),registro, relacion, capMax);}
-                                    else{ insertado = adicionarRegistroP(frame.page->getIdPage(), registro, relacion, 0);}
-                                    //insertado = adicionarRegistroP(frame.page->getIdPage(), registro, relacion, 0); 
+                                    if(adicionarRegistroP(frame.page->getIdPage(),registro, relacion, R))
+                                        break;
                                 }
-                                if(insertado) break;
                             }
-                            if(!insertado) std::cout<<" No hay espacio suficiente en PAGES \n";
+                            if(!insertado) {
+                                std::cout<<" No hay espacio suficiente en PAGES! Liberar o agregar nueva pagina! \n";
+                                return;
+                            }
                         }
-                    
                     }
                     data.close(); 
                 }
                 else{
-                    for(int i=0; i< stoi(n) ; i++){
+                    for(int i=0; i<stoi(n) ; i++){
                         std::getline(data, registro);
-                        // rLF = funcion RLV = 0
-                        if(R){ insertado = adicionarRegistroP(_idPage,registro, relacion, capMax);}
-                        else{ insertado = adicionarRegistroP( _idPage, registro, relacion, 0);}
-                        if(!insertado) {
-                            // CONSEGUIR OTRO IDPAGE
+                        if(!adicionarRegistroP(_idPage, registro, relacion, R)) {
                             for (const auto& frame : BufferPool) {
                                 if (frame.page) { 
-                                    if(R){ insertado = adicionarRegistroP(frame.page->getIdPage(),registro, relacion, capMax);}
-                                    else{ insertado = adicionarRegistroP(frame.page->getIdPage(), registro, relacion, 0);}
-                                    //insertado = adicionarRegistroP(frame.page->getIdPage(), registro, relacion, 0); 
+                                    if(adicionarRegistroP(frame.page->getIdPage(),registro, relacion, R))
+                                        break;
                                 }
-                                if(insertado) break;
                             }
-                            if(!insertado) std::cout<<" No hay espacio suficiente en PAGES \n";
+                            if(!insertado) {
+                                std::cout<<" No hay espacio suficiente en PAGES! Liberar o agregar nueva pagina! \n";
+                                return;
+                            }
                         }
                     }
                     data.close();
@@ -335,22 +319,17 @@ void displayMenu() {
     cout << "4. Get page\n";
     cout << "5. Modificar Page\n";
     cout << "6. Mostrar estado del buffer\n";
-    cout << "7. ALL PIN_COUNT 0\n";
+    cout << "7. Imprimir Pagina / Bloque\n";
     cout << "8. Salir\n";
     cout << "Elija una opcion: ";
 }
 
 void MenuBuffer(Disco* &my_disk) {
-    //int bufferSize = 8000;
-    //int pageSize = 2000;
     int choice;
     cout << " > Metodo de reemplazo " << endl;
     cout << " LRU (0) o CLOCK (1) > ";cin>>choice;
 
     Buffer buffer(my_disk->getCapacidadBloque() *3, my_disk->getCapacidadBloque(), my_disk, choice);
-    // PREGUNTAR METODO DE REEMPLAZO
-
-
     
     do {
         buffer.printBuffer();
@@ -400,13 +379,7 @@ void MenuBuffer(Disco* &my_disk) {
             cin >> pageId;
             buffer.pinPage(pageId, 'W', 0);
             buffer.modificarPage(pageId);
-            char guardar;
-            cout << "¿Desea guardar los cambios? (S/N): ";
-            cin >> guardar;
-            if (guardar == 'S' || guardar == 's') {
-                buffer.flushPage(pageId);
-                buffer.unpinPage(pageId);
-            }
+            buffer.unpinPage(pageId);
             break;
         }
         case 6: {
@@ -414,9 +387,11 @@ void MenuBuffer(Disco* &my_disk) {
             break;
         }
         case 7: {
-            //buffer.resetPin_count();
-            //buffer.printBuffer();
-            //buffer.printStats();
+            int pageId;
+            cout << "Ingrese el ID de la pagina/bloque a imprimir: ";
+            cin >> pageId;
+            imprimirArchivo(getdirPage(pageId));
+            imprimirArchivo(getdirBloque(pageId));
             break;
         }
         case 8: {

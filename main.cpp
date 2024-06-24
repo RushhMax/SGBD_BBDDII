@@ -8,7 +8,6 @@ using namespace std;
 int main(){
     Disco* Disco1;
     int opcion; 
-
     int platos, pistas, sectores, bloques, tamSector, tamBloque;
     cout << " > Crear DISCO " << endl;
     cout << " DEFAULT (0) o MANUAL (1) > ";cin>>opcion;
@@ -42,7 +41,6 @@ int main(){
         case 2: {
             MenuBuffer(Disco1);
             break;
-            
         }
         case 3: {
             cout << "Saliendo...\n";
