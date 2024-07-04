@@ -385,18 +385,18 @@ bool adicionarRegistroP(int idPage, std::string _registro, std::string _relacion
         espacLibrePage -= R.size();
         std::string _nroR = std::to_string(NroRelacion(_relacion));
         if(tipoR) {
-            adicionarRLFArchivo
-            (R, getdirPage(idPage));
+            adicionarRLFArchivo(R, getdirPage(idPage));
             editarCabeceras(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(idPage));
         }else{
             if(getTipoPagina(idPage) == 2){
                 cout<<" REGISTRO EN PAGINA TIPO 2 ACTUALIZANDO!";
-                adicionarRLFArchivo("_|\n", getdirPage(idPage));
+               adicionarRLFArchivo("_|\n", getdirPage(idPage));
             }
             adicionarRLFArchivo(R, getdirPage(idPage));
             editarCabeceras(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(idPage)); 
             //editarSLOTS(idPage, R.size());
         }
+        editarCabeceras(idPage,0, "|" ,std::to_string(espacLibrePage), tipoR, "dirPaginas.txt"); 
         return true;
     }else 
         return false;
@@ -681,5 +681,3 @@ void modificarRegistroPage(int _idPage, string _relacion, string _atributo, stri
     }
     pagina.close();
 }
-
-

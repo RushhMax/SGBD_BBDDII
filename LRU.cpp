@@ -1,5 +1,7 @@
 #include <vector>
 #include <iostream>
+#include <deque>
+
 using namespace std;
 
 struct page_helper{
@@ -44,9 +46,14 @@ class LRU {
             for(int i=0; i<Pages.size();i++) {
                 if(ID_Page == Pages[i].idPage){             // si pagina esta 
                     if(Pages[i].pinCount > 0) Pages[i].pinCount--; 
-                    Pages[i].requerimientos.pop_front();
-                    if(Pages[i].requerimientos.size() > 0){ Pages[i].actualizarDirtyBit();}
-                    else{Pages[i].dirtyBit = 0;}
+                    if(Pages[i].requerimientos.size() == 0){
+                        Pages[i].dirtyBit = 0;
+                    }else{
+                        Pages[i].requerimientos.pop_front();
+                        if(Pages[i].requerimientos.size() == 0) Pages[i].dirtyBit = 0;
+                        else Pages[i].actualizarDirtyBit();
+                        Pages[i].actualizarDirtyBit();
+                    }
                 }
             }
         }

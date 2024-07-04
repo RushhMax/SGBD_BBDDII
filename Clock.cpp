@@ -51,9 +51,14 @@ class Clock {
         }    
         void unpin(int nFrame){
             if(Frames[nFrame].pinCount > 0) { Frames[nFrame].pinCount--;}
-            Frames[nFrame].requerimientos.pop_front();
-            if(Frames[nFrame].requerimientos.size() > 0){Frames[nFrame].actualizarDirtyBit();}
-            else{Frames[nFrame].dirtyBit = 0;}
+            if(Frames[nFrame].requerimientos.size() == 0){
+                Frames[nFrame].dirtyBit = 0;
+            }else {
+                Frames[nFrame].requerimientos.pop_front();
+                if(Frames[nFrame].requerimientos.size() == 0)   Frames[nFrame].dirtyBit = 0;
+                else Frames[nFrame].actualizarDirtyBit();
+                Frames[nFrame].actualizarDirtyBit();
+            }
         }
 
         void newPage(int nFrame, char func, bool pinned){ // buscar si ya existe

@@ -78,6 +78,7 @@ class Buffer {
         Clock* my_clock; 
         LRU* my_LRU;
         int choice_replacer;
+        string dirPaginas = "dirPaginas.txt";
 
         int hit_count;
         int miss_count;
@@ -112,60 +113,80 @@ class Buffer {
             for (int i = 0; i < nFrames; ++i) { BufferPool.push_back(Frame(i));}
             if(_choice == 1) my_clock = new Clock(nFrames);
             else if(_choice == 0)my_LRU = new LRU();
+            crearDirPaginas();
             _mkdir("BUFFERPOOL");
+        }
+
+        void crearDirPaginas(){
+            std::ifstream origen("dirBloques.txt");
+            // Abrir el archivo de destino en modo escritura
+            std::ofstream destino(dirPaginas);
+
+            // Leer del archivo de origen y escribir en el archivo de destino
+            std::string linea;
+            while (std::getline(origen, linea)) {
+                destino << linea << std::endl;
+            }
+
+            // Cerrar ambos archivos
+            origen.close();
+            destino.close();
         }
     
         void flushPage(int _idPage){
-            string dirPage = "BUFFERPOOL/Page" + to_string(_idPage) + ".txt";
-            ofstream block("DISCO/BLOQUES/Bloque" + to_string(_idPage) + ".txt"); 
-            ifstream page(dirPage);
+            ofstream block(getdirBloque(_idPage)); 
+            ifstream page(getdirPage(_idPage));
             string line = "";
             while (getline(page, line)){ block<<line<<endl;}
             page.close();
             block.close();
-            //my_disk->guardarBloqueSector(_idPage); !!!!!!!!!!!!!
+            my_disk->guardarBloqueSector(_idPage); //!!!!!!!!!!!!!
         }
 
         // Indicar que la pagina esta en uso
         void pinPage(int idPage, char func, bool pinned) {
             //request_count++;
-            int dirtyHelp = changeFuncInt(func);
             auto it = PageTable.find(idPage);
-            if (it != PageTable.end()) { // SI ESTA
-                //hit_count++;
+            if (it != PageTable.end()) { 
+                // PIN COUNT
                 BufferPool[it->second].page->incrementPinCount(); // PINNING
-
-                BufferPool[it->second].page->requerimientos.push_back(make_pair(func, dirtyHelp));
+                // DIRTY BIT
+                BufferPool[it->second].page->requerimientos.push_back(make_pair(func, changeFuncInt(func)));
                 BufferPool[it->second].page->actualizarDirtyBit();
-
+                // PINNED
                 if(pinned) BufferPool[it->second].page->Pinned();
-                if(choice_replacer == 1)my_clock->pin(BufferPool[it->second].idFrame, func, pinned);
+                // REPLACER
+                if(choice_replacer == 1) my_clock->pin(BufferPool[it->second].idFrame, func, pinned);
                 else if(choice_replacer == 0) my_LRU->pin(idPage, func, pinned);
 
             } else { 
                 newPage(idPage, func, pinned);
             }
         }
-
         // Indicar que la pagina esta un uso menos
         void unpinPage(int idPage) {
-            //std::cout<<"EN UNPIN PAGE \n";
             auto it = PageTable.find(idPage);
             if (it != PageTable.end()) {
+                // PIN COUNT
                 BufferPool[it->second].page->decrementPinCount();
-
-                if(BufferPool[it->second].page->requerimientos[0].first == 'W' ){
+                // LIBERAR PROCESOS
+                if(BufferPool[it->second].page->requerimientos.size() == 0){
+                    BufferPool[it->second].page->setDirtyBit(0);
+                    cout<<" No hay requerimiento que eliminar! ";
+                }else{
+                    if(BufferPool[it->second].page->requerimientos[0].first == 'W' ){
                     cout << "\n Liberando proceso de Escritura >> \n";
                     char guardar;
                     cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
                     if (guardar == 'S' || guardar == 's') { this->flushPage(idPage); }   
+                    }
+                    else cout << "\n Liberando proceso de Lectura >> \n";
+                    BufferPool[it->second].page->requerimientos.pop_front();
+                    if(BufferPool[it->second].page->requerimientos.size() == 0) BufferPool[it->second].page->setDirtyBit(0);
+                    else BufferPool[it->second].page->actualizarDirtyBit();
                 }
 
-                BufferPool[it->second].page->requerimientos.pop_front();
-                
-                if(BufferPool[it->second].page->requerimientos.size() > 0) BufferPool[it->second].page->actualizarDirtyBit();
-                else BufferPool[it->second].page->setDirtyBit(0);
-                
+                // REPLACER
                 if(choice_replacer == 1)my_clock->unpin(BufferPool[it->second].idFrame);
                 else if(choice_replacer == 0) my_LRU->unpin(idPage);
             }
@@ -174,8 +195,6 @@ class Buffer {
         // Función para agregar una nueva página al búfer
         Page* newPage(int idPage, char func, bool _pinned) {
             request_count++;
-
-            int idF;
             // comprobar que algun frame  este vacio
             for(auto &Frame : BufferPool){
                 if(Frame.page.get()){  // si la pag del frame existe
@@ -187,7 +206,6 @@ class Buffer {
                 }
                 if(!Frame.page.get()){ // SI EL FRAME ESTA VACIO COLOCA AHI LA PAG
                     miss_count++;
-                    //int dirtyHelp = 
                     Page* NewPage = new Page(idPage, _pinned);
                     Frame.setPage(NewPage);
                     Frame.page->requerimientos.push_back(make_pair(func, changeFuncInt(func)));
@@ -255,15 +273,15 @@ class Buffer {
                 std::string registro;
                 std::getline(data, registro); // saltandonos encabezado
                 bool insertado = false;
-                // CAPACIDAD MAXIMA DE REGISTRO calcular si TIPO DE DATO 1(Variable)
-                std::cout<<"n>"<<n<<"\n";
                 if(n == "*"){
                     while(std::getline(data, registro)){
                         if(!adicionarRegistroP(_idPage, registro, relacion, R)) {
                             for (const auto& frame : BufferPool) {
                                 if (frame.page) { 
-                                    if(adicionarRegistroP(frame.page->getIdPage(),registro, relacion, R))
+                                    cout<<" UTILIZANDO NUEVA PAGINA> "<<frame.page->getIdPage()<<"\n";
+                                    if(adicionarRegistroP(frame.page->getIdPage(),registro, relacion, R)){
                                         break;
+                                    }
                                 }
                             }
                             if(!insertado) {
@@ -280,8 +298,10 @@ class Buffer {
                         if(!adicionarRegistroP(_idPage, registro, relacion, R)) {
                             for (const auto& frame : BufferPool) {
                                 if (frame.page) { 
-                                    if(adicionarRegistroP(frame.page->getIdPage(),registro, relacion, R))
-                                        break;
+                                    cout<<" UTILIZANDO NUEVA PAGINA> "<<frame.page->getIdPage()<<"\n";
+                                    if(adicionarRegistroP(frame.page->getIdPage(),registro, relacion, R)){
+                                        break; 
+                                    }
                                 }
                             }
                             if(!insertado) {
@@ -290,6 +310,8 @@ class Buffer {
                             }
                         }
                     }
+                    cout<<" DESEA LIBERAR LA PAGINA? (S/N) "; char opc; cin>>opc;
+                    if(opc == 'S' || opc == 's') unpinPage(_idPage);
                     data.close();
                 }
             } else if (op == 2) {
@@ -310,15 +332,17 @@ class Buffer {
 };
 
 void displayMenu() {
+    cout << "__________________________________________________\n";
     cout << "\n----- MENU -----\n";
     cout << "1. New page\n";
     cout << "2. Pin page\n";
     cout << "3. Unpin page\n";
     cout << "4. Get page\n";
     cout << "5. Modificar Page\n";
-    cout << "6. Mostrar estado del buffer\n";
+    cout << " | 6. Mostrar estado del buffer\n";
     cout << "7. Imprimir Pagina / Bloque\n";
     cout << "8. Salir\n";
+    cout << "__________________________________________________\n";
     cout << "Elija una opcion: ";
 }
 
@@ -339,18 +363,17 @@ void MenuBuffer(Disco* &my_disk) {
             int pageId; char funcion; bool pinned;
             cout << "Ingrese el ID de la nueva pagina: ";
             cin >> pageId;
-            cout << " R/W? ";cin>>funcion;
-            cout << "PINNED? ";cin>>pinned;
+            cout << "R/W?     ";cin>>funcion;
+            cout << "PINNED?  ";cin>>pinned;
             buffer.newPage(pageId, funcion, pinned);
-            
             break;
         }
         case 2: {
             int pageId; char funcion; bool pinned;
             cout << "Ingrese el ID de la pagina a fijar: ";
             cin >> pageId;
-            cout << " R/W? ";cin>>funcion;
-            cout << "PINNED? ";cin>>pinned;
+            cout << "R/W?     ";cin>>funcion;
+            cout << "PINNED?  ";cin>>pinned;
             buffer.pinPage(pageId, funcion, pinned);
             break;
         }
@@ -365,8 +388,8 @@ void MenuBuffer(Disco* &my_disk) {
             int pageId; char funcion;  bool pinned;
             cout << "Ingrese el ID de la pagina a conseguir: ";
             cin >> pageId;
-            cout << " R/W? ";cin>>funcion;
-            cout << "PINNED? ";cin>>pinned;
+            cout << "R/W?     ";cin>>funcion;
+            cout << "PINNED?  ";cin>>pinned;
             buffer.getPage(pageId, funcion, pinned);
             break;
         }
@@ -376,11 +399,10 @@ void MenuBuffer(Disco* &my_disk) {
             cin >> pageId;
             buffer.pinPage(pageId, 'W', 0);
             buffer.modificarPage(pageId);
-            buffer.unpinPage(pageId);
             break;
         }
         case 6: {
-            buffer.printBuffer();
+            //buffer.printBuffer();
             break;
         }
         case 7: {
