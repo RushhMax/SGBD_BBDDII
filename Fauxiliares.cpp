@@ -10,6 +10,14 @@ using namespace std;
 
 ////////////////////////// BLOQUE //////////////////////////////7
 // Funcion que indicar como esta compuesto bloque
+// FUNCION EXTRA  DE ADIC_RELACION(1/2) 
+char is_IntFlo(std::string _dato){ //T ENTERO F FLOAT S STRING;
+    for(int i=0; i<_dato.size();i++){
+        if(_dato[i] == '.') return 'F';
+        if(!isdigit(_dato[i])) return 'S';
+    }
+    return 'T';
+}
 void consultarBloque(int _nroBloque){
     std::ifstream dirBloque("dirBloques.txt");
     std::string bloque, sector, dir;
@@ -36,10 +44,10 @@ void consultarBloque(int _nroBloque){
 void imprimirArchivo(string _string){
     cout<<"\nImprimiendo archivo . . . \n\n";
     std::ifstream archivo(_string);
-    archivo.seekg(0);
+    //archivo.seekg(0);
     std::string cap = "";
     while(getline(archivo, cap)){
-        cout<<cap;
+        cout<<cap<<endl;
     }
     cout<<endl;
     archivo.close();
@@ -54,7 +62,6 @@ string getdirSector(string dir){
     std::string dirSector = "DISCO/Plato" + ubi[0] + "/S" + ubi[1] + "/Pista" + ubi[2] + "/Sector" + ubi[3] + ".txt";
     return dirSector;
 }
-
 string getdirBloque(int _nBloque){
     std::string dir = "DISCO/BLOQUES/Bloque" + std::to_string(_nBloque) + ".txt"; 
     return dir;
@@ -91,101 +98,6 @@ int getTipoPagina(int idPage){
     pagina.close();
     return stoi(tipo);
 }
-// FUNCION PUNTUAL Adiciona registro en un archvo 
-void adicionarRLFArchivo(std::string _registro, string _archivo){
-    std::ofstream archiv(_archivo, std::ios::app);
-    archiv<<_registro;
-    archiv.close();
-}   
-void editarSLOTS(int idPage, int slot){
-    std::fstream archiv(getdirPage(idPage), std::ios::in | std::ios::out);
-    string lineaAux = "";
-    string nuevaLinea = "";
-    getline(archiv, lineaAux); // HEADER
-    getline(archiv, lineaAux); // SLOTS
-    stringstream slots(lineaAux);
-    while (getline(slots, lineaAux, '|')){
-        if(lineaAux == "_") { nuevaLinea += to_string(slot) + "|_|"; break; } 
-        nuevaLinea += lineaAux + "|"; 
-    }
-    archiv.seekg(0);
-    std::ostringstream nuevo_contenido;
-    getline(archiv, lineaAux);
-    nuevo_contenido<<lineaAux;
-    getline(archiv, lineaAux);;
-    nuevo_contenido<<endl<<nuevaLinea<<endl;
-    getline(archiv, lineaAux);
-    nuevo_contenido<<lineaAux;
-    archiv.close(); 
-    archiv.open(getdirPage(idPage), std::ios::out | std::ios::trunc);
-    archiv<<nuevo_contenido.str();
-    archiv.close();
-}
-bool esNumero(const std::string& str) {
-    for (char const &c : str) {
-        if (std::isdigit(c) == 0) return false;
-    }
-    return true;
-}
-void adicionarRLVArchivo(std::string _registro, int idPage){
-    imprimirArchivo(getdirPage(idPage));
-    std::fstream archiv(getdirPage(idPage), std::ios::in | std::ios::out );
-    archiv.seekg(0);
-    archiv.seekp(0);
-
-    std::string lineaAux;
-
-    // Leer el HEADER
-    std::getline(archiv, lineaAux);
-    std::cout << "HEADER: " << lineaAux << std::endl;
-
-    // Leer SLOTS
-    std::getline(archiv, lineaAux);
-    std::cout << "SLOTS: " << lineaAux << std::endl;
-
-    std::stringstream slots(lineaAux);
-    int contSlots = 0;
-    int slot = getCapacPagina(idPage);
-
-    while (std::getline(slots, lineaAux, '|')) {
-        if (lineaAux == "_") {
-            break;
-        }
-        if (esNumero(lineaAux)) {
-            contSlots++;
-            slot = std::stoi(lineaAux);
-        } else {
-            std::cerr << "Valor inválido en los slots: " << lineaAux << std::endl;
-        }
-    }
-    slot -= _registro.size();
-
-
-    archiv.seekg(0, std::ios::end);
-    std::streampos length = archiv.tellg();
-    archiv.seekg(0);
-
-    if (length < slot) {
-        archiv.seekp(0, std::ios::end);
-        for (std::streamoff i = length; i < slot; ++i) {
-            archiv.put('_');
-        }
-    }
-    archiv.seekp(slot, std::ios::beg);
-    archiv << _registro;
-    archiv.close();
-    //editarSLOTS(idPage, slot);
-}
-// FUNCION EXTRA  DE ADIC_RELACION(1/2) 
-char is_IntFlo(std::string _dato){ //T ENTERO F FLOAT S STRING;
-    for(int i=0; i<_dato.size();i++){
-        if(_dato[i] == '.') return 'F';
-        if(!isdigit(_dato[i])) return 'S';
-    }
-    return 'T';
-}
-
-////////////////////////// BLOQUE //////////////////////////////7
 
 // FUNCION DEVUELVE NRO DE RELACION (2/2)
 int NroRelacion(std::string _relacion){
@@ -201,114 +113,10 @@ int NroRelacion(std::string _relacion){
     }
     return 0; 
 }
-string getEsquema(string _relacion){
-    ifstream relaciones("diccionario.txt");
-    string _esquema;
-    for(int i=0; i<NroRelacion(_relacion); i++){
-        getline(relaciones, _esquema);
-    }
-    relaciones.close();
-    return _esquema;
-}
-// Funcion devuelve cap max del registro
-int capacMaxRegistro(std::string _archivo){
-    std::ifstream archivo(_archivo);
-    std::string regis;
-    int max = 0;
-    getline(archivo, regis);
-    while(getline(archivo, regis)){
-        if(regis.size()> max){ /*std::cout<<">"<<regis<<">"<<regis.size()<<"-"<<max<<"\n"; */max = regis.size();}
-    }
-    //std::cout<<" EL MAX ES "<<max<<std::endl;
-    return max;
-}
-
-////////////////////////// RLV //////////////////////////////7
-
-// Funcion para crear un registro de longitud variable
-std::string crearRLV(std::string _registro, std::string _relacion){
-    stringstream esquema(getEsquema(_relacion));
-    string atributo;
-    getline(esquema, atributo, '#'); // nombre de la relacion
-    std::string RN = "", aux, mapa=""; // 2 strings RN y mapa
-    int desplazamiento = 0;
-    std::stringstream R(_registro); // return _registro
-    while(getline(R, aux, ';')){ // Leemos registros separados por ;
-        for(int i=0; i<2; i++)getline(esquema, atributo, '#'); // nombre atributo
-        if(atributo == "varchar") { 
-            mapa += std::to_string(desplazamiento) + "|";
-            getline(esquema, atributo, '#'); 
-        }
-        else { 
-            getline(esquema, atributo, '#');  // tamaño
-            if (stoi(atributo) > aux.size()) {
-                aux.append(stoi(atributo) - aux.size(), ' ');
-            }
-        }
-        desplazamiento += aux.size();  
-        RN += aux; 
-    }
-    mapa += std::to_string(desplazamiento) + "|";
-
-    mapa.push_back('#');
-    RN = mapa + RN; // UNIMOS nuestro mapa con Registro
-    return RN;
-}
-
-////////////////////////// RLF //////////////////////////////7
-
-std::vector<int> longMaxEsquema(string _relacion) {
-    std::vector<int> longMax; 
-    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
-    std::string linea = "";
-    bool relacionEncontrada = false;
-    while (std::getline(diccionario, linea) && !relacionEncontrada ){
-        std::stringstream lin(linea); // de nuestro diccionario buscamos la tabla y el #4 y #7  #10 etc (vector) 
-        std::getline(lin, linea, '#');
-        if (linea == _relacion){ // if linea es igual a la relacion que estamos buscando
-            int n=1; //Tabla1#ID#int#4#Name#String#10#Edad#int#2
-            while(std::getline(lin, linea, '#')){
-                std::stringstream longAtr(linea);
-                //getline(longAtr, linea, '_');
-                if(n%3 == 0){ longMax.push_back(std::stoi(linea));}
-                n++;
-            }
-            relacionEncontrada = true;
-        }
-    }
-    diccionario.close();
-    if(!relacionEncontrada){std::cout<<" RELACION NO ENCONTRADA! "; return longMax;}
-    return longMax;
-} 
-// Funcion para crear un registro de longitud fija de acuerdo a su relcion
-std::string crearRLF(std::string _registro, std::string _relacion){
-    std::vector<int> longMax = longMaxEsquema(_relacion);
-    if(longMax.size() == 0)  {std::cout<<" RELACION NO ENCONTRADA! "; return "";}
-
-    std::string _atributo = "";
-    // LONGITUD FIJA 
-    std::string registroN = ""; // registro nuevo de LONG FIJA
-    int it = 0, _longRA=0;
-    std::stringstream str(_registro);
-    while (std::getline(str, _atributo, ';')){ // leer registro por atributos ";" 
-        registroN += _atributo;
-        if(_atributo.size() < longMax[it]) {// contamos la long del registro 
-            // funcion para agregar espacios
-            if (longMax[it] > _atributo.size()) {
-                registroN.append(longMax[it] - _atributo.size(), ' ');
-            }
-            //for(int i=0; i< longMax[it]-_atributo.size(); i++){ registroN += " "; }
-        } // else{  for(int j=0; j<_atributo.size() - longMax[it] ;j++){ registroN.pop_back(); } }
-        it++;
-    }
-    //std::cout<<"Registro Nuevo de LONG FIJA >"<<registroN<<">";
-    return registroN;
-}
-
 // EDITA EL DIRECTORIO O CABEZALES DE ARCHIVOS
 void editarCabeceras(int Linea, int Posicion, std::string _nRelacion,std::string _capacLibre, int _tipoB, std::string _archivo){
     //(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(idPage))
-    std::fstream archivo(_archivo, std::ios::binary | std::ios::in | std::ios::out);
+    std::fstream archivo(_archivo, std::ios::in | std::ios::out);
     std::string nuevaLinea = "", lineaAUX = "";
 
     // OBTENEMOS la linea a editar
@@ -361,8 +169,8 @@ void editarCabeceras(int Linea, int Posicion, std::string _nRelacion,std::string
     while (getline(archivo, lineaAUX)) {
         BloqueActual++;
         // Si no es la línea que queremos eliminar, la añadimos al nuevo contenido
-        if (BloqueActual != Linea) { nuevo_contenido << lineaAUX;}
-        else{ nuevo_contenido << nuevaLinea;}
+        if (BloqueActual != Linea) { nuevo_contenido << lineaAUX<<endl; }
+        else{ nuevo_contenido << nuevaLinea<<endl;}
     }
     //nuevo_contenido.str().pop_back();
     archivo.close(); 
@@ -370,38 +178,167 @@ void editarCabeceras(int Linea, int Posicion, std::string _nRelacion,std::string
     archivo<<nuevo_contenido.str();
     archivo.close();
 }
+string getEsquema(string _relacion){
+    ifstream relaciones("diccionario.txt");
+    string _esquema;
+    for(int i=0; i<NroRelacion(_relacion); i++){
+        getline(relaciones, _esquema);
+    }
+    relaciones.close();
+    return _esquema;
+}
+// Funcion devuelve cap max del registro
+int capacMaxRegistro(std::string _archivo){
+    std::ifstream archivo(_archivo);
+    std::string regis;
+    int max = 0;
+    getline(archivo, regis);
+    while(getline(archivo, regis)){
+        if(regis.size()> max){ /*std::cout<<">"<<regis<<">"<<regis.size()<<"-"<<max<<"\n"; */max = regis.size();}
+    }
+    //std::cout<<" EL MAX ES "<<max<<std::endl;
+    return max;
+}
 
+////////////////////////// RLF //////////////////////////////7
+std::vector<int> longMaxEsquema(string _relacion) {
+    std::vector<int> longMax; 
+    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
+    std::string linea = "";
+    bool relacionEncontrada = false;
+    while (std::getline(diccionario, linea) && !relacionEncontrada ){
+        std::stringstream lin(linea); // de nuestro diccionario buscamos la tabla y el #4 y #7  #10 etc (vector) 
+        std::getline(lin, linea, '#');
+        if (linea == _relacion){ // if linea es igual a la relacion que estamos buscando
+            int n=1; //Tabla1#ID#int#4#Name#String#10#Edad#int#2
+            while(std::getline(lin, linea, '#')){
+                std::stringstream longAtr(linea);
+                //getline(longAtr, linea, '_');
+                if(n%3 == 0){ longMax.push_back(std::stoi(linea));}
+                n++;
+            }
+            relacionEncontrada = true;
+        }
+    }
+    diccionario.close();
+    if(!relacionEncontrada){std::cout<<" RELACION NO ENCONTRADA! "; return longMax;}
+    return longMax;
+} 
+// Funcion para crear un registro de longitud fija de acuerdo a su relcion
+std::string crearRLF(std::string _registro, std::string _relacion){
+    std::vector<int> longMax = longMaxEsquema(_relacion);
+    if(longMax.size() == 0)  {std::cout<<" RELACION NO ENCONTRADA! "; return "";}
+
+    std::string _atributo = "";
+    // LONGITUD FIJA 
+    std::string registroN = ""; // registro nuevo de LONG FIJA
+    int it = 0, _longRA=0;
+    std::stringstream str(_registro);
+    while (std::getline(str, _atributo, ';')){ // leer registro por atributos ";" 
+        registroN += _atributo;
+        if(_atributo.size() < longMax[it]) {// contamos la long del registro 
+            // funcion para agregar espacios
+            if (longMax[it] > _atributo.size()) {
+                registroN.append(longMax[it] - _atributo.size(), ' ');
+            }
+            //for(int i=0; i< longMax[it]-_atributo.size(); i++){ registroN += " "; }
+        } // else{  for(int j=0; j<_atributo.size() - longMax[it] ;j++){ registroN.pop_back(); } }
+        it++;
+    }
+    //std::cout<<"Registro Nuevo de LONG FIJA >"<<registroN<<">";
+    return registroN;
+}
+// FUNCION PUNTUAL Adiciona registro en un archvo 
+void adicionarRLFArchivo(std::string _registro, string _archivo){
+    std::ofstream archiv(_archivo, std::ios::app);
+    archiv<<_registro;
+    archiv.close();
+}   
+
+////////////////////////// RLV //////////////////////////////7
+// Funcion para crear un registro de longitud variable
+std::string crearRLV(std::string _registro, std::string _relacion){
+    stringstream esquema(getEsquema(_relacion));
+    string atributo;
+    getline(esquema, atributo, '#'); // nombre de la relacion
+    std::string RN = "", aux, mapa=""; // 2 strings RN y mapa
+    int desplazamiento = 0;
+    std::stringstream R(_registro); // return _registro
+    while(getline(R, aux, ';')){ // Leemos registros separados por ;
+        for(int i=0; i<2; i++)getline(esquema, atributo, '#'); // nombre atributo
+        if(atributo == "varchar") { 
+            mapa += std::to_string(desplazamiento) + "|";
+            getline(esquema, atributo, '#'); 
+        }
+        else { 
+            getline(esquema, atributo, '#');  // tamaño
+            if (stoi(atributo) > aux.size()) {
+                aux.append(stoi(atributo) - aux.size(), ' ');
+            }
+        }
+        desplazamiento += aux.size();  
+        RN += aux; 
+    }
+    mapa += std::to_string(desplazamiento) + "|";
+
+    mapa.push_back('#');
+    RN = mapa + RN; // UNIMOS nuestro mapa con Registro
+    return RN;
+}
+void editarSLOTS(int idPage, int slot){
+    std::fstream archiv(getdirPage(idPage), std::ios::in);
+    string lineaAux = "";
+    std::ostringstream nuevo_contenido;
+    getline(archiv, lineaAux); // HEADER
+    nuevo_contenido<<lineaAux<<endl;
+    getline(archiv, lineaAux); // SLOTS
+    stringstream slots(lineaAux);
+    string nuevaLinea = "";
+    while (getline(slots, lineaAux, '|')){
+        if(lineaAux == "_") { nuevaLinea += to_string(slot) + "|_|"; break; } 
+        nuevaLinea += lineaAux + "|"; 
+    }
+    nuevo_contenido<<nuevaLinea<<endl;
+    getline(archiv, lineaAux); // REGISTROS
+    nuevo_contenido<<lineaAux;
+    archiv.close();
+    cout<<"\n ------------------\n" ;
+    cout<<nuevo_contenido.str();
+    cout<<"\n ------------------\n" ;
+    std::ofstream output(getdirPage(idPage), std::ios::trunc);
+    output<<nuevo_contenido.str();
+    output.close();
+}
+
+////////////////////////// PAGINA //////////////////////////////7
 // FUNCION PARA ADICIONAR UN REGISTRO EN UNA TABLA ESPECIFICA
-bool adicionarRegistroP(int idPage, std::string _registro, std::string _relacion, bool tipoR){
+bool adicionarRegistroPage(int idPage, std::string _registro, std::string _relacion, bool tipoR){
     // CREAMOS RLV O RLF
     std::string R = ""; 
     if(tipoR) {R +=  crearRLF(_registro, _relacion);  }
     else{ R += crearRLV(_registro, _relacion); } // REGISTRO LONGITUD VARIABLE
 
-    int espacLibrePage = getcapacLibrePagina(idPage); 
-    
     // este codigo no respeta el espac sectores quiere decir un registro puede partirse
-    if(R.size() <= espacLibrePage && (tipoR == getTipoPagina(idPage) || getTipoPagina(idPage) == 2)){  // y si es del mismo tipo de R
+    int espacLibrePage = getcapacLibrePagina(idPage); 
+    int tipoPage = getTipoPagina(idPage); // Tener en consideracion el page
+    
+    if(R.size() <= espacLibrePage && (tipoR == tipoPage || tipoPage == 2)){  // y si es del mismo tipo de R
         espacLibrePage -= R.size();
         std::string _nroR = std::to_string(NroRelacion(_relacion));
-        if(tipoR) {
-            adicionarRLFArchivo(R, getdirPage(idPage));
-            editarCabeceras(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(idPage));
-        }else{
-            if(getTipoPagina(idPage) == 2){
-                cout<<" REGISTRO EN PAGINA TIPO 2 ACTUALIZANDO!";
-               adicionarRLFArchivo("_|\n", getdirPage(idPage));
-            }
-            adicionarRLFArchivo(R, getdirPage(idPage));
-            editarCabeceras(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(idPage)); 
-            //editarSLOTS(idPage, R.size());
+        if(tipoPage == 2 && tipoR == 0){
+            cout<<"\n REGISTRO EN PAGINA TIPO 2 ACTUALIZANDO!";
+            adicionarRLFArchivo("_|\n", getdirPage(idPage));
         }
-        editarCabeceras(idPage,0, "|" ,std::to_string(espacLibrePage), tipoR, "dirPaginas.txt"); 
+        editarSLOTS(idPage, R.size());
+        adicionarRLFArchivo(R, getdirPage(idPage));
+        editarCabeceras(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(idPage));
+        
+        // editar HEAP FILE 
+        //editarCabeceras(idPage,0, "|" ,std::to_string(espacLibrePage), tipoR, "dirPaginas.txt"); 
         return true;
-    }else 
-        return false;
+    }
+    return false;
 }
-
 bool cumpleCondicion(string _registro, string _condicion, string _relacion, bool _tipoR){
     std::cout<<" EN FUUNCION CUMPLE ! con registro <<"<<_registro<<"> RL>"<<_tipoR<<"\n";
     // if tipoR = 0 RLV
@@ -483,25 +420,6 @@ bool cumpleCondicion(string _registro, string _condicion, string _relacion, bool
    
     return false;
 }
-
-void eliminarNLineaPage(int _idPage, int _nRegistro){
-    fstream _Page("BUFFERPOOL/Page" + std::to_string(_idPage) + ".txt", std::ios::binary | std::ios::in | std::ios::out);
-    std::ostringstream nuevo_contenido;
-    string lineaAUX;
-    int contLinea = 0;
-    while (getline(_Page, lineaAUX)) {
-        contLinea++;
-        lineaAUX.pop_back();
-        if (contLinea != _nRegistro) {
-            nuevo_contenido << lineaAUX <<endl;
-        }
-    }
-    _Page.close(); 
-    _Page.open("BUFFERPOOL/Page" + std::to_string(_idPage) + ".txt", std::ios::out | std::ios::trunc);
-    _Page<<nuevo_contenido.str();
-    _Page.close();
-}
-
 // FUNCION PARA ELIMINAR UN REGISTRO DE LA PAGINA
 void eliminarRegistroPage(int _idPage, string _relacion, string _condicion){
     std::cout<<" EN FUNCION ELIMINAR !\n";
@@ -533,7 +451,7 @@ void eliminarRegistroPage(int _idPage, string _relacion, string _condicion){
             // SI CUMPLE CONDICION
             if(cumpleCondicion(registro, _condicion, _relacion, _tipoR)){
                 std::cout<<"\n CUMPLE CONDICION! registro <<"<<registro.size()<<">  \n"; 
-                eliminarNLineaPage(_idPage, nroregistro);
+                //eliminarNLineaPage(_idPage, nroregistro);
                 nroregistro--;
                 espacioPageINT += registro.size();
                 //std::cout<<" ESPACIO "<<espacioPageINT<<endl;
@@ -544,7 +462,6 @@ void eliminarRegistroPage(int _idPage, string _relacion, string _condicion){
     }
     pagina.close();
 }
-
 int GetnroAtributo(string _atributo, int _tipoR, string _relacion){
     stringstream esquema(getEsquema(_relacion));
     
@@ -566,7 +483,6 @@ int GetnroAtributo(string _atributo, int _tipoR, string _relacion){
     return n_atributo;
     
 }
-
 void modificarNRegistroPage(int _idPage, int _nroRegistro, string _relacion, string _atributo, int _tipoR){
     fstream _Page("BUFFERPOOL/Page" + std::to_string(_idPage) + ".txt", std::ios::binary | std::ios::in | std::ios::out);
     
@@ -638,7 +554,6 @@ void modificarNRegistroPage(int _idPage, int _nroRegistro, string _relacion, str
     _Page<<nuevo_contenido.str();
     _Page.close();
 }
-
 void modificarRegistroPage(int _idPage, string _relacion, string _atributo, string _condicion){
     std::cout<<" EN FUUNCION MODIFICAR !\n";
     fstream pagina("BUFFERPOOL/Page" + std::to_string(_idPage) + ".txt", std::ios::in | std::ios::out);

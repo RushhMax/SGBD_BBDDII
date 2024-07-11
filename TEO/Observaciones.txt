@@ -1,4 +1,38 @@
 1. Actualizar capacidad de Disco cuando se agrega desde Buffer
 2. Adicionar Funcion MODIFICAR 
 3. Si adicionar no entra en pagina llamar otra?
-4. PAGINA CON REGISTROS DE RLV O RLF
+
+----- DISCO --------------------------------------->
+
+----- BUFFER  --------------------------------------->
+-- > HEAP FILE
+-- > MODIFICAR
+-- > ELIMINAR
+
+----- LRU --------------------------------------->
+
+----- CLOCK  --------------------------------------->
+
+
+
+REGISTROS
+Cabeceras de registros <RID,BLOQUE>
+
+CRITERIOS DE INDEXACIÓN
+1) Tiempo de acceso
+2) Tiempo de inserción
+3) Tiempo de Borrado
+4) Espacio adicional requerido(Fisico, memoria)
+
+INDICES
+- Orden INDEX
+- indices con clustering y sin clustering
+- Indices densos y dispersos
+- Indices Multinivel
+
+
+BTREE
+    Se crean por clave de busqueda y por relacion
+    Pueden haber muchos BTRESS por relacion dependiendo que clave de busqueda quiero
+    Los nodos hoja -> punyeros a REGISTROS o conjunto de REGISTROS
+    las hojas apuntan a un registro de la sgt forma <BLOQUE,RID del bloque>

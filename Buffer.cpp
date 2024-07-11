@@ -8,8 +8,8 @@
 #include <deque>
 
 #include "Disco.cpp"
-#include "Clock.cpp"
-#include "LRU.cpp"
+#include "REPLACERS/Clock.cpp"
+#include "REPLACERS/LRU.cpp"
 
 using namespace std;
 
@@ -69,6 +69,26 @@ struct Frame {
     } 
 };
 
+struct HeapFile{
+    vector<Page*> free;
+    vector<Page*> busy;
+    int nroRelacion;
+
+    HeapFile(int _nroRelacion = 0 ) : nroRelacion(_nroRelacion){}
+    
+    /*void actualizarDirtyBit() {
+        for(int i=requerimientos.size()-1; i>0; i--){
+            if(requerimientos[i].second == 1){
+                requerimientos[i-1].second = 1;
+            }
+        }
+        dirtyBit = requerimientos[0].second;
+    }
+    page_helper(int _idPage, int _dirtyBit, int _pinCount, int _pinned, deque<pair<char,int>> _Requerimientos) : idPage(_idPage), pinCount(_pinCount), dirtyBit(_dirtyBit), pinned(_pinned), requerimientos(_Requerimientos) {}
+
+*/
+};
+
 class Buffer {
     private:
         Disco* my_disk;
@@ -113,11 +133,12 @@ class Buffer {
             for (int i = 0; i < nFrames; ++i) { BufferPool.push_back(Frame(i));}
             if(_choice == 1) my_clock = new Clock(nFrames);
             else if(_choice == 0)my_LRU = new LRU();
-            crearDirPaginas();
+            // CREAR HEAP FILE
+            //crearDirPaginas();
             _mkdir("BUFFERPOOL");
         }
 
-        void crearDirPaginas(){
+        /*void crearDirPaginas(){
             std::ifstream origen("dirBloques.txt");
             // Abrir el archivo de destino en modo escritura
             std::ofstream destino(dirPaginas);
@@ -131,7 +152,7 @@ class Buffer {
             // Cerrar ambos archivos
             origen.close();
             destino.close();
-        }
+        }*/
     
         void flushPage(int _idPage){
             ofstream block(getdirBloque(_idPage)); 
@@ -236,6 +257,7 @@ class Buffer {
         }
 
         void printBuffer() const {
+            cout << "_____________ BUFFER POOL ___________________________\n\n";
             for (const auto& frame : BufferPool) {
                 if (frame.page) { cout<<"Frame ID: "<<frame.idFrame<<", Page ID: "<<frame.page->getIdPage()<< ", Dity bit: "<< frame.page->getDirtyBit() << ", Pin Count: " << frame.page->getPinCount() << ", Pinned: " <<frame.page->getPinned()<< " \n";
                 }else{ cout<<"Frame ID: "<<frame.idFrame<<" > FRAME VACIO! \n";}
@@ -255,65 +277,57 @@ class Buffer {
         }
         
         void modificarPage(int _idPage){
-            // VERIFICAR SI PAGE ES W
             int op;
-            cout << "Seleccione una opcion: 1-Adicionar, 2-Eliminar, 3-Modificar: ";
+            cout << "__________________________________________________\n";
+            cout << "\n----- MODIFICANDO PAGINA "<<_idPage<<" -----\n";
+            cout << "1. Adicionar registros \n";
+            cout << "2. Eliminar registros\n";
+            cout << "3. Modificar registros\n";
+            cout << "__________________________________________________\n\n";
+            cout << "Elija una opcion: ";
             cin >> op;
             if (op == 1) {
                 int R;
                 string n; 
                 string archivo, relacion;
+                cout << "\n----- ADICIONANDO REGISTROS -----\n";
                 std::cout<<" Adicionando (n) registros de LV(0) LF(1) del (archivo) a la (Relacion) >\n";
-                std::cout<<" n> (n/*) ";cin>>n;  ///1
-                std::cout<<" Archivo > "; cin>>archivo;
-                std::cout<<" Relacion > ";cin>>relacion;
+                std::cout<<" n> (n/*)   \t";cin>>n;  ///1
+                std::cout<<" Archivo >  \t "; cin>>archivo;
+                std::cout<<" Relacion > \t";cin>>relacion;
                 std::cout<<" Registro Long FIJA (1) O Varible(0) > ";cin>>R;
-                //adicionarRegistrosPage( _idPage, n , archivo, relacion, R);
+                archivo =  "DATABASE/" + archivo;
+                // saltandonos encabezado
                 std::ifstream data(archivo);
                 std::string registro;
-                std::getline(data, registro); // saltandonos encabezado
-                bool insertado = false;
-                if(n == "*"){
-                    while(std::getline(data, registro)){
-                        if(!adicionarRegistroP(_idPage, registro, relacion, R)) {
-                            for (const auto& frame : BufferPool) {
-                                if (frame.page) { 
-                                    cout<<" UTILIZANDO NUEVA PAGINA> "<<frame.page->getIdPage()<<"\n";
-                                    if(adicionarRegistroP(frame.page->getIdPage(),registro, relacion, R)){
-                                        break;
-                                    }
+                std::getline(data, registro); 
+                int loopLimit = (n == "*") ? INT_MAX : stoi(n);
+
+                for (int i = 0; i < loopLimit; ++i) {
+                    if (!std::getline(data, registro)) {
+                        break; // Salir del bucle si no hay más registros
+                    }
+
+                    if (!adicionarRegistroPage(_idPage, registro, relacion, R)) {
+                        bool insertado = false;
+                        for (const auto& frame : BufferPool) {
+                            if (frame.page) {
+                                cout << " UTILIZANDO NUEVA PAGINA> " << frame.page->getIdPage() << "\n";
+                                if (adicionarRegistroPage(frame.page->getIdPage(), registro, relacion, R)) {
+                                    cout<<" > REGISTRO INSERTADO \n";
+                                    insertado = true;
+                                    break;
                                 }
                             }
-                            if(!insertado) {
-                                std::cout<<" No hay espacio suficiente en PAGES! Liberar o agregar nueva pagina! \n";
-                                return;
-                            }
+                        }
+                        if (!insertado) {
+                            std::cout << " No hay espacio suficiente en PAGES! Liberar o agregar nueva pagina! \n";
+                            return;
                         }
                     }
-                    data.close(); 
+                    
                 }
-                else{
-                    for(int i=0; i<stoi(n) ; i++){
-                        std::getline(data, registro);
-                        if(!adicionarRegistroP(_idPage, registro, relacion, R)) {
-                            for (const auto& frame : BufferPool) {
-                                if (frame.page) { 
-                                    cout<<" UTILIZANDO NUEVA PAGINA> "<<frame.page->getIdPage()<<"\n";
-                                    if(adicionarRegistroP(frame.page->getIdPage(),registro, relacion, R)){
-                                        break; 
-                                    }
-                                }
-                            }
-                            if(!insertado) {
-                                std::cout<<" No hay espacio suficiente en PAGES! Liberar o agregar nueva pagina! \n";
-                                return;
-                            }
-                        }
-                    }
-                    cout<<" DESEA LIBERAR LA PAGINA? (S/N) "; char opc; cin>>opc;
-                    if(opc == 'S' || opc == 's') unpinPage(_idPage);
-                    data.close();
-                }
+                data.close();
             } else if (op == 2) {
                 string relacion, condicion;
                 std::cout<<" Eliminando registro de la (relacion) donde (condicion) >\n";
@@ -339,10 +353,10 @@ void displayMenu() {
     cout << "3. Unpin page\n";
     cout << "4. Get page\n";
     cout << "5. Modificar Page\n";
-    cout << " | 6. Mostrar estado del buffer\n";
+    cout << "6. Mostrar estado del buffer\n";
     cout << "7. Imprimir Pagina / Bloque\n";
     cout << "8. Salir\n";
-    cout << "__________________________________________________\n";
+    cout << "__________________________________________________\n\n";
     cout << "Elija una opcion: ";
 }
 
@@ -359,67 +373,72 @@ void MenuBuffer(Disco* &my_disk) {
         cin >> choice;
 
         switch (choice) {
-        case 1: {
-            int pageId; char funcion; bool pinned;
-            cout << "Ingrese el ID de la nueva pagina: ";
-            cin >> pageId;
-            cout << "R/W?     ";cin>>funcion;
-            cout << "PINNED?  ";cin>>pinned;
-            buffer.newPage(pageId, funcion, pinned);
-            break;
-        }
-        case 2: {
-            int pageId; char funcion; bool pinned;
-            cout << "Ingrese el ID de la pagina a fijar: ";
-            cin >> pageId;
-            cout << "R/W?     ";cin>>funcion;
-            cout << "PINNED?  ";cin>>pinned;
-            buffer.pinPage(pageId, funcion, pinned);
-            break;
-        }
-        case 3: {
-            int pageId;
-            cout << "Ingrese el ID de la pagina a liberar: ";
-            cin >> pageId;
-            buffer.unpinPage(pageId);
-            break;
-        }
-        case 4:{
-            int pageId; char funcion;  bool pinned;
-            cout << "Ingrese el ID de la pagina a conseguir: ";
-            cin >> pageId;
-            cout << "R/W?     ";cin>>funcion;
-            cout << "PINNED?  ";cin>>pinned;
-            buffer.getPage(pageId, funcion, pinned);
-            break;
-        }
-        case 5:{
-            int pageId;
-            cout << "Ingrese el ID de la pagina a modificar: ";
-            cin >> pageId;
-            buffer.pinPage(pageId, 'W', 0);
-            buffer.modificarPage(pageId);
-            break;
-        }
-        case 6: {
-            //buffer.printBuffer();
-            break;
-        }
-        case 7: {
-            int pageId;
-            cout << "Ingrese el ID de la pagina/bloque a imprimir: ";
-            cin >> pageId;
-            imprimirArchivo(getdirPage(pageId));
-            imprimirArchivo(getdirBloque(pageId));
-            break;
-        }
-        case 8: {
-            cout << "Saliendo...\n";
-            break;
-        }
-        default: {
-            cout << "Opción no válida. Intente de nuevo.\n";
-        }
+            case 1: {
+                int pageId; char funcion; bool pinned;
+                cout << "\n-----  New page  ---------\n";
+                cout << "Ingrese el ID de la nueva pagina: ";
+                cin >> pageId;
+                cout << "R/W?     ";cin>>funcion;
+                cout << "PINNED?  ";cin>>pinned;
+                buffer.newPage(pageId, funcion, pinned);
+                break;
+            }
+            case 2: {
+                int pageId; char funcion; bool pinned;
+                cout << "\n-----  Pin page  ---------\n";
+                cout << "Ingrese el ID de la pagina a fijar: ";
+                cin >> pageId;
+                cout << "R/W?     ";cin>>funcion;
+                cout << "PINNED?  ";cin>>pinned;
+                buffer.pinPage(pageId, funcion, pinned);
+                break;
+            }
+            case 3: {
+                cout << "\n-----  Unpin page  ---------\n";
+                int pageId;
+                cout << "Ingrese el ID de la pagina a liberar: ";
+                cin >> pageId;
+                buffer.unpinPage(pageId);
+                break;
+            }
+            case 4:{
+                cout << "\n-----  Get page  ---------\n";
+                int pageId; char funcion;  bool pinned;
+                cout << "Ingrese el ID de la pagina a conseguir: ";
+                cin >> pageId;
+                cout << "R/W?     ";cin>>funcion;
+                cout << "PINNED?  ";cin>>pinned;
+                buffer.getPage(pageId, funcion, pinned);
+                break;
+            }
+            case 5:{
+                cout << "\n-----  Modificar page  ---------\n";
+                int pageId;
+                cout << "Ingrese el ID de la pagina a modificar: ";
+                cin >> pageId;
+                buffer.pinPage(pageId, 'W', 0);
+                buffer.modificarPage(pageId);
+                break;
+            }
+            case 6: {
+                buffer.printBuffer();
+                break;
+            }
+            case 7: {
+                int pageId;
+                cout << "Ingrese el ID de la pagina/bloque a imprimir: ";
+                cin >> pageId;
+                imprimirArchivo(getdirPage(pageId));
+                imprimirArchivo(getdirBloque(pageId));
+                break;
+            }
+            case 8: {
+                cout << "Saliendo...\n";
+                break;
+            }
+            default: {
+                cout << "Opción no válida. Intente de nuevo.\n";
+            }
         }
     } while (choice != 8);
 

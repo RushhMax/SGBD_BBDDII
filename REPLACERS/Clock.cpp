@@ -18,6 +18,7 @@ struct frame_helper{
     deque<pair<char,int>> requerimientos;
 
     void actualizarDirtyBit() {
+        if(requerimientos.size() == 0) { dirtyBit = 0; return;}
         for(int i=requerimientos.size()-1; i>0; i--){
             if(requerimientos[i].second == 1){
                 requerimientos[i-1].second = 1;
@@ -51,14 +52,10 @@ class Clock {
         }    
         void unpin(int nFrame){
             if(Frames[nFrame].pinCount > 0) { Frames[nFrame].pinCount--;}
-            if(Frames[nFrame].requerimientos.size() == 0){
-                Frames[nFrame].dirtyBit = 0;
-            }else {
+            if(Frames[nFrame].requerimientos.size() > 0){
                 Frames[nFrame].requerimientos.pop_front();
-                if(Frames[nFrame].requerimientos.size() == 0)   Frames[nFrame].dirtyBit = 0;
-                else Frames[nFrame].actualizarDirtyBit();
-                Frames[nFrame].actualizarDirtyBit();
-            }
+            } 
+            Frames[nFrame].actualizarDirtyBit();
         }
 
         void newPage(int nFrame, char func, bool pinned){ // buscar si ya existe
@@ -99,7 +96,7 @@ class Clock {
         }
 
         void printClock(){
-            cout<<" CLOCK >  \n";
+            cout << "_________ MY CLOCK __________________\n";
             int clockCont = clock_hand; // 4 4           
             do{
                 std::cout<<" Clock Hand : "<<clock_hand<<", Ref_bit : "<<Frames[clock_hand].refBit <<", dirty_bit: "<<Frames[clock_hand].dirtyBit<<", pin_count : "<<Frames[clock_hand].pinCount<<", pinned: "<<Frames[clock_hand].pinned<<endl;

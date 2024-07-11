@@ -12,6 +12,7 @@ struct page_helper{
     deque<pair<char,int>> requerimientos;
     
     void actualizarDirtyBit() {
+        if(requerimientos.size() == 0) { dirtyBit = 0; return;}
         for(int i=requerimientos.size()-1; i>0; i--){
             if(requerimientos[i].second == 1){
                 requerimientos[i-1].second = 1;
@@ -46,14 +47,10 @@ class LRU {
             for(int i=0; i<Pages.size();i++) {
                 if(ID_Page == Pages[i].idPage){             // si pagina esta 
                     if(Pages[i].pinCount > 0) Pages[i].pinCount--; 
-                    if(Pages[i].requerimientos.size() == 0){
-                        Pages[i].dirtyBit = 0;
-                    }else{
+                    if(Pages[i].requerimientos.size() > 0){
                         Pages[i].requerimientos.pop_front();
-                        if(Pages[i].requerimientos.size() == 0) Pages[i].dirtyBit = 0;
-                        else Pages[i].actualizarDirtyBit();
-                        Pages[i].actualizarDirtyBit();
-                    }
+                    } 
+                    Pages[i].actualizarDirtyBit();
                 }
             }
         }
@@ -83,6 +80,7 @@ class LRU {
             return -1;
         }
         void printLRU(){
+            cout << "________ MY LRU _________________\n";
             cout<<"\n LRU >   \n";
             for(int i=0; i<Pages.size(); i++){
                 cout<<" PAGE : "<<Pages[i].idPage<<", pin_count : "<<Pages[i].pinCount<<", dirty bit : "<<Pages[i].dirtyBit<<", pinned : "<<Pages[i].pinned<<endl;

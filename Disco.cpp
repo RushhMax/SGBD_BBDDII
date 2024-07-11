@@ -18,15 +18,15 @@ class Disco{
         int nroPistas;
         int nroSectores;
         long long int capacidadS;
-        int nroBloques; // POSIBLE OTRA CLASE
-        long long int capacBloque; // POSIBLE OTRA CLASE
+        int nroBloques; 
+        long long int capacBloque; 
         std::string diccionario = "diccionario.txt";
         std::string directorioBloques = "dirBloques.txt";
 
     public:
         // CONSTRUCTORES
-        Disco(); // deafult
-        Disco(int _platos, int _pistas, int _sectores, long long int _capacSector, int _capacBloque);
+        //Disco(); // deafult
+        Disco(int _platos = 4, int _pistas = 8, int _sectores = 20, long long int _capacSector = 500, int _capacidadBloque = 2000);
         void crearEstructura();
         void crearBloques(); // FUERA DE CLASE
         ~Disco(){ };
@@ -37,25 +37,9 @@ class Disco{
         void printDisco();
 };
 
-// CONSTRUCTOR DISCO DEFAULT 
-Disco::Disco(){
-    _mkdir("DISCO");
-    this->nombre = "DISCO";
-    this->nroPlatos = 4;
-    this->nroPistas = 8;  
-    this->nroSectores = 20;
-    this->capacidadS = 500;
-    this->capacidadD = capacidadS * nroSectores * nroPistas * nroPlatos * 2;
-    this->capaclibre = capacidadD; 
-    this->capacBloque = 2000;
-    this->nroBloques = this->capacidadD / this->capacBloque;
-
-    crearEstructura();
-    crearBloques();
-}
-
 // CONSTRUCTOR DISCO POR PARAMETROS 
 Disco::Disco(int _platos, int _pistas, int _sectores, long long int _capacSector, int _capacidadBloque){
+    _mkdir("DISCO");
     this->nombre = "DISCO";
     this->nroPlatos = _platos;
     this->nroPistas = _pistas;  
@@ -103,17 +87,16 @@ void Disco::crearBloques(){
 
     int nPlato = 1, nS = 1 , nPista = 1, nSector = 1; 
     for(int i=0; i<nroBloques; i++){
-        // {espacioLibre}#BLOQUE#1#{capacidadBloque}#SECTORES
+        // {espacioLibre}#tipoDeBloque#BLOQUE#1#{capacidadBloque}#RELACION
         _dirBloques<<capacBloque<<"#2#BLOQUE#"<<i+1<<"#"<<capacBloque<<"##_";
         std::string newDir = "DISCO/BLOQUES/Bloque" + std::to_string(i+1) + ".txt";
-        std::ofstream nB(newDir);
-        nB<<capacBloque<<"#2#BLOQUE#"<<i+1<<"#"<<capacBloque<<"##_"; // cabecera de bloque en bloque
+        std::ofstream nuevoBloque(newDir);
+        nuevoBloque<<capacBloque<<"#2#BLOQUE#"<<i+1<<"#"<<capacBloque<<"##_"; // cabecera de bloque en bloque
         
         // SECTORES 
-        for(int j=0; j<nroSectoresBLOQUE; j++){ //deben copiarse solo nroSECTORESBLOQUE 
+        for(int j=0; j<nroSectoresBLOQUE; j++){ 
             _dirBloques<<capacidadS<<"#"<<nPlato<<"/"<<nS<<"/"<<nPista<<"/"<<nSector<<"##_";
             //nB<<capacidadS<<"#"<<nPlato<<"/"<<nS<<"/"<<nPista<<"/"<<nSector<<"##_";
-            // FUNCION QUE CONTROLE CRECIEMIENTO DE VARIABLES 
             nS++;
             if(nS % 2 == 1 && nS != 1) {nS = 1; nPlato++;}
             if(nPlato % nroPlatos == 1 && nPlato != 1) {nPlato = 1; nSector++; }
@@ -121,12 +104,12 @@ void Disco::crearBloques(){
             if(nPista % this->nroPistas == 1 && nPista != 1) { nPista = 1; }
         }
         _dirBloques<<std::endl;
-        nB<<std::endl;
-        nB.close();
+        nuevoBloque<<std::endl;
+        nuevoBloque.close();
     }_dirBloques.close(); 
 }
 
-// IMPORTAR TABLA MANUAL o AUTOMATICO
+// IMPORTAR TABLA MANUAL o AUTOMATICO // asignar numeros de bloque
 void Disco::adicRelacion(std::string _archivo){
     std::ofstream _diccionario(diccionario, std::ios::app); // abriendo archivo diccionario
     std::cout<<"\n > Adicionando tabla desde archivo "<<_archivo<<"\n";
@@ -134,11 +117,14 @@ void Disco::adicRelacion(std::string _archivo){
     std::string linea = "", nombre = ""; 
 
     char delimi = ';';
-    //std::cout<<" DELIMITADOR ? ";std::std::cin>>delimi; 
+    
+    // NRO DE BLOQUES A RELACIO
+    //int nBloques;
+    //cout<<" > Cuantos bloques desea asignar a esta relacion";cin>>nBloques;
     
     _diccionario << _archivo.substr(0, _archivo.length() - 4);
     int opc;
-    std::cout<<"MANUAL(0) o AUTOMATICO(1)> "; std::cin>>opc;
+    std::cout<<" > MANUAL(0) o AUTOMATICO(1)> "; std::cin>>opc;
     if(opc == 0){
         int longMax;
         std::getline(archivo, linea);
@@ -212,6 +198,15 @@ void Disco::guardarBloqueSector(int nBloque){
     int nSector = 0, capacidadSectori = capacidadS;
     if(!Bloque.is_open()) std::cout<<" ERROR ARCHIVO ! ";
     std::getline(Bloque, R);
+    stringstream cabecera(R);
+    std::getline(cabecera, R, '#');
+    std::getline(cabecera, R, '#');
+    if(stoi(R)== 0){ 
+        cout<<"\n Bloque de longitud variable \n";
+        std::getline(Bloque, R); 
+    }
+    cout<<"\n Bloque de longitud \n";
+
     std::getline(Bloque, R);
     //std::cout<<R;
     int capacB = 2000 - R.size();
@@ -262,29 +257,17 @@ void MenuDisco(Disco* &Disco1){
     int n, R; std::string relacion;
     std::string nd;
 
-    /*int platos, pistas, sectores, bloques, tamSector, tamBloque;
-    cout << " > Crear DISCO " << endl;
-    cout << " DEFAULT (0) o MANUAL (1) > ";std::cin>>opcion;
-    if(opcion == 0) {  Disco1 = new Disco(); }
-    else if(opcion == 1) {
-        
-        std::cout<<" Cantidad de platos> ";std::cin>>platos;
-        std::cout<<" Cantidad de pistas> ";std::cin>>pistas;
-        std::cout<<" Cantidad de Sectores> ";std::cin>>sectores;
-        std::cout<<" Capacidad de sector> ";std::cin>>tamSector;
-        std::cout<<" Capacidad de bloque> ";std::cin>>tamBloque;
-        Disco1 = new Disco(platos, pistas, sectores, tamSector, tamBloque);
-    }
-    std::cout<<" DISCO  CREADO >>\n";
-    Disco1->printDisco();*/
     do {
         // Presentación del menú
-        cout << "=== Menu DISCO ===" << endl;
+        cout << "__________________________________________________\n";
+        cout << "\n----- MENU -----\n";
         cout << "1. Adicionar relacion desde archivo " << endl;
         cout << "2. Imprimir Disco "<< endl;
         cout << "3. Consultar Bloque "<< endl;
-        cout << "4. Salir del Menu ..."<< endl;
-        cout << "Ingrese su opcion: ";
+        cout << "4. Guardar Bloque a sectores "<< endl;
+        cout << "5. Salir del Menu ..."<< endl;
+        cout << "__________________________________________________\n\n";
+        cout << "Elija una opcion: ";
         
         // Capturar la opción del usuario
         std::cin >> opcion;
@@ -303,10 +286,14 @@ void MenuDisco(Disco* &Disco1){
                 consultarBloque(n);
                 break;
             case 4: 
+                std::cout<<" Que bloque quiere consultar? > ";std::cin>>n;
+                Disco1->guardarBloqueSector(n);
+                break;            
+            case 5: 
                 std::cout<<" SALIENDO DEL MENU //";
                 break;
             default:
                 cout << "Opcion invalida. Por favor, seleccione una opción valida." << endl;
         }
-    } while(opcion != 4);
+    } while(opcion != 5);
 }
