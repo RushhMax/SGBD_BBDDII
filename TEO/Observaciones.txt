@@ -7,14 +7,12 @@
 ----- BUFFER  --------------------------------------->
 -- > HEAP FILE
 -- > MODIFICAR 
--- > ELIMINAR
-    Actualizar nueva capacidad LIBRE
-    RLV Actualizar SLOTS
 
 ----- LRU --------------------------------------->
 
 ----- CLOCK  --------------------------------------->
 
+----- B+TREE  --------------------------------------->
 
 
 REGISTROS

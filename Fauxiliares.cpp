@@ -70,7 +70,6 @@ string getdirPage(int _nPage){
     std::string dir = "BUFFERPOOL/Page" + to_string(_nPage) + ".txt";
     return dir;
 }
-
 // DEVUELVE LA CAPACIDAD LIBRE DE LA PAGINA
 int getcapacLibrePagina(int idPage){
     std::ifstream pagina(getdirPage(idPage));
@@ -98,7 +97,6 @@ int getTipoPagina(int idPage){
     pagina.close();
     return stoi(tipo);
 }
-
 // FUNCION DEVUELVE NRO DE RELACION (2/2)
 int NroRelacion(std::string _relacion){
     std::ifstream _diccionario("diccionario.txt");
@@ -286,7 +284,6 @@ void adicionarRLFArchivo(std::string _registro, string _archivo){
     archiv<<_registro;
     archiv.close();
 }   
-
 ////////////////////////// RLV //////////////////////////////7
 // Funcion para crear un registro de longitud variable
 std::string crearRLV(std::string _registro, std::string _relacion){
@@ -316,7 +313,7 @@ std::string crearRLV(std::string _registro, std::string _relacion){
     RN = mapa + RN; // UNIMOS nuestro mapa con Registro
     return RN;
 }
-void editarSLOTS(int idPage, int slot){
+void agregarSLOTS(int idPage, int slot){
     std::fstream archiv(getdirPage(idPage), std::ios::in);
     string lineaAux = "";
     std::ostringstream nuevo_contenido;
@@ -340,6 +337,38 @@ void editarSLOTS(int idPage, int slot){
     output<<nuevo_contenido.str();
     output.close();
 }
+void eliminarSLOTS(int _idPage, vector<int> _slots){
+    std::fstream archiv(getdirPage(_idPage), std::ios::in);
+    string lineaAux = "";
+    std::ostringstream nuevo_contenido;
+    getline(archiv, lineaAux); // HEADER
+    nuevo_contenido<<lineaAux<<endl;
+
+    getline(archiv, lineaAux); // SLOTS
+    stringstream slots(lineaAux);
+    string nuevaLinea = "";
+    int i = 0; // 8|7|5|6|_|
+    while (getline(slots, lineaAux, '|')){
+        if(lineaAux == "_") break;
+        cout<<" stoi(lineaAux) == _slots[i] "<<stoi(lineaAux)<<" == "<<_slots[i] <<endl;
+        if(stoi(lineaAux) == _slots[i] ) { 
+            i++;
+            if(i == _slots.size()) break;
+        } 
+        else { nuevaLinea += lineaAux + "|"; }
+    }
+    nuevo_contenido<<nuevaLinea<<endl;
+
+    getline(archiv, lineaAux); // REGISTROS
+    nuevo_contenido<<lineaAux;
+    archiv.close();
+    //cout<<"\n ------------------\n" ;
+    //cout<<nuevo_contenido.str();
+    //cout<<"\n ------------------\n" ;
+    std::ofstream output(getdirPage(_idPage), std::ios::trunc);
+    output<<nuevo_contenido.str();
+    output.close();
+}
 ////////////////////////// PAGINA //////////////////////////////7
 // FUNCION PARA ADICIONAR UN REGISTRO EN UNA TABLA ESPECIFICA
 bool adicionarRegistroPage(int idPage, std::string _registro, std::string _relacion, bool tipoR){
@@ -360,7 +389,7 @@ bool adicionarRegistroPage(int idPage, std::string _registro, std::string _relac
             adicionarRLFArchivo("_|\n", getdirPage(idPage));
         }
         //if(tipoPage == 0) 
-        editarSLOTS(idPage, R.size());
+        agregarSLOTS(idPage, R.size());
         adicionarRLFArchivo(R, getdirPage(idPage));
         editarCabeceras(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(idPage));
         
@@ -370,15 +399,7 @@ bool adicionarRegistroPage(int idPage, std::string _registro, std::string _relac
     }
     return false;
 }
-bool cumpleCondicion(string _registro, string _condicion, string _relacion, bool _tipoR){
-    // DESGLOSAMOS nuestra condicion
-    std::stringstream cond(_condicion); 
-    std::vector<std::string> condicion; string token;
-    getline(cond, token, ' ' ); condicion.push_back(token);
-    getline(cond, token, ' ' ); condicion.push_back(token);
-    getline(cond, token); condicion.push_back(token);
-
-    int nroAtributo = GetnroAtributo(condicion[0], _tipoR, _relacion);
+vector<string> getVectorRegistro(string _registro, string _relacion, bool _tipoR){
     vector<string> arrayRegistro; // Nuestro registro en un vector de atributos
 
     vector<pair<string,int>> longitudes = longMaxEsquema(_relacion);
@@ -412,7 +433,20 @@ bool cumpleCondicion(string _registro, string _condicion, string _relacion, bool
             arrayRegistro.push_back(atributo);
         }
     }
-    cout<<"->"<<condicion[0]<<" "<<nroAtributo<<"-"<<arrayRegistro[nroAtributo-1];
+    return arrayRegistro;
+}
+bool cumpleCondicion(string _registro, string _condicion, string _relacion, bool _tipoR){
+    // DESGLOSAMOS nuestra condicion
+    std::stringstream cond(_condicion); 
+    std::vector<std::string> condicion; string token;
+    getline(cond, token, ' ' ); condicion.push_back(token);
+    getline(cond, token, ' ' ); condicion.push_back(token);
+    getline(cond, token); condicion.push_back(token);
+
+    int nroAtributo = GetnroAtributo(condicion[0], _tipoR, _relacion);
+    vector<string> arrayRegistro = getVectorRegistro(_registro, _relacion, _tipoR); // Nuestro registro en un vector de atributos
+
+    //cout<<"->"<<condicion[0]<<" "<<nroAtributo<<"-"<<arrayRegistro[nroAtributo-1];
     if(condicion[1] == "="){ if(arrayRegistro[nroAtributo-1] == condicion[2] ) return true;}
     //else if(condicion[1] == ">="){ if(r >= condicion[2] ) critCUM = true;}
     //else if(condicion[1] == "<="){ if(r <= condicion[2] ) critCUM = true;}
@@ -423,7 +457,7 @@ bool cumpleCondicion(string _registro, string _condicion, string _relacion, bool
 }
 // FUNCION PARA ELIMINAR UN REGISTRO DE LA PAGINA
 void eliminarRegistroPage(int _idPage,vector<pair<int,int>> posiciones,bool _tipoR){
-    cout<<"\n! ELIMINADNO !\n";
+    //cout<<"\n! ELIMINADNO !\n";
     fstream pagina(getdirPage(_idPage), std::ios::in);
     if (!pagina) { std::cerr << "\n\n Page no se encuentra en el buffer \n"<< std::endl; return;} 
     string lineaAux = "";
@@ -450,11 +484,39 @@ void eliminarRegistroPage(int _idPage,vector<pair<int,int>> posiciones,bool _tip
     output<<nuevo_contenido.str();
     output.close();
 }
+// FUNCION PARA MODFICAR UN REGISTRO DE LA PAGINA
+void modificarRegistroPage(int _idPage, string _relacion,vector<pair<int,int>> _posiciones, string _atributo, bool _tipoR){
+    fstream pagina(getdirPage(_idPage), std::ios::in);
+    if (!pagina) { std::cerr << "\n\n Page no se encuentra en el buffer \n"<< std::endl; return;} 
+    string lineaAux = "";
+    std::ostringstream nuevo_contenido;
+    getline(pagina, lineaAux); // HEADER
+    nuevo_contenido<<lineaAux<<endl;
+    getline(pagina, lineaAux); // SLOTS
+    nuevo_contenido<<lineaAux<<endl;
+    getline(pagina, lineaAux); // REGISTROS
+    // MODIFICAR AQUI
+    string nuevalinea = lineaAux.substr(0, _posiciones[0].first);
+    for(int i=0; i<_posiciones.size()-1; i++){
+        int startPos = _posiciones[i].first + _posiciones[i].second;
+        int endPos = _posiciones[i + 1].first;
+        nuevalinea += lineaAux.substr(startPos, endPos - startPos);
+    }
+    nuevalinea += lineaAux.substr(_posiciones[_posiciones.size()-1].first + _posiciones[_posiciones.size()-1].second);
 
-void modificarRegistroPage(int _idPage, string _relacion,int _posI, int _long, string _atributo, bool _tipoR){}
-
+    nuevo_contenido<<nuevalinea;
+    pagina.close();
+    // cout<<"\n ------------------\n" ;
+    // cout<<nuevo_contenido.str();
+    // cout<<"\n ------------------\n" ;
+    std::ofstream output(getdirPage(_idPage), std::ios::trunc);
+    output<<nuevo_contenido.str();
+    output.close();
+}
+// FUNCION PARA ELIMINAR/MODFICAR UN REGISTRO DE LA PAGINA 
+//ACCION = 0 ELIMINAR  || ACCION = 1 MODIFICAR
 void registroPage(int _idPage, string _relacion, string _condicion, string _atributo, bool _accion){
-    std::cout<<" EN FUNCION ELIMINAR !\n";
+    //std::cout<<" EN FUNCION ELIMINAR !\n";
     int tipoPage = getTipoPagina(_idPage);
     int espacioLibre = getcapacLibrePagina(_idPage);
 
@@ -465,6 +527,7 @@ void registroPage(int _idPage, string _relacion, string _condicion, string _atri
     getline(pagina, registros);// SLOTS
     string registro;
     vector<pair<int,int>> posiciones;
+    vector<int> vectorSlots;
     if(tipoPage == 1) {// FIJA
         vector<pair<string,int>> longitudes = longMaxEsquema(_relacion);
         int longitudFija = getCapacMaxRegistro(longitudes);
@@ -476,7 +539,6 @@ void registroPage(int _idPage, string _relacion, string _condicion, string _atri
             registro = registros.substr(pos,longitudFija);
             //cout<<" REGISTRO >"<<registro<<endl;
             if(cumpleCondicion(registro, _condicion, _relacion, tipoPage)){
-                //cout<<"\n Cumple con condicion "<<registro<<endl;
                 if(_accion == 0) espacioLibre += registro.size();
                 posiciones.push_back(make_pair(pos, longitudFija));
             }
@@ -497,11 +559,12 @@ void registroPage(int _idPage, string _relacion, string _condicion, string _atri
             registro = registros.substr(pos,post);
             //cout<<" REGISTRO >"<<registro<<endl;
             if(cumpleCondicion(registro, _condicion, _relacion, tipoPage)){
-                //cout<<"\n Cumple con condicion "<<registro<<endl;
+                vectorSlots.push_back(post);
                 if(_accion == 0) espacioLibre += registro.size();
                 posiciones.push_back(make_pair(pos, post));
             }
             pos += post;
+            
         }
     }else { return; }
 
@@ -509,10 +572,16 @@ void registroPage(int _idPage, string _relacion, string _condicion, string _atri
     if(_accion == 0) { 
         eliminarRegistroPage(_idPage,posiciones, tipoPage);
         editarCabeceras(1, 0,"|", to_string(espacioLibre) , tipoPage, getdirPage(_idPage));
-        if(tipoPage == 0) ;// VARIABLE
-            // EDITAR SLOTS ELIMINAR
+        if(tipoPage == 0) {// VARIABLE
+            eliminarSLOTS(_idPage, vectorSlots);// EDITAR SLOTS ELIMINAR
+        }
+    }// IF _ACCION ES 1 MODIFICAR
+    else if(_accion == 1){
+        //modificarRegistroPage(_idPage, _relacion, posiciones, _atributo, tipoPage);
+        // editarCabeceras(1, 0,"|", to_string(espacioLibre) , tipoPage, getdirPage(_idPage));
+        // if(tipoPage == 0) {// VARIABLE
+        //     eliminarSLOTS(_idPage, vectorSlots);// EDITAR SLOTS ELIMINAR
+        // }
     }
-    // IF _ACCION ES 1 MODIFICAR
-    //else if(_accion == 1)
     
 }

@@ -166,16 +166,15 @@ void Disco::adicRelacion(std::string _archivo){
     archivo.close();
 }
 
- // ESTA FUNCION!!  
+// ESTA FUNCION!!  
 void Disco::guardarBloqueSector(int nBloque){
     std::ifstream directorio(directorioBloques);
 
     string R = "";
     // RECOPILAR SECTORES
-    std::vector<string> sectores;// VECTOR DE SECTORES EN ESTE BLOQUE
+    std::vector<string> sectores;
     for(int i=0; i<nBloque; i++) { 
         std::getline(directorio,R);
-        //cout<<i<<"> "<<R<<endl;
     }
     stringstream cabeceraBloque(R);
     std::getline(cabeceraBloque, R, '_'); // CABECERA BLOQUE
@@ -193,9 +192,8 @@ void Disco::guardarBloqueSector(int nBloque){
     consultarBloque(nBloque);
 
     for(int i=0; i<sectores.size(); i++){
-        std::ofstream sector( getdirSector(sectores[i]), std::ios::out); // Abrir para reescribir
+        std::ofstream sector( getdirSector(sectores[i])); // Abrir para reescribir
         sector.close();
-        //std::cout<<" SECTOR >"<<getdirSector()<<endl;
     }
 
     ifstream Bloque(getdirBloque(nBloque));
@@ -212,12 +210,12 @@ void Disco::guardarBloqueSector(int nBloque){
     std::getline(Bloque, R);
     int capacB = 2000 - R.size();
     while(R.size() > 0){
-        std::cout<<"\nR.SIZE "<<R.size()<<" capacB <<"<<capacB<<"\n";
+        //std::cout<<"\nR.SIZE "<<R.size()<<" capacB <<"<<capacB<<"\n";
 
         if(R.size() <= capacidadSectori){ // 1/1/1/1
             adicionarRLFArchivo(R, getdirSector(sectores[nSector]));
             capacidadSectori = capacidadSectori - R.size();
-            std::cout<<"\nCAPCA. SECTOr>"<<capacidadSectori<<"\n";
+            //std::cout<<"\nCAPCA. SECTOr>"<<capacidadSectori<<"\n";
             editarCabeceras(nBloque, nSector+1, "|" ,to_string(capacidadSectori),2,directorioBloques);
             R = "";
         }else{
