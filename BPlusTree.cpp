@@ -81,10 +81,14 @@ class BPlusTree {
     Node<T> *root;
     string indice;
     int maxCapacity;
+    int minCapacity;
+    int depth;
 
     BPlusTree(int _maxCapacity = 4) {
       root = new Node<T>(nullptr, true, nullptr, nullptr);
       maxCapacity = _maxCapacity;
+      minCapacity = maxCapacity / 2;
+      depth = 0;
     }
 
     Node<T> *findLeaf(T key) {
@@ -92,6 +96,8 @@ class BPlusTree {
       while (!node->isLeaf) node = node->getChild(key);
       return node;
     }
+
+    int get(int key) { return findLeaf(key)->get(key); }
 
     void set(T key) {
       Node<T> *leaf = findLeaf(key);
@@ -108,6 +114,7 @@ class BPlusTree {
       
       if (parent == nullptr) {
         left->parent = right->parent = root = new Node<T>(nullptr, false, nullptr, nullptr);
+        depth += 1;
         root->keys = {key};
         root->children = {left, right};
         return;
@@ -115,6 +122,194 @@ class BPlusTree {
       parent->setChild(key, {left, right});
       if (parent->keys.size() > maxCapacity) insert(parent->splitInternal());
     }
+
+    void removeFromLeaf(int key, Node<T> *node) {
+        int index = node->indexOfKey(key);
+        if (index == -1) {
+            cout << "Key " << key << " not found! Exiting ..." << endl;
+            exit(0);
+        }
+        node->keys.erase(node->keys.begin() + index);
+        node->values.erase(node->values.begin() + index);
+        if (node->parent) {
+            int indexInParent = node->parent->indexOfChild(key);
+            if (indexInParent) node->parent->keys[indexInParent - 1] = node->keys.front();
+        }
+    }
+
+    void removeFromInternal(int key, Node<T> *node) {
+        int index = node->indexOfKey(key);
+        if (index != -1) {
+            Node<T> *leftMostLeaf = node->children[index + 1];
+            while (!leftMostLeaf->isLeaf) leftMostLeaf = leftMostLeaf->children.front();
+            node->keys[index] = leftMostLeaf->keys.front();
+        }
+    }
+
+    void borrowKeyFromRightLeaf(Node<T> *node, Node<T> *next) {
+        node->keys.push_back(next->keys.front());
+        next->keys.erase(next->keys.begin());
+        node->values.push_back(next->values.front());
+        next->values.erase(next->values.begin());
+        for (int i = 0; i < node->parent->children.size(); i++) {
+            if (node->parent->children[i] == next) {
+                node->parent->keys[i - 1] = next->keys.front();
+                break;
+            }
+        }
+    }
+
+    void borrowKeyFromLeftLeaf(Node<T> *node, Node<T> *prev) {
+        node->keys.insert(node->keys.begin(), prev->keys.back());
+        prev->keys.erase(prev->keys.end() - 1);
+        node->values.insert(node->values.begin(), prev->values.back());
+        prev->values.erase(prev->values.end() - 1);
+        for (int i = 0; i < node->parent->children.size(); i++) {
+            if (node->parent->children[i] == node) {
+                node->parent->keys[i - 1] = node->keys.front();
+                break;
+            }
+        }
+    }
+
+    void mergeNodeWithRightLeaf(Node<T> *node, Node<T> *next) {
+        node->keys.insert(node->keys.end(), next->keys.begin(), next->keys.end());
+        node->values.insert(node->values.end(), next->values.begin(), next->values.end());
+        node->next = next->next;
+        if (node->next) node->next->prev = node;
+        for (int i = 0; i < next->parent->children.size(); i++) {
+            if (node->parent->children[i] == next) {
+                node->parent->keys.erase(node->parent->keys.begin() + i - 1);
+                node->parent->children.erase(node->parent->children.begin() + i);
+                break;
+            }
+        }
+    }
+
+    void mergeNodeWithLeftLeaf(Node<T> *node, Node<T> *prev) {
+        prev->keys.insert(prev->keys.end(), node->keys.begin(), node->keys.end());
+        prev->values.insert(prev->values.end(), node->values.begin(), node->values.end());
+        prev->next = node->next;
+        if (prev->next) prev->next->prev = prev;
+        for (int i = 0; i < node->parent->children.size(); i++) {
+            if (node->parent->children[i] == node) {
+                node->parent->keys.erase(node->parent->keys.begin() + i - 1);
+                node->parent->children.erase(node->parent->children.begin() + i);
+                break;
+            }
+        }
+    }
+
+    void borrowKeyFromRightInternal(int myPositionInParent, Node<T> *node, Node<T> *next) {
+        node->keys.insert(node->keys.end(), node->parent->keys[myPositionInParent]);
+        node->parent->keys[myPositionInParent] = next->keys.front();
+        next->keys.erase(next->keys.begin());
+        node->children.insert(node->children.end(), next->children.front());
+        next->children.erase(next->children.begin());
+        node->children.back()->parent = node;
+    }
+
+    void borrowKeyFromLeftInternal(int myPositionInParent, Node<T> *node, Node<T> *prev) {
+        node->keys.insert(node->keys.begin(), node->parent->keys[myPositionInParent - 1]);
+        node->parent->keys[myPositionInParent - 1] = prev->keys.back();
+        prev->keys.erase(prev->keys.end() - 1);
+        node->children.insert(node->children.begin(), prev->children.back());
+        prev->children.erase(prev->children.end() - 1);
+        node->children.front()->parent = node;
+    }
+
+    void mergeNodeWithRightInternal(int myPositionInParent, Node<T> *node, Node<T> *next) {
+        node->keys.insert(node->keys.end(), node->parent->keys[myPositionInParent]);
+        node->parent->keys.erase(node->parent->keys.begin() + myPositionInParent);
+        node->parent->children.erase(node->parent->children.begin() + myPositionInParent + 1);
+        node->keys.insert(node->keys.end(), next->keys.begin(), next->keys.end());
+        node->children.insert(node->children.end(), next->children.begin(), next->children.end());
+        for (Node<T> *child : node->children) {
+            child->parent = node;
+        }
+    }
+    void mergeNodeWithLeftInternal(int myPositionInParent, Node<T> *node, Node<T> *prev) {
+        prev->keys.insert(prev->keys.end(), node->parent->keys[myPositionInParent - 1]);
+        node->parent->keys.erase(node->parent->keys.begin() + myPositionInParent - 1);
+        node->parent->children.erase(node->parent->children.begin() + myPositionInParent);
+        prev->keys.insert(prev->keys.end(), node->keys.begin(), node->keys.end());
+        prev->children.insert(prev->children.end(), node->children.begin(), node->children.end());
+        for (Node<T> *child : prev->children) {
+            child->parent = prev;
+        }
+    }
+
+    void remove(int key, Node<T> *node = nullptr) {
+        if (node == nullptr) {
+            node = findLeaf(key);
+        }
+        if (node->isLeaf) {
+            removeFromLeaf(key, node);
+        } else {
+            removeFromInternal(key, node);
+        }
+
+        if (node->keys.size() < minCapacity) {
+            if (node == root) {
+                if (root->keys.empty() && !root->children.empty()) {
+                    root = root->children[0];
+                    root->parent = nullptr;
+                    depth -= 1;
+                }
+                return;
+            } else if (node->isLeaf) {
+                Node<T> *next = node->next;
+                Node<T> *prev = node->prev;
+
+                if (next && next->parent == node->parent && next->keys.size() > minCapacity) {
+                    borrowKeyFromRightLeaf(node, next);
+                } else if (prev && prev->parent == node->parent && prev->keys.size() > minCapacity) {
+                    borrowKeyFromLeftLeaf(node, prev);
+                } else if (next && next->parent == node->parent && next->keys.size() <= minCapacity) {
+                    mergeNodeWithRightLeaf(node, next);
+                } else if (prev && prev->parent == node->parent && prev->keys.size() <= minCapacity) {
+                    mergeNodeWithLeftLeaf(node, prev);
+                }
+            } else {
+                int myPositionInParent = -1;
+                for (int i = 0; i < node->parent->children.size(); i++) {
+                    if (node->parent->children[i] == node) {
+                        myPositionInParent = i;
+                        break;
+                    }
+                }
+
+                Node<T> *next;
+                Node<T> *prev;
+
+                if (node->parent->children.size() > myPositionInParent + 1) {
+                    next = node->parent->children[myPositionInParent + 1];
+                } else {
+                    next = nullptr;
+                }
+
+                if (myPositionInParent) {
+                    prev = node->parent->children[myPositionInParent - 1];
+                } else {
+                    prev = nullptr;
+                }
+
+                if (next && next->parent == node->parent && next->keys.size() > minCapacity) {
+                    borrowKeyFromRightInternal(myPositionInParent, node, next);
+                } else if (prev && prev->parent == node->parent && prev->keys.size() > minCapacity) {
+                    borrowKeyFromLeftInternal(myPositionInParent, node, prev);
+                } else if (next && next->parent == node->parent && next->keys.size() <= minCapacity) {
+                    mergeNodeWithRightInternal(myPositionInParent, node, next);
+                } else if (prev && prev->parent == node->parent && prev->keys.size() <= minCapacity) {
+                    mergeNodeWithLeftInternal(myPositionInParent, node, prev);
+                }
+            }
+        }
+        if (node->parent) {
+            remove(key, node->parent);
+        }
+    }
+
 
     void print(Node<T> *node = nullptr, string _prefix = "", bool _last = true) {
       if (!node) node = root;
