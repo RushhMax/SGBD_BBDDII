@@ -69,26 +69,6 @@ struct Frame {
     } 
 };
 
-struct HeapFile{
-    vector<Page*> free;
-    vector<Page*> busy;
-    int nroRelacion;
-
-    HeapFile(int _nroRelacion = 0 ) : nroRelacion(_nroRelacion){}
-    
-    /*void actualizarDirtyBit() {
-        for(int i=requerimientos.size()-1; i>0; i--){
-            if(requerimientos[i].second == 1){
-                requerimientos[i-1].second = 1;
-            }
-        }
-        dirtyBit = requerimientos[0].second;
-    }
-    page_helper(int _idPage, int _dirtyBit, int _pinCount, int _pinned, deque<pair<char,int>> _Requerimientos) : idPage(_idPage), pinCount(_pinCount), dirtyBit(_dirtyBit), pinned(_pinned), requerimientos(_Requerimientos) {}
-
-*/
-};
-
 class Buffer {
     private:
         Disco* my_disk;
@@ -325,7 +305,6 @@ class Buffer {
                             return;
                         }
                     }
-                    
                 }
                 data.close();
             } else if (op == 2) {
@@ -333,14 +312,14 @@ class Buffer {
                 std::cout<<" Eliminando registro de la (relacion) donde (condicion) >\n";
                 std::cout<<" Relacion > ";cin>>relacion;
                 std::cout<<" Condicion > ";getline(std::cin >> std::ws, condicion);
-                eliminarRegistroPage(_idPage, relacion, condicion);
+                registroPage(_idPage, relacion, condicion, "", 0);
             } else if (op == 3) {
                 string relacion, condicion, atributo;
                 std::cout<<" Actualizando en la (relacion) el (atributo) del registro donde (condicion) >\n";
                 std::cout<<" Relacion > ";cin>>relacion;
                 std::cout<<" Atributo > ";getline(std::cin >> std::ws, atributo);
                 std::cout<<" Condicion > ";getline(std::cin >> std::ws, condicion);
-                modificarRegistroPage(_idPage, relacion, atributo, condicion);
+                registroPage(_idPage, relacion, condicion, atributo, 1);
             } else { cout << " Ingrese una opción valida! \n "; return; }
         }
 };

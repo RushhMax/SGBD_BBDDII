@@ -1,2 +1,2 @@
-Titanic#PassengerId#int#2#Survived#int#1#Pclass#int#1#Name#varchar#57#Sex#varchar#6#Age#int#2#SibSp#int#1#Parch#int#1#Ticket#varchar#20#Fare#float#7#Cabin#varchar#4#Embarked#varchar#1
+Titanic#PassengerId#int#3#Survived#int#2#Pclass#int#2#Name#varchar#58#Sex#varchar#7#Age#int#3#SibSp#int#2#Parch#int#2#Ticket#varchar#19#Fare#float#8#Cabin#varchar#5#Embarked#varchar#2
 Housing#price#int#8#area#int#5#bedrooms#int#1#bathrooms#int#1#stories#int#1#mainroad#boolean#3#guestroom#boolean#3#basement#boolean#3#hotwaterheating#boolean#3#airconditioning#boolean#3#parking#int#1#prefarea#boolean#3#furnishingstatus#varchar#142

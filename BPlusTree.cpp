@@ -79,6 +79,7 @@ template <typename T>
 class BPlusTree {
   public:
     Node<T> *root;
+    string indice;
     int maxCapacity;
 
     BPlusTree(int _maxCapacity = 4) {
@@ -134,41 +135,41 @@ class BPlusTree {
     }
 };
 
-int main() {
-  BPlusTree<string> tree(4);
-  vector<int> random_list = {10, 27, 29, 17, 25, 21, 15, 31, 13, 51, 20, 24, 48, 19, 60, 35, 66};
-  vector<string> random_list_strings = {"Hola", "Pepito", "Ayuda", "Suena", "One Piece", "Ciencia de la Computación"};  
+// int main() {
+//   BPlusTree<string> tree(4);
+//   vector<int> random_list = {10, 27, 29, 17, 25, 21, 15, 31, 13, 51, 20, 24, 48, 19, 60, 35, 66};
+//   vector<string> random_list_strings = {"Hola", "Pepito", "Ayuda", "Suena", "One Piece", "Ciencia de la Computación"};  
 
-  for (string i : random_list_strings) {
-    cout << endl
-         << "-------------" << endl;
-    cout << "Inserting " << i << endl
-         << endl;
-    cout << "-------------" << endl
-         << endl;
+//   for (string i : random_list_strings) {
+//     cout << endl
+//          << "-------------" << endl;
+//     cout << "Inserting " << i << endl
+//          << endl;
+//     cout << "-------------" << endl
+//          << endl;
 
-    tree.set(i);
-    tree.print();
-  }
+//     tree.set(i);
+//     tree.print();
+//   }
 
-  cout << endl
-       << "-------------------------" << endl;
-  cout << "All keys are inserted ..." << endl;
-  cout << "-------------------------" << endl
-       << endl;
+//   cout << endl
+//        << "-------------------------" << endl;
+//   cout << "All keys are inserted ..." << endl;
+//   cout << "-------------------------" << endl
+//        << endl;
 
-  tree.print(nullptr, "", false);
+//   tree.print(nullptr, "", false);
 
-  /*
-  > [25]
-     > [15, 20]
-     |  > [10, 13]
-     |  > [15, 17, 19]
-     |  > [20, 21, 24]
-     > [29, 48]
-        > [25, 27]
-        > [29, 31, 35]
-        > [48, 51, 60, 66]
-  */
-  return 0;
-}
+//   /*
+//   > [25]
+//      > [15, 20]
+//      |  > [10, 13]
+//      |  > [15, 17, 19]
+//      |  > [20, 21, 24]
+//      > [29, 48]
+//         > [25, 27]
+//         > [29, 31, 35]
+//         > [48, 51, 60, 66]
+//   */
+//   return 0;
+// }

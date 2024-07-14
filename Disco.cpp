@@ -6,6 +6,7 @@
 #include <filesystem>
 
 #include "Fauxiliares.cpp"
+#include "BPlusTree.cpp"
 
 using namespace std;
 
@@ -174,7 +175,7 @@ void Disco::guardarBloqueSector(int nBloque){
     std::vector<string> sectores;// VECTOR DE SECTORES EN ESTE BLOQUE
     for(int i=0; i<nBloque; i++) { 
         std::getline(directorio,R);
-        cout<<i<<"> "<<R<<endl;
+        //cout<<i<<"> "<<R<<endl;
     }
     stringstream cabeceraBloque(R);
     std::getline(cabeceraBloque, R, '_'); // CABECERA BLOQUE
@@ -188,10 +189,13 @@ void Disco::guardarBloqueSector(int nBloque){
     sectores.pop_back();
     directorio.close();
 
+    cout<<"\n\n GUARDANDO registros del bloque "<<nBloque<<"en las siguientes direcciones>>\n";
+    consultarBloque(nBloque);
+
     for(int i=0; i<sectores.size(); i++){
         std::ofstream sector( getdirSector(sectores[i]), std::ios::out); // Abrir para reescribir
         sector.close();
-        std::cout<<" SECTOR >"<<sectores[i]<<endl;
+        //std::cout<<" SECTOR >"<<getdirSector()<<endl;
     }
 
     ifstream Bloque(getdirBloque(nBloque));
@@ -202,13 +206,10 @@ void Disco::guardarBloqueSector(int nBloque){
     std::getline(cabecera, R, '#');
     std::getline(cabecera, R, '#');
     if(stoi(R)== 0){ 
-        cout<<"\n Bloque de longitud variable \n";
         std::getline(Bloque, R); 
     }
-    cout<<"\n Bloque de longitud \n";
 
     std::getline(Bloque, R);
-    //std::cout<<R;
     int capacB = 2000 - R.size();
     while(R.size() > 0){
         std::cout<<"\nR.SIZE "<<R.size()<<" capacB <<"<<capacB<<"\n";
@@ -233,7 +234,7 @@ void Disco::guardarBloqueSector(int nBloque){
     editarCabeceras(nBloque, 0, "|",to_string(capacB), 2,directorioBloques);
     while(nSector < sectores.size()-1){
         nSector++;
-        //editarCabeceras(nBloque, nSector+1, "|" , to_string(capacidadS), 2, directorioBloques);
+        editarCabeceras(nBloque, nSector+1, "|" , to_string(capacidadS), 2, directorioBloques);
     }
 }
 

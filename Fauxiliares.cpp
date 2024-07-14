@@ -194,27 +194,59 @@ int capacMaxRegistro(std::string _archivo){
     int max = 0;
     getline(archivo, regis);
     while(getline(archivo, regis)){
-        if(regis.size()> max){ /*std::cout<<">"<<regis<<">"<<regis.size()<<"-"<<max<<"\n"; */max = regis.size();}
+        if(regis.size()> max){ /*std::cout<<">"<<regis<<">"<<regis.size()<<"-"<<max<<"\n"; */
+            max = regis.size();
+        }
     }
     //std::cout<<" EL MAX ES "<<max<<std::endl;
     return max;
 }
-
+int getCapacMaxRegistro(vector<pair<string,int>> _longMaxEsquema){
+    int capac = 0;
+    for(int i=0; i<_longMaxEsquema.size();i++){
+        capac += _longMaxEsquema[i].second;
+    }
+    return capac;
+}
+int GetnroAtributo(string _atributo, int _tipoR, string _relacion){
+    stringstream esquema(getEsquema(_relacion));
+    
+    string atributo; 
+    int n_atributo = 1, n = 0;
+    getline(esquema, atributo, '#'); // SE PASA NOMBRE DE LA RELACION
+    while (getline(esquema, atributo, '#')){
+        n++;
+        //Tabla1# ID#int#4#Name#String#10#Edad#int#2
+        //std::cout<<" A> "<<atributo<<" = "<<condicion[0]<<"? "<<n_atributo<<"-"<<posRLF<<" \n";
+        if(atributo == _atributo){
+            break;
+        }
+        if(n % 3 == 0 ) { 
+            //std::cout<<" en A> "<<atributo<<endl;
+            n_atributo++;
+        }
+    }
+    return n_atributo;
+    
+}
 ////////////////////////// RLF //////////////////////////////7
-std::vector<int> longMaxEsquema(string _relacion) {
-    std::vector<int> longMax; 
+std::vector<pair<string,int>> longMaxEsquema(string _relacion) {
+    std::vector<pair<string,int>> longMax; 
     std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
     std::string linea = "";
     bool relacionEncontrada = false;
+    string tipoAtributo;
     while (std::getline(diccionario, linea) && !relacionEncontrada ){
         std::stringstream lin(linea); // de nuestro diccionario buscamos la tabla y el #4 y #7  #10 etc (vector) 
         std::getline(lin, linea, '#');
         if (linea == _relacion){ // if linea es igual a la relacion que estamos buscando
             int n=1; //Tabla1#ID#int#4#Name#String#10#Edad#int#2
             while(std::getline(lin, linea, '#')){
-                std::stringstream longAtr(linea);
-                //getline(longAtr, linea, '_');
-                if(n%3 == 0){ longMax.push_back(std::stoi(linea));}
+                if(n%2 == 0){ tipoAtributo = linea; }
+                if(n%3 == 0){ 
+                    longMax.push_back(make_pair(tipoAtributo,std::stoi(linea))); 
+                    n = 0;
+                }
                 n++;
             }
             relacionEncontrada = true;
@@ -226,7 +258,7 @@ std::vector<int> longMaxEsquema(string _relacion) {
 } 
 // Funcion para crear un registro de longitud fija de acuerdo a su relcion
 std::string crearRLF(std::string _registro, std::string _relacion){
-    std::vector<int> longMax = longMaxEsquema(_relacion);
+    std::vector<pair<string,int>> longMax = longMaxEsquema(_relacion);
     if(longMax.size() == 0)  {std::cout<<" RELACION NO ENCONTRADA! "; return "";}
 
     std::string _atributo = "";
@@ -236,10 +268,10 @@ std::string crearRLF(std::string _registro, std::string _relacion){
     std::stringstream str(_registro);
     while (std::getline(str, _atributo, ';')){ // leer registro por atributos ";" 
         registroN += _atributo;
-        if(_atributo.size() < longMax[it]) {// contamos la long del registro 
+        if(_atributo.size() < longMax[it].second) {// contamos la long del registro 
             // funcion para agregar espacios
-            if (longMax[it] > _atributo.size()) {
-                registroN.append(longMax[it] - _atributo.size(), ' ');
+            if (longMax[it].second > _atributo.size()) {
+                registroN.append(longMax[it].second - _atributo.size(), ' ');
             }
             //for(int i=0; i< longMax[it]-_atributo.size(); i++){ registroN += " "; }
         } // else{  for(int j=0; j<_atributo.size() - longMax[it] ;j++){ registroN.pop_back(); } }
@@ -265,21 +297,20 @@ std::string crearRLV(std::string _registro, std::string _relacion){
     int desplazamiento = 0;
     std::stringstream R(_registro); // return _registro
     while(getline(R, aux, ';')){ // Leemos registros separados por ;
-        for(int i=0; i<2; i++)getline(esquema, atributo, '#'); // nombre atributo
-        if(atributo == "varchar") { 
-            mapa += std::to_string(desplazamiento) + "|";
-            getline(esquema, atributo, '#'); 
-        }
-        else { 
+        for(int i=0; i<2; i++) getline(esquema, atributo, '#'); // nombre atributo
+        if(atributo != "varchar") { 
             getline(esquema, atributo, '#');  // tamaño
             if (stoi(atributo) > aux.size()) {
                 aux.append(stoi(atributo) - aux.size(), ' ');
             }
+            desplazamiento += aux.size();  
+        }else{
+            desplazamiento += aux.size();  
+            mapa += std::to_string(desplazamiento) + "|";
+            getline(esquema, atributo, '#'); 
         }
-        desplazamiento += aux.size();  
-        RN += aux; 
+        RN += aux;
     }
-    mapa += std::to_string(desplazamiento) + "|";
 
     mapa.push_back('#');
     RN = mapa + RN; // UNIMOS nuestro mapa con Registro
@@ -302,14 +333,13 @@ void editarSLOTS(int idPage, int slot){
     getline(archiv, lineaAux); // REGISTROS
     nuevo_contenido<<lineaAux;
     archiv.close();
-    cout<<"\n ------------------\n" ;
-    cout<<nuevo_contenido.str();
-    cout<<"\n ------------------\n" ;
+    //cout<<"\n ------------------\n" ;
+    //cout<<nuevo_contenido.str();
+    //cout<<"\n ------------------\n" ;
     std::ofstream output(getdirPage(idPage), std::ios::trunc);
     output<<nuevo_contenido.str();
     output.close();
 }
-
 ////////////////////////// PAGINA //////////////////////////////7
 // FUNCION PARA ADICIONAR UN REGISTRO EN UNA TABLA ESPECIFICA
 bool adicionarRegistroPage(int idPage, std::string _registro, std::string _relacion, bool tipoR){
@@ -329,6 +359,7 @@ bool adicionarRegistroPage(int idPage, std::string _registro, std::string _relac
             cout<<"\n REGISTRO EN PAGINA TIPO 2 ACTUALIZANDO!";
             adicionarRLFArchivo("_|\n", getdirPage(idPage));
         }
+        //if(tipoPage == 0) 
         editarSLOTS(idPage, R.size());
         adicionarRLFArchivo(R, getdirPage(idPage));
         editarCabeceras(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(idPage));
@@ -340,10 +371,6 @@ bool adicionarRegistroPage(int idPage, std::string _registro, std::string _relac
     return false;
 }
 bool cumpleCondicion(string _registro, string _condicion, string _relacion, bool _tipoR){
-    std::cout<<" EN FUUNCION CUMPLE ! con registro <<"<<_registro<<"> RL>"<<_tipoR<<"\n";
-    // if tipoR = 0 RLV
-    // if tipoR = 1 RLF
-    
     // DESGLOSAMOS nuestra condicion
     std::stringstream cond(_condicion); 
     std::vector<std::string> condicion; string token;
@@ -351,248 +378,141 @@ bool cumpleCondicion(string _registro, string _condicion, string _relacion, bool
     getline(cond, token, ' ' ); condicion.push_back(token);
     getline(cond, token); condicion.push_back(token);
 
-    string atributoCondicion;
-    
-    stringstream esquema(getEsquema(_relacion));
-    //std::cout<<" Esquema de la relacion "<<esquema<<endl;
-    string atributo; 
-    int n_atributo = 1, n = 0;
-    int posRLF = 0;  int longitudACTUAL;
-    getline(esquema, atributo, '#'); // SE PASA NOMBRE DE LA RELACION
-    while (getline(esquema, atributo, '#')){
-        n++;
-        //Tabla1# ID#int#4#Name#String#10#Edad#int#2
-        //std::cout<<" A> "<<atributo<<" = "<<condicion[0]<<"? "<<n_atributo<<"-"<<posRLF<<" \n";
-        if(atributo == condicion[0]){
-            if(_tipoR == 1){ // RLF
-                getline(esquema, atributo, '#');
-                getline(esquema, atributo, '#');
-                stringstream longA(atributo);
-                string longAtributo;
-                getline(longA, longAtributo, '_');
-                longitudACTUAL = stoi(longAtributo);
-            }
-            break;
-        }
-        if(n % 3 == 0 ) { 
-            //std::cout<<" en A> "<<atributo<<endl;
-            n_atributo++;
-            if(_tipoR == 1){// RLF
-                stringstream longA(atributo);
-                string longAtributo;
-                getline(longA, longAtributo, '_');
-                int longitud = stoi(longAtributo);
-                posRLF += longitud + 1;
-            }
-        }
-    }
+    int nroAtributo = GetnroAtributo(condicion[0], _tipoR, _relacion);
+    vector<string> arrayRegistro; // Nuestro registro en un vector de atributos
 
-    //std::cout<<" Posicion del tributo de RLF >"<<posRLF<<"> y nro Atributo "<<n_atributo<<endl;
-    //std::cout<<" REGISTRO "<<_registro<<">"<<_registro.substr(posRLF, longitudACTUAL)<<"\n";
-
-    if(_tipoR == 1){// RLF
-        atributoCondicion = _registro.substr(posRLF, longitudACTUAL);
-        size_t endpos = atributoCondicion.find_last_not_of(" \t\n\r\f\v");
-        if (std::string::npos != endpos) { atributoCondicion.erase(endpos + 1); }// Borra desde el final hasta el primer carácter que no es un espacio
+    vector<pair<string,int>> longitudes = longMaxEsquema(_relacion);
+    if(_tipoR){ // FIJA
+        for(int i=0; i<longitudes.size(); i++){
+            string atributo = _registro.substr(0, longitudes[i].second);
+            _registro = _registro.substr(longitudes[i].second);
+            atributo.erase(atributo.find_last_not_of(" \t\n\r\f\v") + 1);
+            //cout<<atributo<<"|"<<endl;
+            arrayRegistro.push_back(atributo);
+        }
     }else{
-        // 0|1|2|3|26|30|32|33|34|43|47|47#103Braund, Mr. Owen Harrismale2210A/5 211717.25S
-        string mapaBits, registroLV;
-        std::stringstream registro(_registro); 
-        getline(registro, mapaBits, '#');
-        stringstream mapa(mapaBits); string posRLV, posRLV2;
-        getline(registro, registroLV);
-        for(int i=0;i<n_atributo; i++){
-            getline(mapa, posRLV, '|');
+        // 30|34|50|58|59|59|#1  0 3 Braund, Mr. Owen Harrismale22 1 0 A/5 211717.25    S
+        stringstream RLV(_registro);
+        string valores, aux;
+        getline(RLV, valores, '#');
+        stringstream slots(valores);
+        getline(RLV, valores);
+        int conteoLong = 0;
+        for(int i=0; i<longitudes.size();i++){
+            int limite;
+            if(longitudes[i].first == "varchar"){
+                getline(slots, aux,'|');
+                limite = stoi(aux) - conteoLong;
+            }else{ limite = longitudes[i].second; }
+            conteoLong += limite;
+            string atributo = valores.substr(0, limite);
+            valores = valores.substr(limite);
+            atributo.erase(atributo.find_last_not_of(" \t\n\r\f\v") + 1);
+            // cout<<atributo<<"|"<<endl;
+            arrayRegistro.push_back(atributo);
         }
-        getline(mapa, posRLV2, '|');
-
-        longitudACTUAL = stoi(posRLV2) - stoi(posRLV);
-        atributoCondicion = registroLV.substr(stoi(posRLV), longitudACTUAL);
     }
-
-    std::cout<<" ATRIBUTO >"<<atributoCondicion<<">< condicion >"<<condicion[2]<<">\n";
-
-    if(condicion[1] == "="){ if(atributoCondicion == condicion[2] ) return true;}
+    cout<<"->"<<condicion[0]<<" "<<nroAtributo<<"-"<<arrayRegistro[nroAtributo-1];
+    if(condicion[1] == "="){ if(arrayRegistro[nroAtributo-1] == condicion[2] ) return true;}
     //else if(condicion[1] == ">="){ if(r >= condicion[2] ) critCUM = true;}
     //else if(condicion[1] == "<="){ if(r <= condicion[2] ) critCUM = true;}
     //else if(condicion[1] == "<"){ if(r < condicion[2] ) critCUM = true;}
     //else if(condicion[1] == ">"){ if(r >condicion[2] ) critCUM = true;}
-   
+
     return false;
 }
 // FUNCION PARA ELIMINAR UN REGISTRO DE LA PAGINA
-void eliminarRegistroPage(int _idPage, string _relacion, string _condicion){
-    std::cout<<" EN FUNCION ELIMINAR !\n";
-    fstream pagina("BUFFERPOOL/Page" + std::to_string(_idPage) + ".txt", std::ios::in | std::ios::out);
-    pagina.seekg(0);
-    if (!pagina) { std::cerr << "Error al abrir el archivo! "<< std::endl; return;}
-    
-    int nroRelac = NroRelacion(_relacion);
-    string registro = "";
-    int nroregistro = 1;
-    // CABECERA
-    getline(pagina, registro);
-    stringstream cabecera(registro);
-    string espacioPage; 
-    getline(cabecera, espacioPage, '#'); // CAPACIDAD
-    int espacioPageINT = stoi(espacioPage);
-
-    while(getline(pagina, registro)){ // ITERAR CADA REGISTRO 
-        std::cout<<" REGISTRO >"<< registro<<">\n" ;
-        nroregistro++;
-        stringstream reg(registro);
-        getline(reg, registro, '#');
-        if(stoi(registro) == nroRelac){ //SI ES DE LA RELACION
-            
-            getline(reg, registro, '#'); // NOS SALTAMOS SI ES DE RLF O RLV
-            int _tipoR = stoi(registro);
-
-            getline(reg, registro);
-            // SI CUMPLE CONDICION
-            if(cumpleCondicion(registro, _condicion, _relacion, _tipoR)){
-                std::cout<<"\n CUMPLE CONDICION! registro <<"<<registro.size()<<">  \n"; 
-                //eliminarNLineaPage(_idPage, nroregistro);
-                nroregistro--;
-                espacioPageINT += registro.size();
-                //std::cout<<" ESPACIO "<<espacioPageINT<<endl;
-                //editarCabeceras(1, 0, std::to_string(nroRelac) , std::to_string(espacioPageINT),  "BUFFERPOOL/Page" + std::to_string(_idPage) + ".txt");
-            }
-
-        }
-    }
-    pagina.close();
-}
-int GetnroAtributo(string _atributo, int _tipoR, string _relacion){
-    stringstream esquema(getEsquema(_relacion));
-    
-    string atributo; 
-    int n_atributo = 1, n = 0;
-    getline(esquema, atributo, '#'); // SE PASA NOMBRE DE LA RELACION
-    while (getline(esquema, atributo, '#')){
-        n++;
-        //Tabla1# ID#int#4#Name#String#10#Edad#int#2
-        //std::cout<<" A> "<<atributo<<" = "<<condicion[0]<<"? "<<n_atributo<<"-"<<posRLF<<" \n";
-        if(atributo == _atributo){
-            break;
-        }
-        if(n % 3 == 0 ) { 
-            //std::cout<<" en A> "<<atributo<<endl;
-            n_atributo++;
-        }
-    }
-    return n_atributo;
-    
-}
-void modificarNRegistroPage(int _idPage, int _nroRegistro, string _relacion, string _atributo, int _tipoR){
-    fstream _Page("BUFFERPOOL/Page" + std::to_string(_idPage) + ".txt", std::ios::binary | std::ios::in | std::ios::out);
-    
-    // DESGLOSAMOS nuestra condicion
-    std::stringstream atributostr(_atributo); 
-    std::vector<std::string> atributoV; string token;
-    getline(atributostr, token, ' ' ); atributoV.push_back(token);
-    getline(atributostr, token, ' ' ); atributoV.push_back(token);
-    getline(atributostr, token); atributoV.push_back(token);
-
-    //stringstream esquema(getEsquema(_relacion));
-    int n_atributo = GetnroAtributo(atributoV[0], _tipoR, _relacion);
-    std::cout<<" Atributo a cambiar > "<<n_atributo<<endl;
-    
-
-    string nuevoRegistro = "";
+void eliminarRegistroPage(int _idPage,vector<pair<int,int>> posiciones,bool _tipoR){
+    cout<<"\n! ELIMINADNO !\n";
+    fstream pagina(getdirPage(_idPage), std::ios::in);
+    if (!pagina) { std::cerr << "\n\n Page no se encuentra en el buffer \n"<< std::endl; return;} 
+    string lineaAux = "";
     std::ostringstream nuevo_contenido;
-    string lineaAUX;
-    int contLinea = 0;
-    while (getline(_Page, lineaAUX)) {
-        contLinea++;
-        lineaAUX.pop_back();
-        if (contLinea != _nroRegistro) {
-            nuevo_contenido << lineaAUX <<endl;
-        }else{
-            // LEER REGISTRO
-            
-            if(_tipoR == 1){ // FIJA
-                //stringstream registro(lineaAUX);
-
-                vector<int> longitudes = longMaxEsquema(_relacion);
-                for(int i=0; i<longitudes.size(); i++) std::cout<<" LONGITUDES "<<longitudes[i]<<endl;
-                int desplazamiento  = 4;
-                std::cout<<lineaAUX<<endl;
-                for(int i=0; i< longitudes.size(); i++){
-                    std::cout<<" i >"<<i+1<<"> Atributo a cambiar >"<<n_atributo<<endl;
-                    if (n_atributo == i+1) { 
-                        nuevoRegistro += atributoV[2] + ";";
-                        desplazamiento +=  longitudes[i]+1;
-
-                    } else {  //1#1#2  1 1 Cumings, Mrs. John Bradley (Florence Briggs Thayer)       female 38 1 0 PC 17599             71.2833 C85  C
-                        // REGISTROS VACIOS ATRIBUTOS
-                        string atributoSinEspacios = lineaAUX.substr(desplazamiento, longitudes[i]+1);
-                        std::cout<<"ATRIBUTO >"<<atributoSinEspacios<<endl;
-                        // eliminar espacios des = 
-                        size_t endpos = atributoSinEspacios.find_last_not_of(" \t\n\r\f\v");
-                        desplazamiento +=  longitudes[i]+1;
-                        if (std::string::npos != endpos) { atributoSinEspacios.erase(endpos + 1); }// Borra desde el final hasta el primer carácter que no es un espacio
-                        std::cout<<"ATRIBUTO SE >"<<atributoSinEspacios<<endl;
-                        nuevoRegistro += atributoSinEspacios + ";";
-                    }
-                    std::cout<<nuevoRegistro<<endl;
-                }
-                nuevoRegistro = crearRLF(nuevoRegistro, _relacion);
-                nuevoRegistro = lineaAUX.substr(0,4) + nuevoRegistro;
-            } 
-            else{ // VARIABLE
-                nuevoRegistro = crearRLV(nuevoRegistro, _relacion);
-            }
-
-            //std::cout<<" Nueva linea es "<<nuevalinea<<">\n";
-            
-            nuevo_contenido << nuevoRegistro << endl;
-            // MODIFICAR ESTA LINEA;
-        }
+    getline(pagina, lineaAux); // HEADER
+    nuevo_contenido<<lineaAux<<endl;
+    getline(pagina, lineaAux); // SLOTS
+    nuevo_contenido<<lineaAux<<endl;
+    getline(pagina, lineaAux); // REGISTROS
+    string nuevalinea = lineaAux.substr(0, posiciones[0].first);
+    for(int i=0; i<posiciones.size()-1; i++){
+        int startPos = posiciones[i].first + posiciones[i].second;
+        int endPos = posiciones[i + 1].first;
+        nuevalinea += lineaAux.substr(startPos, endPos - startPos);
     }
-    _Page.close(); 
-    _Page.open("BUFFERPOOL/Page" + std::to_string(_idPage) + ".txt", std::ios::out | std::ios::trunc);
-    _Page<<nuevo_contenido.str();
-    _Page.close();
-}
-void modificarRegistroPage(int _idPage, string _relacion, string _atributo, string _condicion){
-    std::cout<<" EN FUUNCION MODIFICAR !\n";
-    fstream pagina("BUFFERPOOL/Page" + std::to_string(_idPage) + ".txt", std::ios::in | std::ios::out);
-    pagina.seekg(0);
-    if (!pagina) { std::cerr << "Error al abrir el archivo! "<< std::endl; return;}
-    
-    int nroRelac = NroRelacion(_relacion);
-    string registro = "";
-    int nroregistro = 1;
-    // CABECERA
-    getline(pagina, registro);
-    stringstream cabecera(registro);
-    string espacioPage; 
-    getline(cabecera, espacioPage, '#'); // CAPACIDAD
-    int espacioPageINT = stoi(espacioPage);
+    nuevalinea += lineaAux.substr(posiciones[posiciones.size()-1].first + posiciones[posiciones.size()-1].second);
 
-    while(getline(pagina, registro)){ // ITERAR CADA REGISTRO 
-        std::cout<<" REGISTRO >"<< registro<<">\n" ;
-        nroregistro++;
-        stringstream reg(registro);
-        getline(reg, registro, '#');
-        if(stoi(registro) == nroRelac){ //SI ES DE LA RELACION
-            
-            getline(reg, registro, '#'); // NOS SALTAMOS SI ES DE RLF O RLV
-            int _tipoR = stoi(registro);
-
-            getline(reg, registro);
-            // SI CUMPLE CONDICION
-            if(cumpleCondicion(registro, _condicion, _relacion, _tipoR)){
-                std::cout<<"\n CUMPLE CONDICION! registro <<"<<registro.size()<<">  \n"; 
-                // EDITAR LINEA CON ATRIBUTO
-                
-                modificarNRegistroPage(_idPage, nroregistro,_relacion ,  _atributo, _tipoR);
-                //espacioPageINT += registro.size();
-                //std::cout<<" ESPACIO "<<espacioPageINT<<endl;
-                //editarCabeceras(1, 0, std::to_string(nroRelac) , std::to_string(espacioPageINT),  "BUFFERPOOL/Page" + std::to_string(_idPage) + ".txt");
-            }
-
-        }
-    }
+    nuevo_contenido<<nuevalinea;
     pagina.close();
+    // cout<<"\n ------------------\n" ;
+    // cout<<nuevo_contenido.str();
+    // cout<<"\n ------------------\n" ;
+    std::ofstream output(getdirPage(_idPage), std::ios::trunc);
+    output<<nuevo_contenido.str();
+    output.close();
+}
+
+void modificarRegistroPage(int _idPage, string _relacion,int _posI, int _long, string _atributo, bool _tipoR){}
+
+void registroPage(int _idPage, string _relacion, string _condicion, string _atributo, bool _accion){
+    std::cout<<" EN FUNCION ELIMINAR !\n";
+    int tipoPage = getTipoPagina(_idPage);
+    int espacioLibre = getcapacLibrePagina(_idPage);
+
+    fstream pagina(getdirPage(_idPage), std::ios::in | std::ios::out);
+    if (!pagina) { std::cerr << "\n\n Page no se encuentra en el buffer \n"<< std::endl; return;}
+    string registros = "";
+    getline(pagina, registros);// CABECERA
+    getline(pagina, registros);// SLOTS
+    string registro;
+    vector<pair<int,int>> posiciones;
+    if(tipoPage == 1) {// FIJA
+        vector<pair<string,int>> longitudes = longMaxEsquema(_relacion);
+        int longitudFija = getCapacMaxRegistro(longitudes);
+        getline(pagina, registros); // REGISTROS 
+        pagina.close();
+        int posfinal = registros.size();
+        int pos = 0;
+        while (pos < posfinal){
+            registro = registros.substr(pos,longitudFija);
+            //cout<<" REGISTRO >"<<registro<<endl;
+            if(cumpleCondicion(registro, _condicion, _relacion, tipoPage)){
+                //cout<<"\n Cumple con condicion "<<registro<<endl;
+                if(_accion == 0) espacioLibre += registro.size();
+                posiciones.push_back(make_pair(pos, longitudFija));
+            }
+            pos+=longitudFija;
+        }
+    }
+    else if(tipoPage == 0) {// VARIABLE
+        stringstream slots(registros);
+        getline(pagina, registros); // REGISTROS
+        pagina.close();
+        string aux;
+        int post;
+        int pos = 0;
+        while(getline(slots, aux, '|')){    
+            if(aux == "_") break;
+            post = stoi(aux);
+            if (pos + post > registros.size()) break;
+            registro = registros.substr(pos,post);
+            //cout<<" REGISTRO >"<<registro<<endl;
+            if(cumpleCondicion(registro, _condicion, _relacion, tipoPage)){
+                //cout<<"\n Cumple con condicion "<<registro<<endl;
+                if(_accion == 0) espacioLibre += registro.size();
+                posiciones.push_back(make_pair(pos, post));
+            }
+            pos += post;
+        }
+    }else { return; }
+
+    // IF _ACCION ES 0 ELIMINAR
+    if(_accion == 0) { 
+        eliminarRegistroPage(_idPage,posiciones, tipoPage);
+        editarCabeceras(1, 0,"|", to_string(espacioLibre) , tipoPage, getdirPage(_idPage));
+        if(tipoPage == 0) ;// VARIABLE
+            // EDITAR SLOTS ELIMINAR
+    }
+    // IF _ACCION ES 1 MODIFICAR
+    //else if(_accion == 1)
+    
 }

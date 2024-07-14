@@ -6,8 +6,10 @@
 
 ----- BUFFER  --------------------------------------->
 -- > HEAP FILE
--- > MODIFICAR
+-- > MODIFICAR 
 -- > ELIMINAR
+    Actualizar nueva capacidad LIBRE
+    RLV Actualizar SLOTS
 
 ----- LRU --------------------------------------->
 
