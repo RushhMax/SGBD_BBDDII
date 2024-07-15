@@ -1,8 +1,10 @@
 #include <iostream>
 #include <random>
 #include <utility>
+#include <fstream>
 #include <vector>
 #include <algorithm> // Necesario para std::shuffle
+#include <sstream> // para mis stringsteam
 
 using namespace std;
 
@@ -300,8 +302,8 @@ class BPlusTree {
         string output = _prefix + "> [";
         for (int i = 0; i < node->keys.size(); i++) {
             output += " [ " + to_string(node->keys[i]) + " ] ";
-            if (node->isLeaf) 
-                output += "[Ruta: (" + to_string(node->rutas[i].first) + ", " + to_string(node->rutas[i].second) + ")] ";
+            if (node->isLeaf) {}
+                // output += "[Ruta: (" + to_string(node->rutas[i].first) + ", " + to_string(node->rutas[i].second) + ")] ";
         }
         output += "]";
 
@@ -324,18 +326,52 @@ class BPlusTree {
 };
 
 // int main() {
-//   BPlusTree<int> tree(4, "relacion", "claveBusqueda");
+//   BPlusTree<int> tree(7, "", "");
+//   vector<int> random_list = {100,75,1,99,30,80,3};
 
-//   // Insertar claves con sus rutas
-//   tree.set(1, {1, 2});
-//   tree.set(2, {2, 3});
-//   tree.set(3, {3, 4});
-//   tree.set(4, {4, 5});
-//   tree.set(5, {5, 6});
+//   for (int i : random_list){
+//     cout << endl
+//           << "-------------" << endl;
+//     cout << "Inserting " << i << endl
+//           << endl;
+//       cout << "-------------" << endl
+//            << endl;
 
-//   // Imprimir el árbol
-//   tree.print();
-//   cout << endl;
+//       tree.set(i, make_pair (0,0));
+//       //tree.print();
+//     }
+
+    
+//     cout<<endl;
+//     int x;
+//     cout<<" INGRESAR >";cin>>x;
+//     do{
+//         tree.set(x, make_pair (0,0));
+//         cout<<" INGRESAR >";cin>>x;
+//     }while(x != -1);
+    
+
+//     cout << endl
+//          << "-------------------------" << endl;
+//     cout << "All keys are inserted ..." << endl;
+//     cout << "-------------------------" << endl
+//          << endl;
+
+//     tree.print(nullptr,"",false);
+
+
+  
+
+// //   // Insertar claves con sus rutas
+// //   tree.set(1, {1, 2});
+// //   tree.set(2, {2, 3});
+// //   tree.set(3, {3, 4});
+// //   tree.set(4, {4, 5});
+// //   tree.set(5, {5, 6});
+
+// //   // Imprimir el árbol
+// //   tree.print();
+// //   cout << endl;
 
 //   return 0;
 // }
