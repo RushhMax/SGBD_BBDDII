@@ -41,6 +41,26 @@ void consultarBloque(int _nroBloque){
     }
     dirBloque.close();
 }
+vector<string> getHeader(string _header){
+    vector<string> vectorHeader;
+    string aux;
+    stringstream header(_header);
+    while (getline(header, aux, '#')){
+        vectorHeader.push_back(aux);
+    }
+    return vectorHeader;
+}
+string getNombreRelacion(int nroRelacion){
+    string aux;
+    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
+    for(int i=0; i<nroRelacion; i++){
+        getline(diccionario, aux);
+    }
+    stringstream relacion(aux);
+    getline(relacion, aux, '#');
+    diccionario.close();
+    return aux;
+}
 void imprimirArchivo(string _string){
     cout<<"\nImprimiendo archivo . . . \n\n";
     std::ifstream archivo(_string);
@@ -371,27 +391,28 @@ void eliminarSLOTS(int _idPage, vector<int> _slots){
 }
 ////////////////////////// PAGINA //////////////////////////////7
 // FUNCION PARA ADICIONAR UN REGISTRO EN UNA TABLA ESPECIFICA
-bool adicionarRegistroPage(int idPage, std::string _registro, std::string _relacion, bool tipoR){
+bool adicionarRegistroPage(int _idPage, std::string _registro, std::string _relacion, bool tipoR){
     // CREAMOS RLV O RLF
     std::string R = ""; 
     if(tipoR) {R +=  crearRLF(_registro, _relacion);  }
     else{ R += crearRLV(_registro, _relacion); } // REGISTRO LONGITUD VARIABLE
 
     // este codigo no respeta el espac sectores quiere decir un registro puede partirse
-    int espacLibrePage = getcapacLibrePagina(idPage); 
-    int tipoPage = getTipoPagina(idPage); // Tener en consideracion el page
+    int espacLibrePage = getcapacLibrePagina(_idPage); 
+    int tipoPage = getTipoPagina(_idPage); // Tener en consideracion el page
     
+    cout<<R.size()<<" "<<espacLibrePage<<" "<<tipoR<<" "<<tipoPage<<endl;
     if(R.size() <= espacLibrePage && (tipoR == tipoPage || tipoPage == 2)){  // y si es del mismo tipo de R
         espacLibrePage -= R.size();
         std::string _nroR = std::to_string(NroRelacion(_relacion));
         if(tipoPage == 2 && tipoR == 0){
             cout<<"\n REGISTRO EN PAGINA TIPO 2 ACTUALIZANDO!";
-            adicionarRLFArchivo("_|\n", getdirPage(idPage));
+            adicionarRLFArchivo("_|\n", getdirPage(_idPage));
         }
         //if(tipoPage == 0) 
-        agregarSLOTS(idPage, R.size());
-        adicionarRLFArchivo(R, getdirPage(idPage));
-        editarCabeceras(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(idPage));
+        agregarSLOTS(_idPage, R.size());
+        adicionarRLFArchivo(R, getdirPage(_idPage));
+        editarCabeceras(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(_idPage));
         
         // editar HEAP FILE 
         //editarCabeceras(idPage,0, "|" ,std::to_string(espacLibrePage), tipoR, "dirPaginas.txt"); 
@@ -583,5 +604,4 @@ void registroPage(int _idPage, string _relacion, string _condicion, string _atri
         //     eliminarSLOTS(_idPage, vectorSlots);// EDITAR SLOTS ELIMINAR
         // }
     }
-    
 }

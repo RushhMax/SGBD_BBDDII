@@ -34,21 +34,21 @@ int main(){
         cin >> choice;
 
         switch (choice) {
-        case 1: {
-            MenuDisco(Disco1);
-            break;
-        }
-        case 2: {
-            MenuBuffer(Disco1);
-            break;
-        }
-        case 3: {
-            cout << "Saliendo...\n";
-            break;
-        }
-        default: {
-            cout << "Opción no válida. Intente de nuevo.\n";
-        }
+            case 1: {
+                MenuDisco(Disco1);
+                break;
+            }
+            case 2: {
+                MenuBuffer(Disco1);
+                break;
+            }
+            case 3: {
+                cout << "Saliendo...\n";
+                break;
+            }
+            default: {
+                cout << "Opción no válida. Intente de nuevo.\n";
+            }
         }
     } while (choice != 3);
 }

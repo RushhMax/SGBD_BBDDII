@@ -23,6 +23,7 @@ class Disco{
         long long int capacBloque; 
         std::string diccionario = "diccionario.txt";
         std::string directorioBloques = "dirBloques.txt";
+        // INDICES
 
     public:
         // CONSTRUCTORES
@@ -34,6 +35,8 @@ class Disco{
 
         int getCapacidadBloque(){ return capacBloque; };
         void adicRelacion(std::string _archivo);
+        vector<string> getSectores(int _nroBloque);
+        void indices(int _nBloque);
         void guardarBloqueSector(int nBloque);
         void printDisco();
 };
@@ -165,15 +168,13 @@ void Disco::adicRelacion(std::string _archivo){
     _diccionario<<std::endl;
     archivo.close();
 }
-
-// ESTA FUNCION!!  
-void Disco::guardarBloqueSector(int nBloque){
-    std::ifstream directorio(directorioBloques);
+vector<string> Disco::getSectores(int _nroBloque){
+    std::ifstream directorio("dirBloques.txt");
 
     string R = "";
     // RECOPILAR SECTORES
     std::vector<string> sectores;
-    for(int i=0; i<nBloque; i++) { 
+    for(int i=0; i<_nroBloque; i++) { 
         std::getline(directorio,R);
     }
     stringstream cabeceraBloque(R);
@@ -187,28 +188,95 @@ void Disco::guardarBloqueSector(int nBloque){
     }
     sectores.pop_back();
     directorio.close();
+    return sectores;
+}
+void Disco::indices(int _nBloque){
+    ifstream Bloque(getdirBloque(_nBloque));
+    string registros;
+    int nSector = 0, capacidadSectori = capacidadS;
+    if(!Bloque.is_open()) std::cout<<" ERROR ARCHIVO ! ";
 
-    cout<<"\n\n GUARDANDO registros del bloque "<<nBloque<<"en las siguientes direcciones>>\n";
+    std::getline(Bloque, registros); // HEADER
+    vector<string> vectorHeader = getHeader(registros);
+    for(int i=0; i<vectorHeader.size(); i++){
+        cout<<vectorHeader[i]<<endl;
+    }
+    int tipoR = stoi(vectorHeader[1]);
+    int nroRelacion = stoi(vectorHeader[5].substr(1));
+    string nombreRelacion = getNombreRelacion(nroRelacion);
+
+    int nodos;
+    cout<<"> NODOS ";cin>>nodos;
+    BPlusTree<int> BPlusTree_indices(nodos, nombreRelacion, "userid" );
+
+
+    std::getline(Bloque, registros);  // SLOTS
+    //std::getline(Bloque, registros);  // REGISTROS
+    string registro;
+    vector<pair<int,int>> posiciones;
+    vector<int> vectorSlots;
+    if(tipoR == 1) {// FIJA
+        vector<pair<string,int>> longitudes = longMaxEsquema(nombreRelacion);
+        int longitudFija = getCapacMaxRegistro(longitudes);
+        getline(Bloque, registros); // REGISTROS 
+        Bloque.close();
+        int posfinal = registros.size();
+        int pos = 0;
+        while (pos < posfinal){
+            registro = registros.substr(pos,longitudFija);
+            cout<<" REGISTRO >"<<registro<<endl;
+            vector<string> vectorRegistro = getVectorRegistro(registro, nombreRelacion, tipoR);
+            BPlusTree_indices.set(stoi(vectorRegistro[1]), make_pair(_nBloque, pos));
+            pos+=longitudFija;
+        }
+    }
+    else if(tipoR == 0) {// VARIABLE
+        stringstream slots(registros);
+        getline(Bloque, registros); // REGISTROS
+        Bloque.close();
+        string aux;
+        int post;
+        int pos = 0;
+        while(getline(slots, aux, '|')){    
+            if(aux == "_") break;
+            post = stoi(aux);
+            if (pos + post > registros.size()) break;
+            registro = registros.substr(pos,post);
+            cout<<" REGISTRO >"<<registro<<endl;
+            vector<string> vectorRegistro = getVectorRegistro(registro, nombreRelacion, tipoR);
+            BPlusTree_indices.set(stoi(vectorRegistro[1]), make_pair(_nBloque, pos));
+            pos += post;
+        }
+    }else { return; }
+
+    BPlusTree_indices.print(nullptr, "", true, nullptr);
+    ofstream outfile(BPlusTree_indices.archivo);
+    BPlusTree_indices.print(nullptr, "", true, &outfile);
+    Bloque.close();
+}
+// FUNCION GUARDA BLOQUE EN SECTORES
+void Disco::guardarBloqueSector(int nBloque){
+    // RECOPILAR SECTORES
+    std::vector<string> sectores = getSectores(nBloque);
+
+    cout<<"\n\n> GUARDANDO registros del bloque "<<nBloque<<" en las siguientes direcciones>>\n";
     consultarBloque(nBloque);
 
     for(int i=0; i<sectores.size(); i++){
         std::ofstream sector( getdirSector(sectores[i])); // Abrir para reescribir
         sector.close();
     }
+    string R = "";
 
     ifstream Bloque(getdirBloque(nBloque));
     int nSector = 0, capacidadSectori = capacidadS;
     if(!Bloque.is_open()) std::cout<<" ERROR ARCHIVO ! ";
-    std::getline(Bloque, R);
-    stringstream cabecera(R);
-    std::getline(cabecera, R, '#');
-    std::getline(cabecera, R, '#');
-    if(stoi(R)== 0){ 
-        std::getline(Bloque, R); 
-    }
 
-    std::getline(Bloque, R);
-    int capacB = 2000 - R.size();
+    std::getline(Bloque, R); // HEADER
+    std::getline(Bloque, R);  // SLOTS
+    std::getline(Bloque, R);  // REGISTROS
+
+    int capacB = capacBloque - R.size();
     while(R.size() > 0){
         //std::cout<<"\nR.SIZE "<<R.size()<<" capacB <<"<<capacB<<"\n";
 
@@ -234,8 +302,9 @@ void Disco::guardarBloqueSector(int nBloque){
         nSector++;
         editarCabeceras(nBloque, nSector+1, "|" , to_string(capacidadS), 2, directorioBloques);
     }
-}
 
+    indices(nBloque);
+}
 // FUNCION QUE IMPRIME CARACTERISCAS DE DISCO
 void Disco::printDisco(){
     std::cout<<" Nombre  > "<<nombre<<"\n";
@@ -249,7 +318,6 @@ void Disco::printDisco(){
     std::cout<<"  >  Nro de Bloques "<<nroBloques<<std::endl;
     std::cout<<"  >  Capacidad del Bloque "<<capacBloque<<std::endl;
 }
-
 void MenuDisco(Disco* &Disco1){
     int opcion; 
     std::string archivo = "", criterio ="", registro = "";

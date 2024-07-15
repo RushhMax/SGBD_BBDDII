@@ -237,7 +237,7 @@ class Buffer {
         }
 
         void printBuffer() const {
-            cout << "_____________ BUFFER POOL ___________________________\n\n";
+            cout << "\n_____________ BUFFER POOL ___________________________\n\n";
             for (const auto& frame : BufferPool) {
                 if (frame.page) { cout<<"Frame ID: "<<frame.idFrame<<", Page ID: "<<frame.page->getIdPage()<< ", Dity bit: "<< frame.page->getDirtyBit() << ", Pin Count: " << frame.page->getPinCount() << ", Pinned: " <<frame.page->getPinned()<< " \n";
                 }else{ cout<<"Frame ID: "<<frame.idFrame<<" > FRAME VACIO! \n";}
@@ -256,10 +256,15 @@ class Buffer {
             }
         }
         
-        void modificarPage(int _idPage){
+        void modificarPage(){
             int op;
             cout << "__________________________________________________\n";
-            cout << "\n----- MODIFICANDO PAGINA "<<_idPage<<" -----\n";
+            //cout << "\n----- MODIFICANDO PAGINA "<<_idPage<<" -----\n";
+            int _idPage;
+            cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
+            cin >> _idPage;
+            pinPage(_idPage, 'W', 0);
+
             cout << "1. Adicionar registros \n";
             cout << "2. Eliminar registros\n";
             cout << "3. Modificar registros\n";
@@ -289,21 +294,9 @@ class Buffer {
                     }
 
                     if (!adicionarRegistroPage(_idPage, registro, relacion, R)) {
-                        bool insertado = false;
-                        for (const auto& frame : BufferPool) {
-                            if (frame.page) {
-                                cout << " UTILIZANDO NUEVA PAGINA> " << frame.page->getIdPage() << "\n";
-                                if (adicionarRegistroPage(frame.page->getIdPage(), registro, relacion, R)) {
-                                    cout<<" > REGISTRO INSERTADO \n";
-                                    insertado = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!insertado) {
-                            std::cout << " No hay espacio suficiente en PAGES! Liberar o agregar nueva pagina! \n";
-                            return;
-                        }
+                        // adquiri nueva pagina indices
+                        std::cout << " No hay espacio suficiente en PAGES. Liberar o agregar nueva pagina! \n";
+                        return;
                     }
                 }
                 data.close();
@@ -331,7 +324,7 @@ void displayMenu() {
     cout << "2. Pin page\n";
     cout << "3. Unpin page\n";
     cout << "4. Get page\n";
-    cout << "5. Modificar Page\n";
+    cout << "5. BUFFER MANAGER \n";
     cout << "6. Mostrar estado del buffer\n";
     cout << "7. Imprimir Pagina / Bloque\n";
     cout << "8. Salir\n";
@@ -392,11 +385,7 @@ void MenuBuffer(Disco* &my_disk) {
             }
             case 5:{
                 cout << "\n-----  Modificar page  ---------\n";
-                int pageId;
-                cout << "Ingrese el ID de la pagina a modificar: ";
-                cin >> pageId;
-                buffer.pinPage(pageId, 'W', 0);
-                buffer.modificarPage(pageId);
+                buffer.modificarPage();
                 break;
             }
             case 6: {

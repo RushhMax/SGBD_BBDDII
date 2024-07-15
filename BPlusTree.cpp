@@ -15,6 +15,7 @@ class Node {
     Node *next;
     Node *prev;
     bool isLeaf;
+    vector<pair<int, int>> rutas; // Almacenar pares de ruta en las hojas
 
     Node(Node *parent = nullptr, bool isLeaf = false, Node *prev_ = nullptr, Node *next_ = nullptr) 
         : parent(parent), isLeaf(isLeaf), prev(prev_), next(next_) {
@@ -56,10 +57,13 @@ class Node {
       return make_tuple(key, left, this);
     }
 
-    void set(T key) {
+    void set(T key, pair<int, int> ruta) {
       int i = indexOfChild(key);
       if (std::find(keys.begin(), keys.end(), key) == keys.end()) {
         keys.insert(keys.begin() + i, key);
+        if (isLeaf) {
+          rutas.insert(rutas.begin() + i, ruta); // Insertar ruta en la hoja
+        }
       } 
     }
 
@@ -68,8 +72,10 @@ class Node {
       int mid = keys.size() / 2;
 
       left->keys = vector<T>(keys.begin(), keys.begin() + mid);
+      left->rutas = vector<pair<int, int>>(rutas.begin(), rutas.begin() + mid); // Dividir rutas
 
       keys.erase(keys.begin(), keys.begin() + mid);
+      rutas.erase(rutas.begin(), rutas.begin() + mid); // Borrar rutas divididas
 
       return make_tuple(keys[0], left, this);
     }
@@ -79,16 +85,69 @@ template <typename T>
 class BPlusTree {
   public:
     Node<T> *root;
-    string indice;
+    string relacion;
+    string claveBusqueda;
+    string archivo;
     int maxCapacity;
     int minCapacity;
     int depth;
 
-    BPlusTree(int _maxCapacity = 4) {
+    BPlusTree(int _maxCapacity = 4, string _relacion = "", string _claveBusqueda = "") {
       root = new Node<T>(nullptr, true, nullptr, nullptr);
       maxCapacity = _maxCapacity;
       minCapacity = maxCapacity / 2;
+      claveBusqueda = _claveBusqueda;
+      relacion = _relacion;
+      archivo = "INDICES/" + _relacion + "_" +_claveBusqueda + ".txt";
       depth = 0;
+    }
+
+    BPlusTree(string archivo) { // relacion clave de busqyeda, depth
+        ifstream infile(archivo);
+        string line;
+
+        // Leer la capacidad máxima del archivo
+        getline(infile, line);
+        maxCapacity = stoi(line);
+        minCapacity = maxCapacity / 2;
+
+        root = nullptr;
+        depth = 0;
+        vector<Node<T>*> nodeStack;
+        vector<int> levelStack;
+
+        while (getline(infile, line)) {
+            if (line.empty()) continue;
+
+            int level = 0;
+            while (line[level] == ' ') level++;
+
+            line = line.substr(level); // Remove leading spaces
+            line.erase(0, 3); // Remove "> ["
+
+            Node<T>* newNode = new Node<T>(nullptr, line.find('>') == string::npos);
+            istringstream iss(line);
+            T key;
+            while (iss >> key) {
+                newNode->keys.push_back(key);
+                iss.ignore(3, ' '); // Skip " - "
+            }
+
+            if (nodeStack.empty()) {
+                root = newNode;
+            } else {
+                while (!levelStack.empty() && levelStack.back() >= level) {
+                    nodeStack.pop_back();
+                    levelStack.pop_back();
+                }
+                Node<T>* parent = nodeStack.back();
+                parent->children.push_back(newNode);
+                newNode->parent = parent;
+            }
+            nodeStack.push_back(newNode);
+            levelStack.push_back(level);
+        }
+        infile.close();
     }
 
     Node<T> *findLeaf(T key) {
@@ -99,9 +158,9 @@ class BPlusTree {
 
     int get(int key) { return findLeaf(key)->get(key); }
 
-    void set(T key) {
+    void set(T key, pair<int, int> ruta) {
       Node<T> *leaf = findLeaf(key);
-      leaf->set(key);
+      leaf->set(key, ruta);
       if (leaf->keys.size() > maxCapacity) insert(leaf->splitLeaf());
     }
 
@@ -130,7 +189,7 @@ class BPlusTree {
             exit(0);
         }
         node->keys.erase(node->keys.begin() + index);
-        node->values.erase(node->values.begin() + index);
+        node->rutas.erase(node->rutas.begin() + index);
         if (node->parent) {
             int indexInParent = node->parent->indexOfChild(key);
             if (indexInParent) node->parent->keys[indexInParent - 1] = node->keys.front();
@@ -149,8 +208,8 @@ class BPlusTree {
     void borrowKeyFromRightLeaf(Node<T> *node, Node<T> *next) {
         node->keys.push_back(next->keys.front());
         next->keys.erase(next->keys.begin());
-        node->values.push_back(next->values.front());
-        next->values.erase(next->values.begin());
+        node->rutas.push_back(next->rutas.front());
+        next->rutas.erase(next->rutas.begin());
         for (int i = 0; i < node->parent->children.size(); i++) {
             if (node->parent->children[i] == next) {
                 node->parent->keys[i - 1] = next->keys.front();
@@ -162,8 +221,6 @@ class BPlusTree {
     void borrowKeyFromLeftLeaf(Node<T> *node, Node<T> *prev) {
         node->keys.insert(node->keys.begin(), prev->keys.back());
         prev->keys.erase(prev->keys.end() - 1);
-        node->values.insert(node->values.begin(), prev->values.back());
-        prev->values.erase(prev->values.end() - 1);
         for (int i = 0; i < node->parent->children.size(); i++) {
             if (node->parent->children[i] == node) {
                 node->parent->keys[i - 1] = node->keys.front();
@@ -174,7 +231,6 @@ class BPlusTree {
 
     void mergeNodeWithRightLeaf(Node<T> *node, Node<T> *next) {
         node->keys.insert(node->keys.end(), next->keys.begin(), next->keys.end());
-        node->values.insert(node->values.end(), next->values.begin(), next->values.end());
         node->next = next->next;
         if (node->next) node->next->prev = node;
         for (int i = 0; i < next->parent->children.size(); i++) {
@@ -188,7 +244,6 @@ class BPlusTree {
 
     void mergeNodeWithLeftLeaf(Node<T> *node, Node<T> *prev) {
         prev->keys.insert(prev->keys.end(), node->keys.begin(), node->keys.end());
-        prev->values.insert(prev->values.end(), node->values.begin(), node->values.end());
         prev->next = node->next;
         if (prev->next) prev->next->prev = prev;
         for (int i = 0; i < node->parent->children.size(); i++) {
@@ -200,171 +255,87 @@ class BPlusTree {
         }
     }
 
-    void borrowKeyFromRightInternal(int myPositionInParent, Node<T> *node, Node<T> *next) {
-        node->keys.insert(node->keys.end(), node->parent->keys[myPositionInParent]);
-        node->parent->keys[myPositionInParent] = next->keys.front();
-        next->keys.erase(next->keys.begin());
-        node->children.insert(node->children.end(), next->children.front());
-        next->children.erase(next->children.begin());
-        node->children.back()->parent = node;
-    }
-
-    void borrowKeyFromLeftInternal(int myPositionInParent, Node<T> *node, Node<T> *prev) {
-        node->keys.insert(node->keys.begin(), node->parent->keys[myPositionInParent - 1]);
-        node->parent->keys[myPositionInParent - 1] = prev->keys.back();
-        prev->keys.erase(prev->keys.end() - 1);
-        node->children.insert(node->children.begin(), prev->children.back());
-        prev->children.erase(prev->children.end() - 1);
-        node->children.front()->parent = node;
-    }
-
-    void mergeNodeWithRightInternal(int myPositionInParent, Node<T> *node, Node<T> *next) {
-        node->keys.insert(node->keys.end(), node->parent->keys[myPositionInParent]);
-        node->parent->keys.erase(node->parent->keys.begin() + myPositionInParent);
-        node->parent->children.erase(node->parent->children.begin() + myPositionInParent + 1);
-        node->keys.insert(node->keys.end(), next->keys.begin(), next->keys.end());
-        node->children.insert(node->children.end(), next->children.begin(), next->children.end());
-        for (Node<T> *child : node->children) {
-            child->parent = node;
-        }
-    }
-    void mergeNodeWithLeftInternal(int myPositionInParent, Node<T> *node, Node<T> *prev) {
-        prev->keys.insert(prev->keys.end(), node->parent->keys[myPositionInParent - 1]);
-        node->parent->keys.erase(node->parent->keys.begin() + myPositionInParent - 1);
-        node->parent->children.erase(node->parent->children.begin() + myPositionInParent);
-        prev->keys.insert(prev->keys.end(), node->keys.begin(), node->keys.end());
-        prev->children.insert(prev->children.end(), node->children.begin(), node->children.end());
-        for (Node<T> *child : prev->children) {
-            child->parent = prev;
-        }
-    }
-
     void remove(int key, Node<T> *node = nullptr) {
-        if (node == nullptr) {
-            node = findLeaf(key);
-        }
+        if (root == nullptr) return;
+        if (node == nullptr) node = root;
+
         if (node->isLeaf) {
             removeFromLeaf(key, node);
-        } else {
-            removeFromInternal(key, node);
-        }
-
-        if (node->keys.size() < minCapacity) {
-            if (node == root) {
-                if (root->keys.empty() && !root->children.empty()) {
-                    root = root->children[0];
-                    root->parent = nullptr;
-                    depth -= 1;
-                }
-                return;
-            } else if (node->isLeaf) {
-                Node<T> *next = node->next;
-                Node<T> *prev = node->prev;
-
-                if (next && next->parent == node->parent && next->keys.size() > minCapacity) {
-                    borrowKeyFromRightLeaf(node, next);
-                } else if (prev && prev->parent == node->parent && prev->keys.size() > minCapacity) {
-                    borrowKeyFromLeftLeaf(node, prev);
-                } else if (next && next->parent == node->parent && next->keys.size() <= minCapacity) {
-                    mergeNodeWithRightLeaf(node, next);
-                } else if (prev && prev->parent == node->parent && prev->keys.size() <= minCapacity) {
-                    mergeNodeWithLeftLeaf(node, prev);
-                }
-            } else {
-                int myPositionInParent = -1;
-                for (int i = 0; i < node->parent->children.size(); i++) {
-                    if (node->parent->children[i] == node) {
-                        myPositionInParent = i;
-                        break;
-                    }
-                }
-
-                Node<T> *next;
-                Node<T> *prev;
-
-                if (node->parent->children.size() > myPositionInParent + 1) {
-                    next = node->parent->children[myPositionInParent + 1];
+            if (node->keys.size() < minCapacity && node->prev && node->prev->parent == node->parent) {
+                if (node->prev->keys.size() > minCapacity) {
+                    borrowKeyFromLeftLeaf(node, node->prev);
                 } else {
-                    next = nullptr;
-                }
-
-                if (myPositionInParent) {
-                    prev = node->parent->children[myPositionInParent - 1];
-                } else {
-                    prev = nullptr;
-                }
-
-                if (next && next->parent == node->parent && next->keys.size() > minCapacity) {
-                    borrowKeyFromRightInternal(myPositionInParent, node, next);
-                } else if (prev && prev->parent == node->parent && prev->keys.size() > minCapacity) {
-                    borrowKeyFromLeftInternal(myPositionInParent, node, prev);
-                } else if (next && next->parent == node->parent && next->keys.size() <= minCapacity) {
-                    mergeNodeWithRightInternal(myPositionInParent, node, next);
-                } else if (prev && prev->parent == node->parent && prev->keys.size() <= minCapacity) {
-                    mergeNodeWithLeftInternal(myPositionInParent, node, prev);
+                    mergeNodeWithLeftLeaf(node, node->prev);
                 }
             }
+            if (node->keys.size() < minCapacity && node->next && node->next->parent == node->parent) {
+                if (node->next->keys.size() > minCapacity) {
+                    borrowKeyFromRightLeaf(node, node->next);
+                } else {
+                    mergeNodeWithRightLeaf(node, node->next);
+                }
+            }
+        } else {
+            removeFromInternal(key, node);
+            for (Node<T> *child : node->children) remove(key, child);
         }
-        if (node->parent) {
-            remove(key, node->parent);
+
+        if (root->keys.empty()) {
+            root = root->children[0];
+            root->parent = nullptr;
+            depth--;
         }
     }
 
-
-    void print(Node<T> *node = nullptr, string _prefix = "", bool _last = true) {
-      if (!node) node = root;
-      cout << _prefix << "> [";
-      for (int i = 0; i < node->keys.size(); i++) {
-        cout << " " << node->keys[i] << " - ";
-      }
-      cout << "]" << endl;
-
-      _prefix += _last ? "   " : "|  ";
-
-      if (!node->isLeaf) {
-        for (int i = 0; i < node->children.size(); i++) {
-          bool _last = (i == node->children.size() - 1);
-          print(node->children[i], _prefix, _last);
+    void print(Node<T> *node = nullptr, string _prefix = "", bool _last = true, ofstream *outfile = nullptr) {
+        if (!node) {
+            node = root;
+            if (outfile) {
+                *outfile << maxCapacity << endl;
+            } else {
+                cout << maxCapacity << endl;
+            }
         }
-      }
+
+        string output = _prefix + "> [";
+        for (int i = 0; i < node->keys.size(); i++) {
+            output += " [ " + to_string(node->keys[i]) + " ] ";
+            if (node->isLeaf) 
+                output += "[Ruta: (" + to_string(node->rutas[i].first) + ", " + to_string(node->rutas[i].second) + ")] ";
+        }
+        output += "]";
+
+
+        if (outfile) {
+            *outfile << output << endl;
+        } else {
+            cout << output << endl;
+        }
+
+        _prefix += _last ? "   " : "|  ";
+
+        if (!node->isLeaf) {
+            for (int i = 0; i < node->children.size(); i++) {
+                bool _last = (i == node->children.size() - 1);
+                print(node->children[i], _prefix, _last, outfile);
+            }
+        }
     }
 };
 
 // int main() {
-//   BPlusTree<string> tree(4);
-//   vector<int> random_list = {10, 27, 29, 17, 25, 21, 15, 31, 13, 51, 20, 24, 48, 19, 60, 35, 66};
-//   vector<string> random_list_strings = {"Hola", "Pepito", "Ayuda", "Suena", "One Piece", "Ciencia de la Computación"};  
+//   BPlusTree<int> tree(4, "relacion", "claveBusqueda");
 
-//   for (string i : random_list_strings) {
-//     cout << endl
-//          << "-------------" << endl;
-//     cout << "Inserting " << i << endl
-//          << endl;
-//     cout << "-------------" << endl
-//          << endl;
+//   // Insertar claves con sus rutas
+//   tree.set(1, {1, 2});
+//   tree.set(2, {2, 3});
+//   tree.set(3, {3, 4});
+//   tree.set(4, {4, 5});
+//   tree.set(5, {5, 6});
 
-//     tree.set(i);
-//     tree.print();
-//   }
+//   // Imprimir el árbol
+//   tree.print();
+//   cout << endl;
 
-//   cout << endl
-//        << "-------------------------" << endl;
-//   cout << "All keys are inserted ..." << endl;
-//   cout << "-------------------------" << endl
-//        << endl;
-
-//   tree.print(nullptr, "", false);
-
-//   /*
-//   > [25]
-//      > [15, 20]
-//      |  > [10, 13]
-//      |  > [15, 17, 19]
-//      |  > [20, 21, 24]
-//      > [29, 48]
-//         > [25, 27]
-//         > [29, 31, 35]
-//         > [48, 51, 60, 66]
-//   */
 //   return 0;
 // }
