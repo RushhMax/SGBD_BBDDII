@@ -5,6 +5,7 @@
 #include <fstream>
 #include <algorithm> // Para std::remove_if
 #include <cctype>    // Para std::isspace
+#include <iomanip> // Para std::setw
 
 using namespace std;
 
@@ -61,6 +62,25 @@ string getNombreRelacion(int nroRelacion){
     diccionario.close();
     return aux;
 }
+pair<int,int> getBloques(string _relacion){
+    // User#userid#int#3#nickname#varchar#8_11#13
+    string aux;
+    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
+    while(getline(diccionario, aux)){
+        stringstream relacion(aux);
+        getline(relacion, aux, '#');
+        if(aux == _relacion){
+            getline(relacion, aux, '_');
+            getline(relacion, aux, '#');
+            int primerBloqueAsignado = stoi(aux); 
+            getline(relacion, aux, '#');
+            int ultimoBloqueAsignado = stoi(aux); 
+
+            return make_pair(primerBloqueAsignado, ultimoBloqueAsignado);
+        }
+    }
+    return make_pair(0,0); // No encontro
+}
 void imprimirArchivo(string _string){
     cout<<"\nImprimiendo archivo . . . \n\n";
     std::ifstream archivo(_string);
@@ -71,6 +91,13 @@ void imprimirArchivo(string _string){
     }
     cout<<endl;
     archivo.close();
+}
+void imprimirRegistro(vector<string> _registro, vector<pair<string,int>> _longitudes){
+    for (int i = 0; i < _registro.size(); i++) {
+        int longitud = (i < _longitudes.size()) ? _longitudes[i].second : 0;
+        cout << setw(longitud) << left << _registro[i] << " ";
+    }
+    cout << endl;
 }
 // retorna PATH SECTOR desde  1/1/1/1
 string getdirSector(string dir){
@@ -546,11 +573,12 @@ void registroPage(int _idPage, string _relacion, string _condicion, string _atri
     string registros = "";
     getline(pagina, registros);// CABECERA
     getline(pagina, registros);// SLOTS
+    
     string registro;
     vector<pair<int,int>> posiciones;
     vector<int> vectorSlots;
+    vector<pair<string,int>> longitudes = longMaxEsquema(_relacion);
     if(tipoPage == 1) {// FIJA
-        vector<pair<string,int>> longitudes = longMaxEsquema(_relacion);
         int longitudFija = getCapacMaxRegistro(longitudes);
         getline(pagina, registros); // REGISTROS 
         pagina.close();
@@ -561,7 +589,12 @@ void registroPage(int _idPage, string _relacion, string _condicion, string _atri
             //cout<<" REGISTRO >"<<registro<<endl;
             if(cumpleCondicion(registro, _condicion, _relacion, tipoPage)){
                 if(_accion == 0) espacioLibre += registro.size();
+                if(_accion == 1)  {
+                    vector<string> arrayRegistro = getVectorRegistro(registro, _relacion, tipoPage);
+                    imprimirRegistro(arrayRegistro, longitudes);
+                }
                 posiciones.push_back(make_pair(pos, longitudFija));
+                
             }
             pos+=longitudFija;
         }
@@ -582,6 +615,10 @@ void registroPage(int _idPage, string _relacion, string _condicion, string _atri
             if(cumpleCondicion(registro, _condicion, _relacion, tipoPage)){
                 vectorSlots.push_back(post);
                 if(_accion == 0) espacioLibre += registro.size();
+                if(_accion == 1)  {
+                    vector<string> arrayRegistro = getVectorRegistro(registro, _relacion, tipoPage);
+                    imprimirRegistro(arrayRegistro, longitudes);
+                }
                 posiciones.push_back(make_pair(pos, post));
             }
             pos += post;
@@ -597,11 +634,11 @@ void registroPage(int _idPage, string _relacion, string _condicion, string _atri
             eliminarSLOTS(_idPage, vectorSlots);// EDITAR SLOTS ELIMINAR
         }
     }// IF _ACCION ES 1 MODIFICAR
-    else if(_accion == 1){
-        //modificarRegistroPage(_idPage, _relacion, posiciones, _atributo, tipoPage);
-        // editarCabeceras(1, 0,"|", to_string(espacioLibre) , tipoPage, getdirPage(_idPage));
-        // if(tipoPage == 0) {// VARIABLE
-        //     eliminarSLOTS(_idPage, vectorSlots);// EDITAR SLOTS ELIMINAR
-        // }
-    }
+    // else if(_accion == 1){
+    //     //modificarRegistroPage(_idPage, _relacion, posiciones, _atributo, tipoPage);
+    //     // editarCabeceras(1, 0,"|", to_string(espacioLibre) , tipoPage, getdirPage(_idPage));
+    //     // if(tipoPage == 0) {// VARIABLE
+    //     //     eliminarSLOTS(_idPage, vectorSlots);// EDITAR SLOTS ELIMINAR
+    //     // }
+    // }
 }

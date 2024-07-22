@@ -1,0 +1,202 @@
+digraph BTree {
+    rankdir = TB;
+    ranksep = 3;
+    nodesep = 0.3;
+
+    /* 10,30,50,91,129 */
+    node0 [shape=none, fontsize=18, margin=0, label=<
+      <TABLE BORDER="0" COLOR="black" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR>
+          <TD PORT="0" BGCOLOR="lightgrey"></TD>
+          <TD PORT="1" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">10</TD>
+          <TD PORT="2" BGCOLOR="lightgrey"></TD>
+          <TD PORT="3" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">30</TD>
+          <TD PORT="4" BGCOLOR="lightgrey"></TD>
+          <TD PORT="5" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">50</TD>
+          <TD PORT="6" BGCOLOR="lightgrey"></TD>
+          <TD PORT="7" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">91</TD>
+          <TD PORT="8" BGCOLOR="lightgrey"></TD>
+          <TD PORT="9" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">129</TD>
+          <TD PORT="10" BGCOLOR="lightgrey"></TD>
+          <TD PORT="11" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="12" BGCOLOR="lightgrey"></TD>
+          <TD PORT="13" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="14" BGCOLOR="lightgrey"></TD>
+          <TD PORT="15" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="16" BGCOLOR="lightgrey"></TD>
+        </TR>
+      </TABLE>
+    >];
+
+    /* 2,4,5,6,7,8,9 */
+    node1 [shape=none, fontsize=18, margin=0, label=<
+      <TABLE BORDER="0" COLOR="black" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR>
+          <TD PORT="0" BGCOLOR="lightgrey"></TD>
+          <TD PORT="1" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">2</TD>
+          <TD PORT="2" BGCOLOR="lightgrey"></TD>
+          <TD PORT="3" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">4</TD>
+          <TD PORT="4" BGCOLOR="lightgrey"></TD>
+          <TD PORT="5" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">5</TD>
+          <TD PORT="6" BGCOLOR="lightgrey"></TD>
+          <TD PORT="7" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">6</TD>
+          <TD PORT="8" BGCOLOR="lightgrey"></TD>
+          <TD PORT="9" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">7</TD>
+          <TD PORT="10" BGCOLOR="lightgrey"></TD>
+          <TD PORT="11" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">8</TD>
+          <TD PORT="12" BGCOLOR="lightgrey"></TD>
+          <TD PORT="13" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">9</TD>
+          <TD PORT="14" BGCOLOR="lightgrey"></TD>
+          <TD PORT="15" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="16" BGCOLOR="lightgrey"></TD>
+        </TR>
+      </TABLE>
+    >];
+
+    node0:0 -> node1:8;
+
+    /* 10,11,12,13,17,25 */
+    node2 [shape=none, fontsize=18, margin=0, label=<
+      <TABLE BORDER="0" COLOR="black" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR>
+          <TD PORT="0" BGCOLOR="lightgrey"></TD>
+          <TD PORT="1" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">10</TD>
+          <TD PORT="2" BGCOLOR="lightgrey"></TD>
+          <TD PORT="3" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">11</TD>
+          <TD PORT="4" BGCOLOR="lightgrey"></TD>
+          <TD PORT="5" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">12</TD>
+          <TD PORT="6" BGCOLOR="lightgrey"></TD>
+          <TD PORT="7" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">13</TD>
+          <TD PORT="8" BGCOLOR="lightgrey"></TD>
+          <TD PORT="9" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">17</TD>
+          <TD PORT="10" BGCOLOR="lightgrey"></TD>
+          <TD PORT="11" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">25</TD>
+          <TD PORT="12" BGCOLOR="lightgrey"></TD>
+          <TD PORT="13" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="14" BGCOLOR="lightgrey"></TD>
+          <TD PORT="15" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="16" BGCOLOR="lightgrey"></TD>
+        </TR>
+      </TABLE>
+    >];
+
+    node0:2 -> node2:8;
+
+    /* 30,31,35,38,43,45 */
+    node3 [shape=none, fontsize=18, margin=0, label=<
+      <TABLE BORDER="0" COLOR="black" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR>
+          <TD PORT="0" BGCOLOR="lightgrey"></TD>
+          <TD PORT="1" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">30</TD>
+          <TD PORT="2" BGCOLOR="lightgrey"></TD>
+          <TD PORT="3" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">31</TD>
+          <TD PORT="4" BGCOLOR="lightgrey"></TD>
+          <TD PORT="5" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">35</TD>
+          <TD PORT="6" BGCOLOR="lightgrey"></TD>
+          <TD PORT="7" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">38</TD>
+          <TD PORT="8" BGCOLOR="lightgrey"></TD>
+          <TD PORT="9" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">43</TD>
+          <TD PORT="10" BGCOLOR="lightgrey"></TD>
+          <TD PORT="11" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">45</TD>
+          <TD PORT="12" BGCOLOR="lightgrey"></TD>
+          <TD PORT="13" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="14" BGCOLOR="lightgrey"></TD>
+          <TD PORT="15" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="16" BGCOLOR="lightgrey"></TD>
+        </TR>
+      </TABLE>
+    >];
+
+    node0:4 -> node3:8;
+
+    /* 50,60,80,81 */
+    node4 [shape=none, fontsize=18, margin=0, label=<
+      <TABLE BORDER="0" COLOR="black" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR>
+          <TD PORT="0" BGCOLOR="lightgrey"></TD>
+          <TD PORT="1" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">50</TD>
+          <TD PORT="2" BGCOLOR="lightgrey"></TD>
+          <TD PORT="3" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">60</TD>
+          <TD PORT="4" BGCOLOR="lightgrey"></TD>
+          <TD PORT="5" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">80</TD>
+          <TD PORT="6" BGCOLOR="lightgrey"></TD>
+          <TD PORT="7" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">81</TD>
+          <TD PORT="8" BGCOLOR="lightgrey"></TD>
+          <TD PORT="9" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="10" BGCOLOR="lightgrey"></TD>
+          <TD PORT="11" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="12" BGCOLOR="lightgrey"></TD>
+          <TD PORT="13" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="14" BGCOLOR="lightgrey"></TD>
+          <TD PORT="15" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="16" BGCOLOR="lightgrey"></TD>
+        </TR>
+      </TABLE>
+    >];
+
+    node0:6 -> node4:8;
+
+    /* 91,101,110,120 */
+    node5 [shape=none, fontsize=18, margin=0, label=<
+      <TABLE BORDER="0" COLOR="black" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR>
+          <TD PORT="0" BGCOLOR="lightgrey"></TD>
+          <TD PORT="1" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">91</TD>
+          <TD PORT="2" BGCOLOR="lightgrey"></TD>
+          <TD PORT="3" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">101</TD>
+          <TD PORT="4" BGCOLOR="lightgrey"></TD>
+          <TD PORT="5" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">110</TD>
+          <TD PORT="6" BGCOLOR="lightgrey"></TD>
+          <TD PORT="7" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">120</TD>
+          <TD PORT="8" BGCOLOR="lightgrey"></TD>
+          <TD PORT="9" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="10" BGCOLOR="lightgrey"></TD>
+          <TD PORT="11" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="12" BGCOLOR="lightgrey"></TD>
+          <TD PORT="13" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="14" BGCOLOR="lightgrey"></TD>
+          <TD PORT="15" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="16" BGCOLOR="lightgrey"></TD>
+        </TR>
+      </TABLE>
+    >];
+
+    node0:8 -> node5:8;
+
+    /* 129,150,180,200 */
+    node6 [shape=none, fontsize=18, margin=0, label=<
+      <TABLE BORDER="0" COLOR="black" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TR>
+          <TD PORT="0" BGCOLOR="lightgrey"></TD>
+          <TD PORT="1" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">129</TD>
+          <TD PORT="2" BGCOLOR="lightgrey"></TD>
+          <TD PORT="3" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">150</TD>
+          <TD PORT="4" BGCOLOR="lightgrey"></TD>
+          <TD PORT="5" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">180</TD>
+          <TD PORT="6" BGCOLOR="lightgrey"></TD>
+          <TD PORT="7" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE">200</TD>
+          <TD PORT="8" BGCOLOR="lightgrey"></TD>
+          <TD PORT="9" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="10" BGCOLOR="lightgrey"></TD>
+          <TD PORT="11" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="12" BGCOLOR="lightgrey"></TD>
+          <TD PORT="13" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="14" BGCOLOR="lightgrey"></TD>
+          <TD PORT="15" WIDTH="40" HEIGHT="35" FIXEDSIZE="TRUE"></TD>
+          <TD PORT="16" BGCOLOR="lightgrey"></TD>
+        </TR>
+      </TABLE>
+    >];
+
+    node0:10 -> node6:8;
+
+    /* Attach leaf nodes */
+    node1:16 -> node2:0;
+    node2:16 -> node3:0;
+    node3:16 -> node4:0;
+    node4:16 -> node5:0;
+    node5:16 -> node6:0;
+
+    /* Make sure the leaf nodes are aligned vertically */
+    {rank = same; node1; node2; node3; node4; node5; node6}
+}

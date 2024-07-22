@@ -79,6 +79,7 @@ class Buffer {
         LRU* my_LRU;
         int choice_replacer;
         string dirPaginas = "dirPaginas.txt";
+        vector<BPlusTree<int>*> indices;
 
         int hit_count;
         int miss_count;
@@ -238,6 +239,8 @@ class Buffer {
 
         void printBuffer() const {
             cout << "\n_____________ BUFFER POOL ___________________________\n\n";
+            if(choice_replacer == 1) cout<<" > CLOCK \n";
+            else if(choice_replacer == 0) cout<<" > LRU \n";
             for (const auto& frame : BufferPool) {
                 if (frame.page) { cout<<"Frame ID: "<<frame.idFrame<<", Page ID: "<<frame.page->getIdPage()<< ", Dity bit: "<< frame.page->getDirtyBit() << ", Pin Count: " << frame.page->getPinCount() << ", Pinned: " <<frame.page->getPinned()<< " \n";
                 }else{ cout<<"Frame ID: "<<frame.idFrame<<" > FRAME VACIO! \n";}
@@ -315,99 +318,126 @@ class Buffer {
                 registroPage(_idPage, relacion, condicion, atributo, 1);
             } else { cout << " Ingrese una opción valida! \n "; return; }
         }
-};
 
-void displayMenu() {
-    cout << "__________________________________________________\n";
-    cout << "\n----- MENU -----\n";
-    cout << "1. New page\n";
-    cout << "2. Pin page\n";
-    cout << "3. Unpin page\n";
-    cout << "4. Get page\n";
-    cout << "5. BUFFER MANAGER \n";
-    cout << "6. Mostrar estado del buffer\n";
-    cout << "7. Imprimir Pagina / Bloque\n";
-    cout << "8. Salir\n";
-    cout << "__________________________________________________\n\n";
-    cout << "Elija una opcion: ";
-}
+        void displayMenu() {
+            cout << "__________________________________________________\n";
+            cout << "\n----- MENU -----\n";
+            cout << "1. New page\n";
+            cout << "2. Pin page\n";
+            cout << "3. Unpin page\n";
+            cout << "4. Get page\n";
+            cout << "5. BUFFER MANAGER \n";
+            cout << "6. Mostrar estado del buffer\n";
+            cout << "7. Imprimir Pagina / Bloque\n";
+            cout << "8. Salir\n";
+            cout << "__________________________________________________\n\n";
+            cout << "Elija una opcion: ";
+        }
 
-void MenuBuffer(Disco* &my_disk) {
-    int choice;
-    cout << " > Metodo de reemplazo " << endl;
-    cout << " LRU (0) o CLOCK (1) > ";cin>>choice;
+        void MenuBuffer() {
+            int choice;
+            // cout << " > Metodo de reemplazo " << endl;
+            // cout << " LRU (0) o CLOCK (1) > ";cin>>choice;
 
-    Buffer buffer(my_disk->getCapacidadBloque() *3, my_disk->getCapacidadBloque(), my_disk, choice);
-    
-    do {
-        buffer.printBuffer();
-        displayMenu();
-        cin >> choice;
+            // Buffer buffer(my_disk->getCapacidadBloque() *3, my_disk->getCapacidadBloque(), my_disk, choice);
+            
+            do {
+                printBuffer();
+                displayMenu();
+                cin >> choice;
 
-        switch (choice) {
-            case 1: {
-                int pageId; char funcion; bool pinned;
-                cout << "\n-----  New page  ---------\n";
-                cout << "Ingrese el ID de la nueva pagina: ";
-                cin >> pageId;
-                cout << "R/W?     ";cin>>funcion;
-                cout << "PINNED?  ";cin>>pinned;
-                buffer.newPage(pageId, funcion, pinned);
-                break;
+                switch (choice) {
+                    case 1: {
+                        int pageId; char funcion; bool pinned;
+                        cout << "\n-----  New page  ---------\n";
+                        cout << "Ingrese el ID de la nueva pagina: ";
+                        cin >> pageId;
+                        cout << "R/W?     ";cin>>funcion;
+                        cout << "PINNED?  ";cin>>pinned;
+                        newPage(pageId, funcion, pinned);
+                        break;
+                    }
+                    case 2: {
+                        int pageId; char funcion; bool pinned;
+                        cout << "\n-----  Pin page  ---------\n";
+                        cout << "Ingrese el ID de la pagina a fijar: ";
+                        cin >> pageId;
+                        cout << "R/W?     ";cin>>funcion;
+                        cout << "PINNED?  ";cin>>pinned;
+                        pinPage(pageId, funcion, pinned);
+                        break;
+                    }
+                    case 3: {
+                        cout << "\n-----  Unpin page  ---------\n";
+                        int pageId;
+                        cout << "Ingrese el ID de la pagina a liberar: ";
+                        cin >> pageId;
+                        unpinPage(pageId);
+                        break;
+                    }
+                    case 4:{
+                        cout << "\n-----  Get page  ---------\n";
+                        int pageId; char funcion;  bool pinned;
+                        cout << "Ingrese el ID de la pagina a conseguir: ";
+                        cin >> pageId;
+                        cout << "R/W?     ";cin>>funcion;
+                        cout << "PINNED?  ";cin>>pinned;
+                        getPage(pageId, funcion, pinned);
+                        break;
+                    }
+                    case 5:{
+                        cout << "\n-----  Modificar page  ---------\n";
+                        modificarPage();
+                        break;
+                    }
+                    case 6: {
+                        printBuffer();
+                        break;
+                    }
+                    case 7: {
+                        int pageId;
+                        cout << "Ingrese el ID de la pagina/bloque a imprimir: ";
+                        cin >> pageId;
+                        imprimirArchivo(getdirPage(pageId));
+                        imprimirArchivo(getdirBloque(pageId));
+                        break;
+                    }
+                    case 8: {
+                        cout << "Saliendo...\n";
+                        break;
+                    }
+                    default: {
+                        cout << "Opción no válida. Intente de nuevo.\n";
+                    }
+                }
+            } while (choice != 8);
+
+        }
+
+        BPlusTree<int>* getIndice(string _relacion, string _claveBusqueda){
+            for(int i=0; i<indices.size(); i++){
+                if(indices[i]->relacion == _relacion && indices[i]->claveBusqueda == _claveBusqueda){
+                    return indices[i];
+                }
             }
-            case 2: {
-                int pageId; char funcion; bool pinned;
-                cout << "\n-----  Pin page  ---------\n";
-                cout << "Ingrese el ID de la pagina a fijar: ";
-                cin >> pageId;
-                cout << "R/W?     ";cin>>funcion;
-                cout << "PINNED?  ";cin>>pinned;
-                buffer.pinPage(pageId, funcion, pinned);
-                break;
-            }
-            case 3: {
-                cout << "\n-----  Unpin page  ---------\n";
-                int pageId;
-                cout << "Ingrese el ID de la pagina a liberar: ";
-                cin >> pageId;
-                buffer.unpinPage(pageId);
-                break;
-            }
-            case 4:{
-                cout << "\n-----  Get page  ---------\n";
-                int pageId; char funcion;  bool pinned;
-                cout << "Ingrese el ID de la pagina a conseguir: ";
-                cin >> pageId;
-                cout << "R/W?     ";cin>>funcion;
-                cout << "PINNED?  ";cin>>pinned;
-                buffer.getPage(pageId, funcion, pinned);
-                break;
-            }
-            case 5:{
-                cout << "\n-----  Modificar page  ---------\n";
-                buffer.modificarPage();
-                break;
-            }
-            case 6: {
-                buffer.printBuffer();
-                break;
-            }
-            case 7: {
-                int pageId;
-                cout << "Ingrese el ID de la pagina/bloque a imprimir: ";
-                cin >> pageId;
-                imprimirArchivo(getdirPage(pageId));
-                imprimirArchivo(getdirBloque(pageId));
-                break;
-            }
-            case 8: {
-                cout << "Saliendo...\n";
-                break;
-            }
-            default: {
-                cout << "Opción no válida. Intente de nuevo.\n";
+            BPlusTree<int>* newIndice = new BPlusTree<int>(8, _relacion, _claveBusqueda);
+            pair<int, int> bloques = getBloques(_relacion);
+            newIndice->set(0, make_pair(bloques.first,0));
+            indices.push_back(newIndice);
+            return newIndice;
+        }
+
+        int getBloque(string _relacion, string _claveBusqueda, int key){
+            BPlusTree<int>* indice = getIndice(_relacion, _claveBusqueda);
+            Node<int>* NodoHoja = indice->findLeaf(8);
+
+            for(int i=0; i<NodoHoja->keys.size(); i++){
+                cout<<NodoHoja->keys[i]<<" (";
+                cout<<NodoHoja->rutas[i].first<<"-"<<NodoHoja->rutas[i].second<<")\n";
+                if(NodoHoja->keys[i] == key){
+                    return NodoHoja->rutas[i].first;
+                }
             }
         }
-    } while (choice != 8);
+};
 
-}

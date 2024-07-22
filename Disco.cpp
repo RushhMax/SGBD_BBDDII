@@ -54,8 +54,8 @@ Disco::Disco(int _platos, int _pistas, int _sectores, long long int _capacSector
     this->capacBloque = _capacidadBloque;
     this->nroBloques = this->capacidadD / this->capacBloque;
 
-    crearBloques();
-    crearEstructura();
+    //crearBloques();
+    //crearEstructura();
 }
 
 // CONSTRUCTOR DE ESTRUCTURA DE DISCO 

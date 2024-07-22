@@ -26,7 +26,6 @@ Cada nodo va apuntar a un registro o a un bloque ??
 
 
 HEAP FILE PARA DATOS ELIMINADOS
--SISTEMA QUE GESTIONE WHERE CREATE TABLE ETC
 
 ----- DISCO --------------------------------------->
 -- > 1. Actualizar capacidad de Disco cuando se agrega desde Buffer
@@ -36,7 +35,6 @@ HEAP FILE PARA DATOS ELIMINADOS
 -- > MODIFICAR 
     BufferPool / Capacidad de memoria con paginas y BTREE
     Definir cual es el mejor LRU URL 
-
 
 ----- B+TREE  --------------------------------------->
 
