@@ -6,6 +6,9 @@ using namespace std;
 
 void insert(Buffer *_myBuffer)
 {
+    int _idPage;
+    cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
+    cin >> _idPage;   
     //_myBuffer->pinPage(_idPage, 'W', 0);
     int R = 0; // POLITICA RLV / RLF
     string n;
@@ -54,7 +57,7 @@ void consultas(Buffer* _myBuffer){
         cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
         cin >> _idPage;       
         if (op == 1) {
-
+            insert(_myBuffer);
         }
         else if (op == 2){
             _myBuffer->pinPage(_idPage, 'W', 0);
