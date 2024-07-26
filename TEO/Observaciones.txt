@@ -2,13 +2,17 @@ EXAMEN FINAL
 - Informe la politica de nustro SGBD - POST SERVER2
     Definición
         - Registro (si id puede tener solo un post, varios?, partir tabala o no, Consultas usuario, fecha)
-        - definicion de claves (foreana, PK)
-        - min 50 registros
+        - definicion de claves (foreana, PK) / codigo? o solo definicion
+        - min 50 registros - BIEN
         - que consultas se pueden hacer
+            Mostrar por usuario todos los post 
+            Mostrar todos los usuarios
+            Mostrar reacciones y/o comentarios por usuario (historial)
         TITANIC  (para ver como se esta indexando la información)
     Indexacion
         - Tipo de Indexacion (Clustered y Unclustered)
-        - Definir clave de Busqueda
+        - Definir clave de Busqueda  
+            userid
     Diagrama de clases 
         - general ( clases y atributos )
         - detalle (clase ... at ... funciones ...)
@@ -19,8 +23,8 @@ EXAMEN FINAL
         | Ingresar el dataSet 
         | Visualizar con Graphviz
     Definición de Politicas SGBD
-        | Disco (sectores)
-        | Buffer (replacer)
+        | Disco (sectores) // cilindrica
+        | Buffer (replacer) // CLOCK
 
 Cada nodo va apuntar a un registro o a un bloque ??
 
@@ -31,12 +35,10 @@ HEAP FILE PARA DATOS ELIMINADOS
 -- > 1. Actualizar capacidad de Disco cuando se agrega desde Buffer
 
 ----- BUFFER  --------------------------------------->
--- > HEAP FILE
--- > MODIFICAR 
-    BufferPool / Capacidad de memoria con paginas y BTREE
-    Definir cual es el mejor LRU URL 
+        vector<BPlusTree<int>*> indices; (82)
 
 ----- B+TREE  --------------------------------------->
+    Recuperar B+TREE APARTIR DE ARCHIVO  (114-169)
 
 ----- REQUERIMIENTOS - CONSULTAS  --------------------------------------->
     - USER( insert, delete, select )

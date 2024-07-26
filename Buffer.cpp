@@ -114,26 +114,8 @@ class Buffer {
             for (int i = 0; i < nFrames; ++i) { BufferPool.push_back(Frame(i));}
             if(_choice == 1) my_clock = new Clock(nFrames);
             else if(_choice == 0)my_LRU = new LRU();
-            // CREAR HEAP FILE
-            //crearDirPaginas();
             _mkdir("BUFFERPOOL");
         }
-
-        /*void crearDirPaginas(){
-            std::ifstream origen("dirBloques.txt");
-            // Abrir el archivo de destino en modo escritura
-            std::ofstream destino(dirPaginas);
-
-            // Leer del archivo de origen y escribir en el archivo de destino
-            std::string linea;
-            while (std::getline(origen, linea)) {
-                destino << linea << std::endl;
-            }
-
-            // Cerrar ambos archivos
-            origen.close();
-            destino.close();
-        }*/
     
         void flushPage(int _idPage){
             ofstream block(getdirBloque(_idPage)); 
@@ -340,7 +322,6 @@ class Buffer {
             // cout << " LRU (0) o CLOCK (1) > ";cin>>choice;
 
             // Buffer buffer(my_disk->getCapacidadBloque() *3, my_disk->getCapacidadBloque(), my_disk, choice);
-            
             do {
                 printBuffer();
                 displayMenu();
@@ -420,24 +401,33 @@ class Buffer {
                     return indices[i];
                 }
             }
+            return nullptr;
+        }
+
+        BPlusTree<int>*  createNewIndice(string _relacion, string _claveBusqueda){
             BPlusTree<int>* newIndice = new BPlusTree<int>(8, _relacion, _claveBusqueda);
             pair<int, int> bloques = getBloques(_relacion);
             newIndice->set(0, make_pair(bloques.first,0));
             indices.push_back(newIndice);
             return newIndice;
         }
-
+        // no existe el BPLUS TREES
+        // NO EXISTE EL INDICE EN EL BPLUS TREE
         int getBloque(string _relacion, string _claveBusqueda, int key){
             BPlusTree<int>* indice = getIndice(_relacion, _claveBusqueda);
-            Node<int>* NodoHoja = indice->findLeaf(8);
-
-            for(int i=0; i<NodoHoja->keys.size(); i++){
-                cout<<NodoHoja->keys[i]<<" (";
-                cout<<NodoHoja->rutas[i].first<<"-"<<NodoHoja->rutas[i].second<<")\n";
-                if(NodoHoja->keys[i] == key){
-                    return NodoHoja->rutas[i].first;
+            pair<int, int> ruta;
+            if(!indice){
+                indice = createNewIndice(_relacion, _claveBusqueda);
+                ruta = indice->getRuta(0);
+                return ruta.first;
+            }else{
+                ruta = indice->getRuta(key);
+                if(ruta.first == 0 && ruta.second == 0){
+                    pair<int, int> bloques = getBloques(_relacion);
+                    return bloques.first;
+                }else{
+                    return ruta.first;
                 }
             }
         }
 };
-

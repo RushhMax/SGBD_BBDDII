@@ -175,6 +175,18 @@ class BPlusTree {
 
     int get(int key) { return findLeaf(key)->get(key); }
 
+    pair<int, int> getRuta(int key){
+      Node<int>* NodoHoja = findLeaf(key);
+      for (int i = 0; i < NodoHoja->keys.size(); i++){
+        cout << NodoHoja->keys[i] << " (";
+        cout << NodoHoja->rutas[i].first << "-" << NodoHoja->rutas[i].second << ")\n";
+        if (NodoHoja->keys[i] == key){
+          return make_pair(NodoHoja->rutas[i].first, NodoHoja->rutas[i].second);
+        }
+      }
+      return make_pair(0,0);
+    }
+
     void set(T key, pair<int, int> ruta) {
       Node<T> *leaf = findLeaf(key);
       leaf->set(key, ruta);
@@ -484,8 +496,8 @@ class BPlusTree {
 
 //   BPlusTree<int> tree(8, "", ""); // d = 7
 //   //vector<int> random_list = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}; 278
-//   vector<int> random_list = {200,150,8,35,230,1,120,50,30,2,300,25,12,5,10,43,3,258,60,129,270,7,38,80,180,280,17,45,110,4,13,6,9,11,31,51,81,91,101};
-
+//   //vector<int> random_list = {200,150,8,35,230,1,120,50,30,2,300,25,12,5,10,43,3,258,60,129,270,7,38,80,180,280,17,45,110,4,13,6,9,11,31,51,81,91,101};
+//   vector<int> random_list = {0};
 //   for (int i : random_list){
 //     cout << endl
 //           << "-------------" << endl;
@@ -499,39 +511,50 @@ class BPlusTree {
 //     }
 
 
-//     // cout<<endl;
-//     // int x = 0;
-//     // do{
-//     //     tree.set(x, make_pair (0,0));
-//     //     cout<<" INGRESAR >";cin>>x;
-//     // }while(x != -1);
+//     // // cout<<endl;
+//     // // int x = 0;
+//     // // do{
+//     // //     tree.set(x, make_pair (0,0));
+//     // //     cout<<" INGRESAR >";cin>>x;
+//     // // }while(x != -1);
     
 
-//     cout << endl
-//          << "-------------------------" << endl;
-//     cout << "All keys are inserted ..." << endl;
-//     cout << "-------------------------" << endl
-//          << endl;
+//     // cout << endl
+//     //      << "-------------------------" << endl;
+//     // cout << "All keys are inserted ..." << endl;
+//     // cout << "-------------------------" << endl
+//     //      << endl;
 
-//     tree.print(nullptr,"",false);
-//     tree.remove(3);
-//     cout << "\n REMOVE 3" << endl;
-//     tree.print(nullptr,"",false);
-//     tree.remove(1);
-//     cout << "\n REMOVE 1" << endl;
-//     tree.print(nullptr,"",false);
-//     tree.remove(270);
-//     cout << "\n REMOVE 270" << endl;
-//     tree.print(nullptr,"",false);
-//     tree.remove(51);
-//     cout << "\n REMOVE 51" << endl;
-//     tree.print(nullptr,"",false);
-//     tree.remove(230);
-//     tree.remove(258);
-//     tree.remove(280);
-//     tree.remove(300);
+//     // tree.print(nullptr,"",false);
+//     // tree.remove(3);
+//     // cout << "\n REMOVE 3" << endl;
+//     // tree.print(nullptr,"",false);
+//     // tree.remove(1);
+//     // cout << "\n REMOVE 1" << endl;
+//     // tree.print(nullptr,"",false);
+//     // tree.remove(270);
+//     // cout << "\n REMOVE 270" << endl;
+//     // tree.print(nullptr,"",false);
+//     // tree.remove(51);
+//     // cout << "\n REMOVE 51" << endl;
+//     // tree.print(nullptr,"",false);
+//     // tree.remove(230);
+//     // tree.remove(258);
+//     // tree.remove(280);
+//     // tree.remove(300);
 
 //     Node<int>* NodoHoja = tree.findLeaf(8);
+
+//     for(int i=0; i<NodoHoja->keys.size(); i++){
+//       cout<<NodoHoja->keys[i]<<" (";
+//       cout<<NodoHoja->rutas[i].first<<"-"<<NodoHoja->rutas[i].second<<")\n";
+//     }
+
+//     NodoHoja = tree.findLeaf(15);
+
+//     cout<<"NUEVO NODO HOJA";
+//     if(!NodoHoja) cout<<" NO EXISTE ";
+//     cout<<NodoHoja->isLeaf;
 
 //     for(int i=0; i<NodoHoja->keys.size(); i++){
 //       cout<<NodoHoja->keys[i]<<" (";

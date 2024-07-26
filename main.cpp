@@ -4,13 +4,13 @@
 
 using namespace std;
 
-void insert(Buffer *_myBuffer)
-{
-    int _idPage;
-    cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
-    cin >> _idPage;   
-    //_myBuffer->pinPage(_idPage, 'W', 0);
-    int R = 0; // POLITICA RLV / RLF
+void insert(Buffer *_myBuffer){
+    // int _idPage;
+    // cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
+    // cin >> _idPage;   
+    // _myBuffer->pinPage(_idPage, 'W', 0);
+    
+    int R = 0; // POLITICA RLV 0 / RLF 1
     string n;
     string archivo, relacion;
     cout << "\n----- ADICIONANDO REGISTROS -----\n";
@@ -18,19 +18,22 @@ void insert(Buffer *_myBuffer)
     std::cout << " n> (n/*)   \t";cin >> n; /// 1
     std::cout << " Archivo >  \t ";cin >> archivo;
     std::cout << " Relacion > \t";cin >> relacion;
-    // std::cout<<" Registro Long FIJA (1) O Varible(0) > ";cin>>R;
     archivo = "DATABASE/" + archivo;
-    // saltandonos encabezado
+    // std::cout<<" Registro Long FIJA (1) O Varible(0) > ";cin>>R;
+
     std::ifstream data(archivo);
     std::string registro;
     std::getline(data, registro);
 
     int loopLimit = (n == "*") ? INT_MAX : stoi(n);
-
     for (int i = 0; i < loopLimit; ++i){
         if (!std::getline(data, registro)){
             break;
         } // Salir del bucle si no hay más registros
+        vector<string> vector_registro = getVectorRegistro(registro);
+        int _idPage = _myBuffer->getBloque(relacion, "userid", stoi(vector_registro[0]));
+        _myBuffer->pinPage(_idPage, 'W', 0);
+        cout<<" IDE PAGE >"<<_idPage<<endl;
         if (!adicionarRegistroPage(_idPage, registro, relacion, R)){
             // adquiri nueva pagina indices
             std::cout << " No hay espacio suficiente en PAGES. Liberar o agregar nueva pagina! \n";
@@ -39,10 +42,34 @@ void insert(Buffer *_myBuffer)
     data.close();
 }
 
-void consultas(Buffer* _myBuffer){
+void delet(Buffer *_myBuffer){
+    int _idPage;
+    cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
+    cin >> _idPage;   
+    _myBuffer->pinPage(_idPage, 'W', 0);
+    string relacion, condicion;
+    std::cout << " Eliminando registro de la (relacion) donde (condicion) >\n";
+    std::cout << " Relacion > ";cin >> relacion;
+    std::cout << " Condicion > ";getline(std::cin >> std::ws, condicion);
+    registroPage(_idPage, relacion, condicion, "", 0);
+}
+
+void consultas(Buffer *_myBuffer){
+    int _idPage;
+    cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
+    cin >> _idPage;   
+    _myBuffer->pinPage(_idPage, 'R', 0);
+    string relacion, condicion, atributo;
+    std::cout << " Consultando en la (relacion) del registro donde (condicion) >\n";
+    std::cout << " Relacion > ";
+    cin >> relacion;
+    std::cout << " Condicion > ";
+    getline(std::cin >> std::ws, condicion);
+    registroPage(_idPage, relacion, condicion, atributo, 1);
+}
+
+void requerimientos(Buffer* _myBuffer){
     int op;
-    
-    //cout << "\n----- MODIFICANDO PAGINA "<<_idPage<<" -----\n";
     do{
         cout << "_______________________ MENU _______________________\n\n";
         cout << "1. INSERT \n";
@@ -52,28 +79,15 @@ void consultas(Buffer* _myBuffer){
         cout << "__________________________________________________\n\n";
         cout << "Elija una opcion: ";
         cin >> op;
-
-        int _idPage;
-        cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
-        cin >> _idPage;       
+   
         if (op == 1) {
             insert(_myBuffer);
         }
         else if (op == 2){
-            _myBuffer->pinPage(_idPage, 'W', 0);
-            string relacion, condicion;
-            std::cout << " Eliminando registro de la (relacion) donde (condicion) >\n";
-            std::cout << " Relacion > ";cin >> relacion;
-            std::cout << " Condicion > ";getline(std::cin >> std::ws, condicion);
-            registroPage(_idPage, relacion, condicion, "", 0);
+            delet(_myBuffer);
         }
         else if (op == 3){
-            _myBuffer->pinPage(_idPage, 'R', 0);
-            string relacion, condicion, atributo;
-            std::cout << " Consultando en la (relacion) del registro donde (condicion) >\n";
-            std::cout << " Relacion > ";cin >> relacion;
-            std::cout << " Condicion > ";getline(std::cin >> std::ws, condicion);
-            registroPage(_idPage, relacion, condicion, atributo, 1);
+            consultas(_myBuffer);
         }else if (op == 4){
             cout << " Saliendo \n ";
         }
@@ -112,9 +126,9 @@ int main(){
     Buffer* myBuffer = new Buffer(Disco1->getCapacidadBloque() *3, Disco1->getCapacidadBloque(), Disco1, choice);
     myBuffer->printBuffer();
     
-
+    requerimientos(myBuffer);
     do {
-        consultas(myBuffer);
+        
         cout << "\n----- MENU SISTEMA -----\n";
         cout << "1. MENU DISCO \n";
         cout << "2. MENU BUFFER\n";
@@ -133,7 +147,7 @@ int main(){
                 break;
             }
             case 3: {
-                consultas(myBuffer);
+                requerimientos(myBuffer);
                 break;
             }
             case 4: {

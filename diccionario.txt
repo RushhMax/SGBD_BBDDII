@@ -1,6 +1,6 @@
-Titanic#PassengerId#int#3#Survived#int#2#Pclass#int#2#Name#varchar#58#Sex#varchar#7#Age#int#3#SibSp#int#2#Parch#int#2#Ticket#varchar#19#Fare#float#8#Cabin#varchar#5#Embarked#varchar#2_21#41
-Housing#price#int#8#area#int#5#bedrooms#int#1#bathrooms#int#1#stories#int#1#mainroad#boolean#3#guestroom#boolean#3#basement#boolean#3#hotwaterheating#boolean#3#airconditioning#boolean#3#parking#int#1#prefarea#boolean#3#furnishingstatus#varchar#142_41#61
-Post#postid#int#3#userid#int#3#pdate#int#9#content#varchar#78_0#10
-User#userid#int#3#nickname#varchar#8_11#13
-Reaction#reactionid#int#2#userid#int#3#postid#int#3#pdate#int#9_14#16
-Comment#commentid#int#2#userid#int#3#postid#int#3#content#varchar#78_17#20
+Titanic#PassengerId#int#3#Survived#int#2#Pclass#int#2#Name#varchar#58#Sex#varchar#7#Age#int#3#SibSp#int#2#Parch#int#2#Ticket#varchar#19#Fare#float#8#Cabin#varchar#5#Embarked#varchar#2_41#61
+Housing#price#int#8#area#int#5#bedrooms#int#1#bathrooms#int#1#stories#int#1#mainroad#boolean#3#guestroom#boolean#3#basement#boolean#3#hotwaterheating#boolean#3#airconditioning#boolean#3#parking#int#1#prefarea#boolean#3#furnishingstatus#varchar#142_62#72
+Post#postid#int#3#userid#int#3#pdate#int#9#content#varchar#78_1#20
+User#userid#int#3#nickname#varchar#8_21#26
+Reaction#reactionid#int#2#userid#int#3#postid#int#3#pdate#int#9_27#32
+Comment#commentid#int#2#userid#int#3#postid#int#3#content#varchar#78_33#40

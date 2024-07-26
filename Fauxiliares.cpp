@@ -447,6 +447,15 @@ bool adicionarRegistroPage(int _idPage, std::string _registro, std::string _rela
     }
     return false;
 }
+vector<string> getVectorRegistro(string _registro){
+    vector<string> arrayRegistro;
+    string aux;
+    stringstream registro(_registro);
+    while(getline(registro, aux, ';')){
+        arrayRegistro.push_back(aux);
+    }
+    return arrayRegistro;
+}
 vector<string> getVectorRegistro(string _registro, string _relacion, bool _tipoR){
     vector<string> arrayRegistro; // Nuestro registro en un vector de atributos
 

@@ -23,7 +23,7 @@ class Disco{
         long long int capacBloque; 
         std::string diccionario = "diccionario.txt";
         std::string directorioBloques = "dirBloques.txt";
-        // INDICES
+        //vector<BPlusTree<int>*> indices;
 
     public:
         // CONSTRUCTORES
