@@ -5,6 +5,8 @@
 #include <tuple>
 #include <vector>
 
+#include "BPlusTree.cpp"
+
 int search_number(const std::string& str, size_t pos) {
     int number = 0;
     bool flag = false;
@@ -53,8 +55,12 @@ std::vector<std::tuple<int, int, int>> get_leaf_to_bplustree(const std::string& 
 }
 
 int main(int argc, char const* argv[]) {
+    BPlusTree<int> bpt(4, "Post", "userid");
     std::vector<std::tuple<int, int, int>> leaf = get_leaf_to_bplustree("INDICES/Post_userid.txt");
     for (const auto& dato : leaf)
-        std::cout << std::get<0>(dato) << " " << std::get<1>(dato) << " " << std::get<2>(dato) << std::endl;
+        bpt.set(std::get<0>(dato), std::make_pair(std::get<1>(dato), std::get<2>(dato)));
+    bpt.print();
+    Node<int>* new_node = bpt.findLeaf(15);
+    if (!new_node) std::cout << "existence" << std::endl;
     return 0;
 }
