@@ -78,7 +78,7 @@ class Clock {
             return clock_hand;
         }
 
-        int victima(){ // puede efectuarse bucle
+        int victima(){
             for(int i=0; i<3; i++){
                 int clockCont = clock_hand; 
                 do{
@@ -86,13 +86,13 @@ class Clock {
                     if(!Frames[clock_hand].pinned){
                         if(Frames[clock_hand].refBit  == 0){
                             if( Frames[clock_hand].dirtyBit == 0 ) { return clock_hand;}
-                            else if (i==2){return clock_hand;}
+                            else if (i=2){return clock_hand;}
                         }else Frames[clock_hand].refBit  = 0;
                     }
                     clock_hand = getNextClock_hand();
                 }while(clockCont != clock_hand);
             }
-            return -1;
+            return clock_hand;
         }
 
         void printClock(){

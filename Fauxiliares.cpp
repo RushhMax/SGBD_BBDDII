@@ -44,17 +44,6 @@ vector<string> getHeader(string _header){
     }
     return vectorHeader;
 }
-string getNombreRelacion(int nroRelacion){
-    string aux;
-    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
-    for(int i=0; i<nroRelacion; i++){
-        getline(diccionario, aux);
-    }
-    stringstream relacion(aux);
-    getline(relacion, aux, '#');
-    diccionario.close();
-    return aux;
-}
 
 void imprimirArchivo(string _string){
     cout<<"\nImprimiendo archivo . . . \n\n";
@@ -133,6 +122,35 @@ int NroRelacion(std::string _relacion){
     }
     return 0; 
 }
+string getNombreRelacion(int nroRelacion){
+    string aux;
+    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
+    for(int i=0; i<nroRelacion; i++){
+        getline(diccionario, aux);
+    }
+    stringstream relacion(aux);
+    getline(relacion, aux, '#');
+    diccionario.close();
+    return aux;
+}
+string getPrimaryKey(string _relacion){
+    string aux;
+    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
+    while (getline(diccionario, aux)){
+        std::stringstream strRelacion(aux);
+        getline(strRelacion,aux, '#');
+        if(_relacion == aux){
+            getline(strRelacion,aux, '_');
+            getline(strRelacion,aux, '_');
+            getline(strRelacion,aux, '#');
+            diccionario.close();
+            return aux;
+        }    
+    }
+    diccionario.close();
+    cout<<"\n! RELACION NO ENCONTRADA !\n";
+    return "";
+}
 // EDITA EL DIRECTORIO O CABEZALES DE ARCHIVOS
 void editarCabeceras(int Linea, int Posicion, std::string _nRelacion,std::string _capacLibre, int _tipoB, std::string _archivo){
     //(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(idPage))
@@ -205,6 +223,8 @@ string getEsquema(string _relacion){
         getline(relaciones, _esquema);
     }
     relaciones.close();
+    stringstream esquema(_esquema);
+    getline(esquema, _esquema, '_');
     return _esquema;
 }
 // Funcion devuelve cap max del registro
@@ -252,28 +272,19 @@ int GetnroAtributo(string _atributo, int _tipoR, string _relacion){
 ////////////////////////// RLF //////////////////////////////7
 std::vector<pair<string,int>> longMaxEsquema(string _relacion) {
     std::vector<pair<string,int>> longMax; 
-    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
-    std::string linea = "";
-    bool relacionEncontrada = false;
+    std::string linea = getEsquema(_relacion);
     string tipoAtributo;
-    while (std::getline(diccionario, linea) && !relacionEncontrada ){
-        std::stringstream lin(linea); // de nuestro diccionario buscamos la tabla y el #4 y #7  #10 etc (vector) 
-        std::getline(lin, linea, '#');
-        if (linea == _relacion){ // if linea es igual a la relacion que estamos buscando
-            int n=1; //Tabla1#ID#int#4#Name#String#10#Edad#int#2
-            while(std::getline(lin, linea, '#')){
-                if(n%2 == 0){ tipoAtributo = linea; }
-                if(n%3 == 0){ 
-                    longMax.push_back(make_pair(tipoAtributo,std::stoi(linea))); 
-                    n = 0;
-                }
-                n++;
-            }
-            relacionEncontrada = true;
+    std::stringstream lin(linea); // de nuestro diccionario buscamos la tabla y el #4 y #7  #10 etc (vector) 
+    std::getline(lin, linea, '#');
+    int n=1; //Tabla1#ID#int#4#Name#String#10#Edad#int#2
+    while(std::getline(lin, linea, '#')){
+        if(n%2 == 0){ tipoAtributo = linea; }
+        if(n%3 == 0){ 
+            longMax.push_back(make_pair(tipoAtributo,std::stoi(linea))); 
+            n = 0;
         }
+        n++;
     }
-    diccionario.close();
-    if(!relacionEncontrada){std::cout<<" RELACION NO ENCONTRADA! "; return longMax;}
     return longMax;
 } 
 // Funcion para crear un registro de longitud fija de acuerdo a su relcion
@@ -372,7 +383,7 @@ void eliminarSLOTS(int _idPage, vector<int> _slots){
     int i = 0; // 8|7|5|6|_|
     while (getline(slots, lineaAux, '|')){
         if(lineaAux == "_") break;
-        cout<<" stoi(lineaAux) == _slots[i] "<<stoi(lineaAux)<<" == "<<_slots[i] <<endl;
+        //cout<<" stoi(lineaAux) == _slots[i] "<<stoi(lineaAux)<<" == "<<_slots[i] <<endl;
         if(stoi(lineaAux) == _slots[i] ) { 
             i++;
             if(i == _slots.size()) {break;} 
@@ -395,7 +406,7 @@ void eliminarSLOTS(int _idPage, vector<int> _slots){
 }
 ////////////////////////// PAGINA //////////////////////////////7
 // FUNCION PARA ADICIONAR UN REGISTRO EN UNA TABLA ESPECIFICA
-bool adicionarRegistroPage(int _idPage, std::string _registro, std::string _relacion, bool tipoR){
+int adicionarRegistroPage(int _idPage, std::string _registro, std::string _relacion, bool tipoR){
     // CREAMOS RLV O RLF
     std::string R = ""; 
     if(tipoR) {R +=  crearRLF(_registro, _relacion);  }
@@ -405,24 +416,21 @@ bool adicionarRegistroPage(int _idPage, std::string _registro, std::string _rela
     int espacLibrePage = getcapacLibrePagina(_idPage); 
     int tipoPage = getTipoPagina(_idPage); // Tener en consideracion el page
     
-    cout<<R.size()<<" "<<espacLibrePage<<" "<<tipoR<<" "<<tipoPage<<endl;
+    //cout<<R.size()<<" "<<espacLibrePage<<" "<<tipoR<<" "<<tipoPage<<endl;
     if(R.size() <= espacLibrePage && (tipoR == tipoPage || tipoPage == 2)){  // y si es del mismo tipo de R
         espacLibrePage -= R.size();
         std::string _nroR = std::to_string(NroRelacion(_relacion));
         if(tipoPage == 2 && tipoR == 0){
-            cout<<"\n REGISTRO EN PAGINA TIPO 2 ACTUALIZANDO!";
             adicionarRLFArchivo("_|\n", getdirPage(_idPage));
         }
-        //if(tipoPage == 0) 
         agregarSLOTS(_idPage, R.size());
         adicionarRLFArchivo(R, getdirPage(_idPage));
         editarCabeceras(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(_idPage));
         
         // editar HEAP FILE 
-        //editarCabeceras(idPage,0, "|" ,std::to_string(espacLibrePage), tipoR, "dirPaginas.txt"); 
-        return true;
+        return espacLibrePage;
     }
-    return false;
+    return -1;
 }
 vector<string> getVectorRegistro(string _registro){
     vector<string> arrayRegistro;
