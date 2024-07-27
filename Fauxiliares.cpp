@@ -375,10 +375,12 @@ void eliminarSLOTS(int _idPage, vector<int> _slots){
         cout<<" stoi(lineaAux) == _slots[i] "<<stoi(lineaAux)<<" == "<<_slots[i] <<endl;
         if(stoi(lineaAux) == _slots[i] ) { 
             i++;
-            if(i == _slots.size()) break;
+            if(i == _slots.size()) {break;} 
         } 
         else { nuevaLinea += lineaAux + "|"; }
     }
+    getline(slots, lineaAux);
+    nuevaLinea += lineaAux;
     nuevo_contenido<<nuevaLinea<<endl;
 
     getline(archiv, lineaAux); // REGISTROS
@@ -548,12 +550,13 @@ void modificarRegistroPage(int _idPage, string _relacion,vector<pair<int,int>> _
 // FUNCION PARA ELIMINAR/MODFICAR UN REGISTRO DE LA PAGINA 
 //ACCION = 0 ELIMINAR  || ACCION = 1 MODIFICAR
 void registroPage(int _idPage, string _relacion, string _condicion, string _atributo, bool _accion){
-    //std::cout<<" EN FUNCION ELIMINAR !\n";
-    int tipoPage = getTipoPagina(_idPage);
-    int espacioLibre = getcapacLibrePagina(_idPage);
+    int tipoPage = getTipoPagina(_idPage); // RLV Y RLF
+    int espacioLibre = getcapacLibrePagina(_idPage); 
 
     fstream pagina(getdirPage(_idPage), std::ios::in | std::ios::out);
     if (!pagina) { std::cerr << "\n\n Page no se encuentra en el buffer \n"<< std::endl; return;}
+    
+    // LEYENDO PAGINA
     string registros = "";
     getline(pagina, registros);// CABECERA
     getline(pagina, registros);// SLOTS
@@ -561,7 +564,9 @@ void registroPage(int _idPage, string _relacion, string _condicion, string _atri
     string registro;
     vector<pair<int,int>> posiciones;
     vector<int> vectorSlots;
+
     vector<pair<string,int>> longitudes = longMaxEsquema(_relacion);
+    
     if(tipoPage == 1) {// FIJA
         int longitudFija = getCapacMaxRegistro(longitudes);
         getline(pagina, registros); // REGISTROS 
@@ -617,12 +622,5 @@ void registroPage(int _idPage, string _relacion, string _condicion, string _atri
         if(tipoPage == 0) {// VARIABLE
             eliminarSLOTS(_idPage, vectorSlots);// EDITAR SLOTS ELIMINAR
         }
-    }// IF _ACCION ES 1 MODIFICAR
-    // else if(_accion == 1){
-    //     //modificarRegistroPage(_idPage, _relacion, posiciones, _atributo, tipoPage);
-    //     // editarCabeceras(1, 0,"|", to_string(espacioLibre) , tipoPage, getdirPage(_idPage));
-    //     // if(tipoPage == 0) {// VARIABLE
-    //     //     eliminarSLOTS(_idPage, vectorSlots);// EDITAR SLOTS ELIMINAR
-    //     // }
-    // }
+    }
 }

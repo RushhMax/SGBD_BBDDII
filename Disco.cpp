@@ -23,10 +23,11 @@ class Disco{
         long long int capacBloque; 
         std::string diccionario = "diccionario.txt";
         std::string directorioBloques = "dirBloques.txt";
-        //vector<BPlusTree<int>*> indices;
-        vector<HeapFile*> heapsfiles;
 
     public:
+        vector<BPlusTree<int>*> indices;
+        vector<HeapFile*> heapsfiles;
+
         // CONSTRUCTORES
         //Disco(); // deafult
         Disco(int _platos = 4, int _pistas = 8, int _sectores = 20, long long int _capacSector = 500, int _capacidadBloque = 2000);
@@ -38,7 +39,7 @@ class Disco{
         int getCapacidadBloque(){ return capacBloque; };
         void adicRelacion(std::string _archivo);
         vector<string> getSectores(int _nroBloque);
-        void indices(int _nBloque);
+        void createIndices(int _nBloque);
         void guardarBloqueSector(int nBloque);
         void printDisco();
 };
@@ -56,8 +57,8 @@ Disco::Disco(int _platos, int _pistas, int _sectores, long long int _capacSector
     this->capacBloque = _capacidadBloque;
     this->nroBloques = this->capacidadD / this->capacBloque;
 
-    crearBloques();
-    crearEstructura();
+    //crearBloques();
+    //crearEstructura();
     crearHeapsFiles();
 }
 
@@ -213,7 +214,7 @@ vector<string> Disco::getSectores(int _nroBloque){
     directorio.close();
     return sectores;
 }
-void Disco::indices(int _nBloque){
+void Disco::createIndices(int _nBloque){
     ifstream Bloque(getdirBloque(_nBloque));
     string registros;
     int nSector = 0, capacidadSectori = capacidadS;
@@ -326,7 +327,7 @@ void Disco::guardarBloqueSector(int nBloque){
         editarCabeceras(nBloque, nSector+1, "|" , to_string(capacidadS), 2, directorioBloques);
     }
 
-    indices(nBloque);
+    createIndices(nBloque);
 }
 // FUNCION QUE IMPRIME CARACTERISCAS DE DISCO
 void Disco::printDisco(){
