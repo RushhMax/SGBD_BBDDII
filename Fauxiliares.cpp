@@ -1,11 +1,4 @@
-#include <iostream>
-#include <string>
-#include <vector>
-#include <sstream> // para mis stringsteam
-#include <fstream>
-#include <algorithm> // Para std::remove_if
-#include <cctype>    // Para std::isspace
-#include <iomanip> // Para std::setw
+#include "HeapFile.cpp"
 
 using namespace std;
 
@@ -62,25 +55,7 @@ string getNombreRelacion(int nroRelacion){
     diccionario.close();
     return aux;
 }
-pair<int,int> getBloques(string _relacion){
-    // User#userid#int#3#nickname#varchar#8_11#13
-    string aux;
-    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
-    while(getline(diccionario, aux)){
-        stringstream relacion(aux);
-        getline(relacion, aux, '#');
-        if(aux == _relacion){
-            getline(relacion, aux, '_');
-            getline(relacion, aux, '#');
-            int primerBloqueAsignado = stoi(aux); 
-            getline(relacion, aux, '#');
-            int ultimoBloqueAsignado = stoi(aux); 
 
-            return make_pair(primerBloqueAsignado, ultimoBloqueAsignado);
-        }
-    }
-    return make_pair(0,0); // No encontro
-}
 void imprimirArchivo(string _string){
     cout<<"\nImprimiendo archivo . . . \n\n";
     std::ifstream archivo(_string);
