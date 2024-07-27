@@ -5,10 +5,10 @@
 using namespace std;
 
 void insert(Buffer *_myBuffer){
-    int _idPage;
-    cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
-    cin >> _idPage;   
-    _myBuffer->pinPage(_idPage, 'W', 0);
+    // int _idPage;
+    // cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
+    // cin >> _idPage;   
+    //_myBuffer->pinPage(_idPage, 'W', 0);
     int R = 0; // POLITICA RLV 0 / RLF 1
     string n;
     string archivo, relacion;
@@ -24,20 +24,27 @@ void insert(Buffer *_myBuffer){
     std::string registro;
     std::getline(data, registro);
 
+    //string claveBusqueda = "";
+    string claveBusqueda = getPrimaryKey(relacion);
+
     int loopLimit = (n == "*") ? INT_MAX : stoi(n);
     for (int i = 0; i < loopLimit; ++i){
         if (!std::getline(data, registro)){ break; } // Salir del bucle si no hay más registros
  
+        vector<string> vector_registro = getVectorRegistro(registro);
 
+        int _idPage = _myBuffer->getBloque(relacion,claveBusqueda, stoi(vector_registro[0]));
+        cout<<" IDE PAGE >"<<_idPage<<endl;
+        _myBuffer->pinPage(_idPage, 'W', 0);
+        //cout<<" IDE PAGE >"<<_idPage<<endl;
+        int espacioLibre =  adicionarRegistroPage(_idPage, registro, relacion, R);
+        if (espacioLibre != -1){
+            _myBuffer->addRuta(relacion, claveBusqueda, stoi(vector_registro[0]), make_pair(_idPage, 0));
+            _myBuffer->updateCapacBloqueHF(relacion, _idPage, espacioLibre);
+            // editar heapFILE, adicionar ruta a INDICE
 
-        // vector<string> vector_registro = getVectorRegistro(registro);
-        
-        // int _idPage = _myBuffer->getBloque(relacion, "userid", stoi(vector_registro[0]));
-        // _myBuffer->pinPage(_idPage, 'W', 0);
-        // cout<<" IDE PAGE >"<<_idPage<<endl;
-        if (!adicionarRegistroPage(_idPage, registro, relacion, R)){
             // adquiri nueva pagina indices
-            std::cout << " No hay espacio suficiente en PAGES. Liberar o agregar nueva pagina! \n";
+            //std::cout << " No hay espacio suficiente en PAGES. Liberar o agregar nueva pagina! \n";
         }
     }
     data.close();

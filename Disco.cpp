@@ -132,9 +132,9 @@ void Disco::crearHeapsFiles(){
         heapsfiles.push_back(new HeapFile(relaciones[i]));
     }
 
-    for(int i=0; i<heapsfiles.size(); i++){
-        heapsfiles[i]->print();
-    }   
+    // for(int i=0; i<heapsfiles.size(); i++){
+    //     heapsfiles[i]->print();
+    // }   
 }
 
 // IMPORTAR TABLA MANUAL o AUTOMATICO // asignar numeros de bloque
