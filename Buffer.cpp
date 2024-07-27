@@ -422,7 +422,8 @@ class Buffer {
                 return ruta.first;
             }else{
                 ruta = indice->getRuta(key);
-                if(ruta.first == 0 && ruta.second == 0){
+                if(ruta.first == 0 && ruta.second == 0){ // quiere decir que no existe un registro con
+                    //indice->set(key, make_pair());
                     pair<int, int> bloques = getBloques(_relacion);
                     return bloques.first;
                 }else{

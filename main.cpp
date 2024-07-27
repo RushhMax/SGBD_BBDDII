@@ -5,11 +5,6 @@
 using namespace std;
 
 void insert(Buffer *_myBuffer){
-    // int _idPage;
-    // cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
-    // cin >> _idPage;   
-    // _myBuffer->pinPage(_idPage, 'W', 0);
-    
     int R = 0; // POLITICA RLV 0 / RLF 1
     string n;
     string archivo, relacion;
@@ -102,7 +97,7 @@ int main(){
     Disco* Disco1;
     int opcion; 
     int platos, pistas, sectores, bloques, tamSector, tamBloque;
-    cout << " > Crear DISCO " << endl;
+    //cout << " > Crear DISCO " << endl;
     //cout << " DEFAULT (0) o MANUAL (1) > ";cin>>opcion;
     opcion = 0;
     if(opcion == 0) {  Disco1 = new Disco(); }

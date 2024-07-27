@@ -24,6 +24,7 @@ class Disco{
         std::string diccionario = "diccionario.txt";
         std::string directorioBloques = "dirBloques.txt";
         //vector<BPlusTree<int>*> indices;
+        vector<HeapFile*> heapsfiles;
 
     public:
         // CONSTRUCTORES
@@ -31,6 +32,7 @@ class Disco{
         Disco(int _platos = 4, int _pistas = 8, int _sectores = 20, long long int _capacSector = 500, int _capacidadBloque = 2000);
         void crearEstructura();
         void crearBloques(); // FUERA DE CLASE
+        void crearHeapsFiles();
         ~Disco(){ };
 
         int getCapacidadBloque(){ return capacBloque; };
@@ -54,8 +56,9 @@ Disco::Disco(int _platos, int _pistas, int _sectores, long long int _capacSector
     this->capacBloque = _capacidadBloque;
     this->nroBloques = this->capacidadD / this->capacBloque;
 
-    //crearBloques();
-    //crearEstructura();
+    crearBloques();
+    crearEstructura();
+    crearHeapsFiles();
 }
 
 // CONSTRUCTOR DE ESTRUCTURA DE DISCO 
@@ -111,6 +114,26 @@ void Disco::crearBloques(){
         nuevoBloque<<std::endl;
         nuevoBloque.close();
     }_dirBloques.close(); 
+}
+
+void Disco::crearHeapsFiles(){
+    cout<<" Creando HEAPSFILES \n";
+    string aux;
+    vector<string> relaciones;
+    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
+    while(getline(diccionario, aux)){
+        stringstream relacion(aux);
+        getline(relacion, aux, '#');
+        relaciones.push_back(aux);
+    }
+    diccionario.close();
+    for(int i=0; i<relaciones.size(); i++){
+        heapsfiles.push_back(new HeapFile(relaciones[i]));
+    }
+
+    for(int i=0; i<heapsfiles.size(); i++){
+        heapsfiles[i]->print();
+    }   
 }
 
 // IMPORTAR TABLA MANUAL o AUTOMATICO // asignar numeros de bloque
