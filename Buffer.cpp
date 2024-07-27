@@ -80,6 +80,7 @@ class Buffer {
         int choice_replacer;
         string dirPaginas = "dirPaginas.txt";
         vector<BPlusTree<int>*> indices;
+        vector<HeapFile*> heapsfiles;
 
         int hit_count;
         int miss_count;
@@ -114,6 +115,10 @@ class Buffer {
             for (int i = 0; i < nFrames; ++i) { BufferPool.push_back(Frame(i));}
             if(_choice == 1) my_clock = new Clock(nFrames);
             else if(_choice == 0)my_LRU = new LRU();
+
+            heapsfiles = _Disco->heapsfiles;
+            indices = _Disco->indices;
+
             _mkdir("BUFFERPOOL");
         }
     
@@ -404,10 +409,19 @@ class Buffer {
             return nullptr;
         }
 
+        HeapFile* getHeapFile(string _relacion){
+            for(int i=0; i<heapsfiles.size(); i++){
+                if(heapsfiles[i]->nombreRelacion == _relacion) return heapsfiles[i];
+            }
+            return nullptr;
+        }
+
         BPlusTree<int>*  createNewIndice(string _relacion, string _claveBusqueda){
             BPlusTree<int>* newIndice = new BPlusTree<int>(8, _relacion, _claveBusqueda);
-            pair<int, int> bloques = getBloques(_relacion);
-            newIndice->set(0, make_pair(bloques.first,0));
+            HeapFile* heapfile = getHeapFile(_relacion);
+
+            //newIndice->set(0, make_pair(bloques.first,0));
+
             indices.push_back(newIndice);
             return newIndice;
         }

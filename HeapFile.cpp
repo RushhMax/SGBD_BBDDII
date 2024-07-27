@@ -56,6 +56,10 @@ struct HeapFile{
         espacioLibre = getCapacidadLibreBloques(bloquesAsignados.first, bloquesAsignados.second);
     }
 
+    // int getNewFree(){
+
+    // }
+
     void print(){
         cout<<" NOMBRE DE HEAP FILE "<<nombreRelacion<<endl;
         for(int i=0; i<espacioLibre.size(); i++){
