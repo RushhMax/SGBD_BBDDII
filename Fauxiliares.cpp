@@ -108,6 +108,19 @@ int getTipoPagina(int idPage){
     pagina.close();
     return stoi(tipo);
 }
+string getRelacionPagina(int idPage){
+    std::ifstream pagina(getdirPage(idPage));
+    std::string tipo = "";
+    getline(pagina, tipo, '#'); // capacidad 
+    getline(pagina, tipo, '#'); // tipo de 
+    getline(pagina, tipo, '#'); // NOMVRE
+    getline(pagina, tipo, '#'); // NRO
+    getline(pagina, tipo, '#'); // CAPACIDAD
+    getline(pagina, tipo, '#'); // Nro RELACION
+    pagina.close();
+    return getNombreRelacion(stoi(tipo.substr(1)));
+}
+
 // FUNCION DEVUELVE NRO DE RELACION (2/2)
 int NroRelacion(std::string _relacion){
     std::ifstream _diccionario("diccionario.txt");

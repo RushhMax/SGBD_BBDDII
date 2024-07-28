@@ -20,9 +20,13 @@ class Page {
         bool dirty_bit;
         int pin_count;
         bool pinned;
+    
     public:
         deque<pair<char,bool>> requerimientos;
-        
+        std::vector<std::tuple<bool, int, int>> cambios; // cambio (Adicionar o eliminar, clave de Busqueda, ruta)
+        string relacion;
+        string claveBusqueda;
+
         Page(int _id, bool _pinned) :idPage(_id), dirty_bit(false), pin_count(1), pinned(_pinned){
             dir_page = "BUFFERPOOL/Page" + to_string(_id) + ".txt";
             ifstream block("DISCO/BLOQUES/Bloque" + to_string(_id) + ".txt"); 
@@ -138,7 +142,7 @@ class Buffer {
             while (getline(page, line)){ block<<line<<endl;}
             page.close();
             block.close();
-            //my_disk->guardarBloqueSector(_idPage); //!!!!!!!!!!!!!
+            my_disk->guardarBloqueSector(_idPage); 
         }
 
         // Indicar que la pagina esta en uso
@@ -179,7 +183,10 @@ class Buffer {
                         char guardar;
                         //cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
                         guardar = 'S';
-                        if (guardar == 'S' || guardar == 's') { this->flushPage(idPage); }   
+                        if (guardar == 'S' || guardar == 's') { 
+                            my_disk->addChanges(BufferPool[it->second].page->cambios, BufferPool[it->second].page->relacion, BufferPool[it->second].page->claveBusqueda);
+                            this->flushPage(idPage); 
+                        }   
                     }
                     else cout << "\n Liberando proceso de Lectura >> \n";
                     BufferPool[it->second].page->requerimientos.pop_front();
@@ -471,5 +478,14 @@ class Buffer {
         void updateCapacBloqueHF(string _relacion, int _idPage, int _espacioLibre){
             HeapFile* heapfile = getHeapFile(_relacion);
             heapfile->editCapacidad(make_pair(_idPage, _espacioLibre));
+        }
+
+        void addChanges(int _idPage, int key ,bool _change, string _relacion, string _claveBusqueda){ // change 1 -adicionar /  0 - eliminar
+            auto it = PageTable.find(_idPage);
+            if (it != PageTable.end()) {
+                BufferPool[it->second].page->relacion = _relacion;
+                BufferPool[it->second].page->claveBusqueda = _claveBusqueda;
+                BufferPool[it->second].page->cambios.emplace_back(_change, key, _idPage); //cambio (Adicionar o eliminar, clave de Busqueda, ruta)
+            }
         }
 };

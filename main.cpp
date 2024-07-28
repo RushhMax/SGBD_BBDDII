@@ -31,19 +31,25 @@ void insert(Buffer *_myBuffer){
         if (!std::getline(data, registro)){ break; } // Salir del bucle si no hay más registros
  
         vector<string> vector_registro = getVectorRegistro(registro);
+
         cout<<"Bloque a conseguir";
+
         int _idPage = _myBuffer->getBloque(relacion,claveBusqueda.first, stoi(vector_registro[claveBusqueda.second]));
+        
         cout<<" IDE PAGE >"<<_idPage<<endl;
+        
         _myBuffer->pinPage(_idPage, 'W', 0);
+
         cout<<" IDE PAGE >"<<_idPage<<endl;
+
         int espacioLibre =  adicionarRegistroPage(_idPage, registro, relacion, R);
         if (espacioLibre != -1){
+            _myBuffer->addChanges(_idPage, stoi(vector_registro[claveBusqueda.second]), 1, relacion, claveBusqueda.first);
+
+
+            
             _myBuffer->addRuta(relacion, claveBusqueda.first, stoi(vector_registro[claveBusqueda.second]), make_pair(_idPage, 0));
             _myBuffer->updateCapacBloqueHF(relacion, _idPage, espacioLibre);
-            // editar heapFILE, adicionar ruta a INDICE
-
-            // adquiri nueva pagina indices
-            //std::cout << " No hay espacio suficiente en PAGES. Liberar o agregar nueva pagina! \n";
         }
     }
     data.close();
