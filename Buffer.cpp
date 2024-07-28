@@ -138,7 +138,7 @@ class Buffer {
             while (getline(page, line)){ block<<line<<endl;}
             page.close();
             block.close();
-            my_disk->guardarBloqueSector(_idPage); //!!!!!!!!!!!!!
+            //my_disk->guardarBloqueSector(_idPage); //!!!!!!!!!!!!!
         }
 
         // Indicar que la pagina esta en uso
@@ -175,10 +175,11 @@ class Buffer {
                     cout<<" No hay requerimiento que eliminar! ";
                 }else{
                     if(BufferPool[it->second].page->requerimientos[0].first == 'W' ){
-                    cout << "\n Liberando proceso de Escritura >> \n";
-                    char guardar;
-                    cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
-                    if (guardar == 'S' || guardar == 's') { this->flushPage(idPage); }   
+                        cout << "\n Liberando proceso de Escritura >> \n";
+                        char guardar;
+                        //cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
+                        guardar = 'S';
+                        if (guardar == 'S' || guardar == 's') { this->flushPage(idPage); }   
                     }
                     else cout << "\n Liberando proceso de Lectura >> \n";
                     BufferPool[it->second].page->requerimientos.pop_front();
