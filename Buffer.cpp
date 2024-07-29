@@ -131,6 +131,7 @@ class Buffer {
             if(_choice == 1) my_clock = new Clock(nFrames);
             else if(_choice == 0)my_LRU = new LRU();
             indices = _Disco->indices;
+            crearHeapsFiles();
             _mkdir("BUFFERPOOL");
         }
 
@@ -150,9 +151,9 @@ class Buffer {
                 heapsfiles.push_back(new HeapFile(relaciones[i]));
             }
 
-            // for(int i=0; i<heapsfiles.size(); i++){
-            //     heapsfiles[i]->print();
-            // }   
+            for(int i=0; i<heapsfiles.size(); i++){
+                heapsfiles[i]->print();
+            }   
         }
         // RETORNAR PAGINA
         void flushPage(int _idPage){
@@ -471,11 +472,11 @@ class Buffer {
             HeapFile* heapfile = getHeapFile(_relacion);
 
             if(!indice){
-                //cout<<" INDEICE NO EXISTE "<<endl;
+                cout<<" INDICE NO EXISTE \n"<<endl;
                 indice = createNewIndice(_relacion, _claveBusqueda);
                 return heapfile->getNewFree();
             }else{
-                //cout<<" INDEICE EXISTE "<<endl;
+                cout<<" INDICE EXISTE! \n "<<endl;
                 ruta = indice->getRuta(key);
                 if(ruta.first == 0 && ruta.second == 0){ // quiere decir que no existe un registro con
                     cout<<"\n RUTA NO ENCONTRADA GET NEW FREE !\n";

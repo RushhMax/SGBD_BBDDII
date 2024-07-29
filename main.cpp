@@ -22,14 +22,19 @@ void insert(Buffer *_myBuffer){
 
     pair<string,int> claveBusqueda = chooseClaveBusqueda(relacion);
 
+    cout<<" CLAVE DE BUSQUEDA SELECCIONADA! "<<claveBusqueda.first<<"-"<<claveBusqueda.second<<endl;
+
     int loopLimit = (n == "*") ? INT_MAX : stoi(n);
     for (int i = 0; i < loopLimit; ++i){
         if (!std::getline(data, registro)){ break; } // Salir del bucle si no hay más registros
  
         vector<string> vector_registro = getVectorRegistro(registro);
 
+        cout<<" Insertando registro con clave de bsqueda "<<vector_registro[claveBusqueda.second]<<endl;
         int _idPage = _myBuffer->getBloque(relacion,claveBusqueda.first, stoi(vector_registro[claveBusqueda.second])); 
+        cout<<" MY ID - PAGE >"<<_idPage<<endl;
         _myBuffer->pinPage(_idPage, 'W', 0);
+        cout<<" MY ID - PAGE >"<<_idPage<<endl;
 
         int espacioLibre =  adicionarRegistroPage(_idPage, registro, relacion, R);
         if (espacioLibre != -1){
