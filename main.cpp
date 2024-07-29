@@ -58,8 +58,6 @@ void insert(Buffer* _myBuffer) {
     data.close();
 }
 
-vector<int> guardar_elimnados;
-
 void delet(Buffer* _myBuffer) {
     int _idPage = 0;
     // cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
@@ -80,7 +78,6 @@ void delet(Buffer* _myBuffer) {
     _idPage = _myBuffer->getBloque(relacion, clave_busqueda, stoi(dato_condicion));
     _myBuffer->pinPage(_idPage, 'W', 0);
     registroPage(_idPage, relacion, condicion, "", 0);
-    guardar_elimnados.push_back(stoi(dato_condicion));
 }
 
 void consultas(Buffer* _myBuffer) {
