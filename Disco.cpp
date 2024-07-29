@@ -40,6 +40,11 @@ class Disco{
         void adicRelacion(std::string _archivo);
         vector<string> getSectores(int _nroBloque);
         void createIndices(int _nBloque);
+        
+        BPlusTree<int>* createNewIndice(string _relacion, string _claveBusqueda);
+        BPlusTree<int>* getIndice(string _relacion, string _claveBusqueda);
+        void addChanges(vector<std::tuple<bool, int, int>> _cambios, string _relacion, string _claveBusqueda);
+
         void guardarBloqueSector(int nBloque);
         void printDisco();
 };
@@ -57,8 +62,8 @@ Disco::Disco(int _platos, int _pistas, int _sectores, long long int _capacSector
     this->capacBloque = _capacidadBloque;
     this->nroBloques = this->capacidadD / this->capacBloque;
 
-    //crearBloques();
-    //crearEstructura();
+    crearBloques();
+    crearEstructura();
     crearHeapsFiles();
 }
 
@@ -214,6 +219,44 @@ vector<string> Disco::getSectores(int _nroBloque){
     directorio.close();
     return sectores;
 }
+
+BPlusTree<int>*  Disco::createNewIndice(string _relacion, string _claveBusqueda){
+    BPlusTree<int>* newIndice = new BPlusTree<int>(8, _relacion, _claveBusqueda);
+    indices.push_back(newIndice);
+    return newIndice;
+}
+
+BPlusTree<int>* Disco::getIndice(string _relacion, string _claveBusqueda){
+    for (int i = 0; i < indices.size(); i++){
+        if (indices[i]->relacion == _relacion && indices[i]->claveBusqueda == _claveBusqueda){
+            return indices[i];
+        }
+    }
+    return nullptr;
+}
+
+void Disco::addChanges(vector<std::tuple<bool, int, int>> _cambios, string _relacion, string _claveBusqueda){
+    BPlusTree<int> *indice = this->getIndice(_relacion, _claveBusqueda);
+
+    if (!indice){
+        cout << " INDEICE NO EXISTE " << endl;
+        indice = createNewIndice(_relacion, _claveBusqueda);
+    }
+    for(int i=0; i<_cambios.size(); i++){
+        bool change; // 1 adicionar 0 eliminar
+        int key;
+        int ubicacion;
+
+        tie(change, key, ubicacion) = _cambios[i];
+        if(change == 1){
+            indice->set(key, make_pair(ubicacion, 0));
+        }else if(change == 0){
+            indice->remove(key);
+        }
+    }
+    indice->print();
+}
+
 void Disco::createIndices(int _nBloque){
     ifstream Bloque(getdirBloque(_nBloque));
     string registros;
@@ -326,8 +369,6 @@ void Disco::guardarBloqueSector(int nBloque){
         nSector++;
         editarCabeceras(nBloque, nSector+1, "|" , to_string(capacidadS), 2, directorioBloques);
     }
-
-    createIndices(nBloque);
 }
 // FUNCION QUE IMPRIME CARACTERISCAS DE DISCO
 void Disco::printDisco(){

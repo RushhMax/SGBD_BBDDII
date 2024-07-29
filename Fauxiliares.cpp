@@ -108,6 +108,19 @@ int getTipoPagina(int idPage){
     pagina.close();
     return stoi(tipo);
 }
+string getRelacionPagina(int idPage){
+    std::ifstream pagina(getdirPage(idPage));
+    std::string tipo = "";
+    getline(pagina, tipo, '#'); // capacidad 
+    getline(pagina, tipo, '#'); // tipo de 
+    getline(pagina, tipo, '#'); // NOMVRE
+    getline(pagina, tipo, '#'); // NRO
+    getline(pagina, tipo, '#'); // CAPACIDAD
+    getline(pagina, tipo, '#'); // Nro RELACION
+    pagina.close();
+    return getNombreRelacion(stoi(tipo.substr(1)));
+}
+
 // FUNCION DEVUELVE NRO DE RELACION (2/2)
 int NroRelacion(std::string _relacion){
     std::ifstream _diccionario("diccionario.txt");
@@ -133,6 +146,54 @@ string getNombreRelacion(int nroRelacion){
     diccionario.close();
     return aux;
 }
+
+string getEsquema(string _relacion){
+    ifstream relaciones("diccionario.txt");
+    string _esquema;
+    for(int i=0; i<NroRelacion(_relacion); i++){
+        getline(relaciones, _esquema);
+    }
+    relaciones.close();
+    stringstream esquema(_esquema);
+    getline(esquema, _esquema, '_');
+    return _esquema;
+}
+// RETORNA TIPO DE VALOR Y LONGITUD
+std::vector<pair<string,int>> longMaxEsquema(string _relacion) {
+    std::vector<pair<string,int>> longMax; 
+    std::string linea = getEsquema(_relacion);
+    string tipoAtributo;
+    std::stringstream lin(linea); // de nuestro diccionario buscamos la tabla y el #4 y #7  #10 etc (vector) 
+    std::getline(lin, linea, '#');
+    int n=1; //Tabla1#ID#int#4#Name#String#10#Edad#int#2
+    while(std::getline(lin, linea, '#')){
+        if(n%2 == 0){ tipoAtributo = linea; }
+        if(n%3 == 0){ 
+            longMax.push_back(make_pair(tipoAtributo,std::stoi(linea))); 
+            n = 0;
+        }
+        n++;
+    }
+    return longMax;
+} 
+// RETORNA ATRIBUTOS
+std::vector<string> getAtributos(string _relacion){
+    std::vector<string> atributos; 
+    std::string linea = getEsquema(_relacion);
+    string Atributo;
+    std::stringstream lin(linea); // de nuestro diccionario buscamos la tabla y el #4 y #7  #10 etc (vector) 
+    std::getline(lin, linea, '#');
+    int n=1; //Tabla1#ID#int#4#Name#String#10#Edad#int#2
+    while(std::getline(lin, linea, '#')){
+        if(n == 1){ Atributo = linea; }
+        if(n%3 == 0){ 
+            atributos.push_back(Atributo); 
+            n = 0;
+        }
+        n++;
+    }
+    return atributos;
+}
 string getPrimaryKey(string _relacion){
     string aux;
     std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
@@ -150,6 +211,23 @@ string getPrimaryKey(string _relacion){
     diccionario.close();
     cout<<"\n! RELACION NO ENCONTRADA !\n";
     return "";
+}
+pair<string,int> chooseClaveBusqueda(string _relacion){
+    vector<string> atributos = getAtributos(_relacion);
+    cout<<"\n ----- ELIGIENDO CLAVE DE BUSQUEDA ------- \n";
+    cout<<" > OPCIONES:\n";
+    cout<<" (-1) LLAVE PRIMARIA \n"; 
+    for(int i=0; i<atributos.size(); i++){
+        cout<<"  ("<<i<<") "<<atributos[i]<<"\n";
+    }
+    int opcion;
+    cout<<" Ingresar opcion: ";cin>>opcion;
+    if(opcion == -1) return make_pair( getPrimaryKey(_relacion),0);
+    if(opcion < atributos.size()){
+        return make_pair(atributos[opcion], opcion);
+    }
+    cout<<" OPCION NO VALIDA \n";
+    return chooseClaveBusqueda(_relacion);
 }
 // EDITA EL DIRECTORIO O CABEZALES DE ARCHIVOS
 void editarCabeceras(int Linea, int Posicion, std::string _nRelacion,std::string _capacLibre, int _tipoB, std::string _archivo){
@@ -216,17 +294,7 @@ void editarCabeceras(int Linea, int Posicion, std::string _nRelacion,std::string
     archivo<<nuevo_contenido.str();
     archivo.close();
 }
-string getEsquema(string _relacion){
-    ifstream relaciones("diccionario.txt");
-    string _esquema;
-    for(int i=0; i<NroRelacion(_relacion); i++){
-        getline(relaciones, _esquema);
-    }
-    relaciones.close();
-    stringstream esquema(_esquema);
-    getline(esquema, _esquema, '_');
-    return _esquema;
-}
+
 // Funcion devuelve cap max del registro
 int capacMaxRegistro(std::string _archivo){
     std::ifstream archivo(_archivo);
@@ -270,23 +338,7 @@ int GetnroAtributo(string _atributo, int _tipoR, string _relacion){
     
 }
 ////////////////////////// RLF //////////////////////////////7
-std::vector<pair<string,int>> longMaxEsquema(string _relacion) {
-    std::vector<pair<string,int>> longMax; 
-    std::string linea = getEsquema(_relacion);
-    string tipoAtributo;
-    std::stringstream lin(linea); // de nuestro diccionario buscamos la tabla y el #4 y #7  #10 etc (vector) 
-    std::getline(lin, linea, '#');
-    int n=1; //Tabla1#ID#int#4#Name#String#10#Edad#int#2
-    while(std::getline(lin, linea, '#')){
-        if(n%2 == 0){ tipoAtributo = linea; }
-        if(n%3 == 0){ 
-            longMax.push_back(make_pair(tipoAtributo,std::stoi(linea))); 
-            n = 0;
-        }
-        n++;
-    }
-    return longMax;
-} 
+
 // Funcion para crear un registro de longitud fija de acuerdo a su relcion
 std::string crearRLF(std::string _registro, std::string _relacion){
     std::vector<pair<string,int>> longMax = longMaxEsquema(_relacion);

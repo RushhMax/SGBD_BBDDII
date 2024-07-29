@@ -482,7 +482,7 @@ class BPlusTree {
         }
     }
 
-    void print(Node<T> *node = nullptr, string _prefix = "", bool _rutas = false, ofstream *outfile = nullptr) {
+    void print(Node<T> *node = nullptr, string _prefix = "", bool _rutas = true, ofstream *outfile = nullptr) {
         if (!node) {
             node = root;
             if (outfile) {
