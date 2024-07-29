@@ -22,11 +22,12 @@ class Page {
         bool pinned;
     
     public:
-        deque<pair<char,bool>> requerimientos;
+        deque<pair<char,bool>> requerimientos; // COLA DE REQUERIMIENTOS
         std::vector<std::tuple<bool, int, int>> cambios; // cambio (Adicionar o eliminar, clave de Busqueda, ruta)
-        string relacion;
-        string claveBusqueda;
+        string relacion; 
+        string claveBusqueda; 
 
+        // CONSTRUCTOR 
         Page(int _id, bool _pinned) :idPage(_id), dirty_bit(false), pin_count(1), pinned(_pinned){
             dir_page = "BUFFERPOOL/Page" + to_string(_id) + ".txt";
             ifstream block("DISCO/BLOQUES/Bloque" + to_string(_id) + ".txt"); 
@@ -60,6 +61,7 @@ class Page {
         }
 };
 
+// ESTRUCTURA DE FRAME
 struct Frame {
     unique_ptr<Page> page;
     int idFrame;
@@ -72,7 +74,7 @@ struct Frame {
         }
     } 
 };
-
+// CLASE BUFFER
 class Buffer {
     private:
         Disco* my_disk;
@@ -121,20 +123,39 @@ class Buffer {
         }
 
     public:
-        // Constructor de Buffer
+        // Constructor de Buffer (tamanio del buffer, tamaio de paginas, Disco, REPLACER CLOCK-LRU)
         Buffer(int _Buf_size, int _page_size, Disco* & _Disco, int _choice) : Buf_size(_Buf_size), my_disk(_Disco), hit_count(0), miss_count(0), request_count(0) , choice_replacer(_choice) {
             // Crear n frames de acuerdo a cuántos bloques (páginas puedan entrar)
             int nFrames = _Buf_size / _page_size;
             for (int i = 0; i < nFrames; ++i) { BufferPool.push_back(Frame(i));}
             if(_choice == 1) my_clock = new Clock(nFrames);
             else if(_choice == 0)my_LRU = new LRU();
-
-            heapsfiles = _Disco->heapsfiles;
             indices = _Disco->indices;
-
+            crearHeapsFiles();
             _mkdir("BUFFERPOOL");
         }
-    
+
+        // CREA HEAP FILEES PARA TODAS LAS RELACIONES DEL DISCO
+        void crearHeapsFiles(){
+            cout<<" Creando HEAPSFILES \n";
+            string aux;
+            vector<string> relaciones;
+            std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
+            while(getline(diccionario, aux)){
+                stringstream relacion(aux);
+                getline(relacion, aux, '#');
+                relaciones.push_back(aux);
+            }
+            diccionario.close();
+            for(int i=0; i<relaciones.size(); i++){
+                heapsfiles.push_back(new HeapFile(relaciones[i]));
+            }
+
+            for(int i=0; i<heapsfiles.size(); i++){
+                heapsfiles[i]->print();
+            }   
+        }
+        // RETORNAR PAGINA
         void flushPage(int _idPage){
             ofstream block(getdirBloque(_idPage)); 
             ifstream page(getdirPage(_idPage));
@@ -144,7 +165,6 @@ class Buffer {
             block.close();
             my_disk->guardarBloqueSector(_idPage); 
         }
-
         // Indicar que la pagina esta en uso
         void pinPage(int idPage, char func, bool pinned) {
             //request_count++;
@@ -162,9 +182,7 @@ class Buffer {
                 else if(choice_replacer == 0) my_LRU->pin(idPage, func, pinned);
 
             } else { 
-                cout<<" SUBIENDO NUEVA PAGINA ";
                 newPage(idPage, func, pinned);
-                cout<<" LISTO! ";
             }
         }
         // Indicar que la pagina esta un uso menos
@@ -199,7 +217,6 @@ class Buffer {
                 else if(choice_replacer == 0) my_LRU->unpin(idPage);
             }
         }
-
         // Función para agregar una nueva página al búfer
         Page* newPage(int idPage, char func, bool _pinned) {
             request_count++;
@@ -208,16 +225,15 @@ class Buffer {
             for(auto &Frame : BufferPool){
                 if(Frame.page.get()){  // si la pag del frame existe
                     if(Frame.page->getIdPage() == idPage){ // SI ENCUENTRA LA PAGINA
-                        cout<<" NEOCNTRE LA PAGINA ! ";
                         hit_count++;
                         pinPage(idPage, func, _pinned);
                         return Frame.page.get();
                     }
                 }
                 if(!Frame.page.get()){ // SI EL FRAME ESTA VACIO COLOCA AHI LA PAG
-                    cout<<" NO ENEOCNTRE LA PAGINA ! ";
                     miss_count++;
                     Page* NewPage = new Page(idPage, _pinned);
+                    editPageHeapFile(idPage);
                     Frame.setPage(NewPage);
                     Frame.page->requerimientos.push_back(make_pair(func, changeFuncInt(func)));
                     Frame.page->actualizarDirtyBit();
@@ -230,7 +246,6 @@ class Buffer {
             if(Delete_Page()) return newPage(idPage, func, _pinned);
             return nullptr;
         }
-
         // OBTENER PAGINA SOLICITADA POR ID
         Page* getPage(int _idPage, char func, bool pinned){        
             auto it = PageTable.find(_idPage);
@@ -245,7 +260,7 @@ class Buffer {
             }
             return newPage(_idPage, func, pinned);
         }
-
+        // IMPRIMIR CARACTERISTICAS DEL BUFFER
         void printBuffer() const {
             cout << "\n_____________ BUFFER POOL ___________________________\n\n";
             if(choice_replacer == 1) cout<<" > CLOCK \n";
@@ -257,11 +272,13 @@ class Buffer {
             if(choice_replacer == 1)my_clock->printClock();
             else if(choice_replacer == 0) my_LRU->printLRU();
         }
+        // IMPRIMIR HITS
         void printStats() const {
             cout << "Total Requests: " << request_count << "\n";
             cout << "Hit Count: " << hit_count << "\n";
             cout << "Miss Count: " << miss_count << "\n";
         }
+        // IMRPIMIR PAGE TABLE
         void printPageTable() {
             for (const auto& pair : PageTable) {
                 std::cout << "Key: " << pair.first << ", Value: " << pair.second << std::endl;
@@ -327,7 +344,7 @@ class Buffer {
                 registroPage(_idPage, relacion, condicion, atributo, 1);
             } else { cout << " Ingrese una opción valida! \n "; return; }
         }
-
+        // MOSTRAR MENU
         void displayMenu() {
             cout << "__________________________________________________\n";
             cout << "\n----- MENU -----\n";
@@ -342,13 +359,9 @@ class Buffer {
             cout << "__________________________________________________\n\n";
             cout << "Elija una opcion: ";
         }
-
+        // MENU BUFFER
         void MenuBuffer() {
             int choice;
-            // cout << " > Metodo de reemplazo " << endl;
-            // cout << " LRU (0) o CLOCK (1) > ";cin>>choice;
-
-            // Buffer buffer(my_disk->getCapacidadBloque() *3, my_disk->getCapacidadBloque(), my_disk, choice);
             do {
                 printBuffer();
                 displayMenu();
@@ -428,6 +441,17 @@ class Buffer {
             }
             return nullptr;
         }
+        void editPageHeapFile(int idPage){
+            for(int i=0; i<heapsfiles.size(); i++){
+                for(int j=0; j<heapsfiles[i]->Bloque_espacioLibre.size(); j++){
+                    if(heapsfiles[i]->Bloque_espacioLibre[j].first == idPage){
+                        heapsfiles[i]->Bloque_espacioLibre[j].second = getCapacLibreBloque(idPage);
+                        return;
+                    }
+                }
+            }
+        }
+
         BPlusTree<int>* getIndice(string _relacion, string _claveBusqueda){
             for(int i=0; i<indices.size(); i++){
                 if(indices[i]->relacion == _relacion && indices[i]->claveBusqueda == _claveBusqueda){
@@ -441,19 +465,18 @@ class Buffer {
             indices.push_back(newIndice);
             return newIndice;
         }
-        // no existe el BPLUS TREES
-        // NO EXISTE EL INDICE EN EL BPLUS TREE
+
         int getBloque(string _relacion, string _claveBusqueda, int key){
             BPlusTree<int>* indice = getIndice(_relacion, _claveBusqueda);
             pair<int, int> ruta;
             HeapFile* heapfile = getHeapFile(_relacion);
 
             if(!indice){
-                //cout<<" INDEICE NO EXISTE "<<endl;
+                cout<<" INDICE NO EXISTE \n"<<endl;
                 indice = createNewIndice(_relacion, _claveBusqueda);
                 return heapfile->getNewFree();
             }else{
-                //cout<<" INDEICE EXISTE "<<endl;
+                cout<<" INDICE EXISTE! \n "<<endl;
                 ruta = indice->getRuta(key);
                 if(ruta.first == 0 && ruta.second == 0){ // quiere decir que no existe un registro con
                     cout<<"\n RUTA NO ENCONTRADA GET NEW FREE !\n";
@@ -480,6 +503,7 @@ class Buffer {
             heapfile->editCapacidad(make_pair(_idPage, _espacioLibre));
         }
 
+        // AÑADIR CAMBIOS (INSERCIONES - ELIMINACIONES) A PAGINA 
         void addChanges(int _idPage, int key ,bool _change, string _relacion, string _claveBusqueda){ // change 1 -adicionar /  0 - eliminar
             auto it = PageTable.find(_idPage);
             if (it != PageTable.end()) {

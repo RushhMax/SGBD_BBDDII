@@ -2,16 +2,123 @@
 
 using namespace std;
 
-////////////////////////// BLOQUE //////////////////////////////7
-// Funcion que indicar como esta compuesto bloque
-// FUNCION EXTRA  DE ADIC_RELACION(1/2) 
-char is_IntFlo(std::string _dato){ //T ENTERO F FLOAT S STRING;
-    for(int i=0; i<_dato.size();i++){
-        if(_dato[i] == '.') return 'F';
-        if(!isdigit(_dato[i])) return 'S';
+//_______________________________ RELACION _____________________________
+int NroRelacion(std::string _relacion){
+    std::ifstream _diccionario("diccionario.txt");
+    std::string _r; int i=0;
+    while (getline(_diccionario, _r)){
+        i++;
+        std::stringstream strR(_r);
+        getline(strR, _r, '#');
+        if(_relacion == _r){
+            return i;
+        }
     }
-    return 'T';
+    return 0; 
 }
+string getNombreRelacion(int nroRelacion){
+    string aux;
+    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
+    for(int i=0; i<nroRelacion; i++){
+        getline(diccionario, aux);
+    }
+    stringstream relacion(aux);
+    getline(relacion, aux, '#');
+    diccionario.close();
+    return aux;
+}
+string getEsquema(string _relacion){
+    ifstream relaciones("diccionario.txt");
+    string _esquema;
+    for(int i=0; i<NroRelacion(_relacion); i++){
+        getline(relaciones, _esquema);
+    }
+    relaciones.close();
+    stringstream esquema(_esquema);
+    getline(esquema, _esquema, '_');
+    return _esquema;
+}
+
+
+//_______________________________ MAIN _____________________________
+// RETORNA ATRIBUTOS
+std::vector<string> getAtributos(string _relacion){
+    std::vector<string> atributos; 
+    std::string linea = getEsquema(_relacion);
+    string Atributo;
+    std::stringstream lin(linea); // de nuestro diccionario buscamos la tabla y el #4 y #7  #10 etc (vector) 
+    std::getline(lin, linea, '#');
+    int n=1; //Tabla1#ID#int#4#Name#String#10#Edad#int#2
+    while(std::getline(lin, linea, '#')){
+        if(n == 1){ Atributo = linea; }
+        if(n%3 == 0){ 
+            atributos.push_back(Atributo); 
+            n = 0;
+        }
+        n++;
+    }
+    return atributos;
+}
+// CONSIEGUE LLAVE PRIMARIO DE LA RELACION
+string getPrimaryKey(string _relacion){
+    string aux;
+    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
+    while (getline(diccionario, aux)){
+        std::stringstream strRelacion(aux);
+        getline(strRelacion,aux, '#');
+        if(_relacion == aux){
+            getline(strRelacion,aux, '_');
+            getline(strRelacion,aux, '_');
+            getline(strRelacion,aux, '#');
+            diccionario.close();
+            return aux;
+        }    
+    }
+    diccionario.close();
+    cout<<"\n! RELACION NO ENCONTRADA !\n";
+    return "";
+}
+// Retorna clave de busqueda (nombre de la clave de busqueda, nro de atributo (clave de busqueda))
+pair<string,int> chooseClaveBusqueda(string _relacion){ 
+    vector<string> atributos = getAtributos(_relacion);
+    cout<<"\n ----- ELIGIENDO CLAVE DE BUSQUEDA ------- \n";
+    cout<<" > OPCIONES:\n";
+    cout<<" (-1) LLAVE PRIMARIA \n"; 
+    for(int i=0; i<atributos.size(); i++){
+        cout<<"  ("<<i<<") "<<atributos[i]<<"\n";
+    }
+    int opcion;
+    cout<<" Ingresar opcion: ";cin>>opcion;
+    if(opcion == -1) return make_pair( getPrimaryKey(_relacion),0);
+    if(opcion < atributos.size()){
+        return make_pair(atributos[opcion], opcion);
+    }
+    cout<<" OPCION NO VALIDA \n";
+    return chooseClaveBusqueda(_relacion);
+}
+
+
+//_______________________________ PATH _____________________________
+string getdirSector(string dir){
+    std::stringstream ss(dir);
+    std::vector<std::string> ubi;
+    std::string token = "";
+    while(std::getline(ss, token, '/')){ ubi.push_back(token);}
+    
+    std::string dirSector = "DISCO/Plato" + ubi[0] + "/S" + ubi[1] + "/Pista" + ubi[2] + "/Sector" + ubi[3] + ".txt";
+    return dirSector;
+}
+string getdirBloque(int _nBloque){
+    std::string dir = "DISCO/BLOQUES/Bloque" + std::to_string(_nBloque) + ".txt"; 
+    return dir;
+}
+string getdirPage(int _nPage){
+    std::string dir = "BUFFERPOOL/Page" + to_string(_nPage) + ".txt";
+    return dir;
+}
+
+
+//_______________________________ BLOQUE _____________________________
 void consultarBloque(int _nroBloque){
     std::ifstream dirBloque("dirBloques.txt");
     std::string bloque, sector, dir;
@@ -35,53 +142,15 @@ void consultarBloque(int _nroBloque){
     }
     dirBloque.close();
 }
-vector<string> getHeader(string _header){
-    vector<string> vectorHeader;
-    string aux;
-    stringstream header(_header);
-    while (getline(header, aux, '#')){
-        vectorHeader.push_back(aux);
-    }
-    return vectorHeader;
+int getCapacLibreBloque(int idBloque){
+    std::ifstream bloque(getdirBloque(idBloque));
+    std::string cap = "";
+    getline(bloque, cap, '#');
+    bloque.close();
+    return stoi(cap);
 }
 
-void imprimirArchivo(string _string){
-    cout<<"\nImprimiendo archivo . . . \n\n";
-    std::ifstream archivo(_string);
-    //archivo.seekg(0);
-    std::string cap = "";
-    while(getline(archivo, cap)){
-        cout<<cap<<endl;
-    }
-    cout<<endl;
-    archivo.close();
-}
-void imprimirRegistro(vector<string> _registro, vector<pair<string,int>> _longitudes){
-    for (int i = 0; i < _registro.size(); i++) {
-        int longitud = (i < _longitudes.size()) ? _longitudes[i].second : 0;
-        cout << setw(longitud) << left << _registro[i] << " ";
-    }
-    cout << endl;
-}
-// retorna PATH SECTOR desde  1/1/1/1
-string getdirSector(string dir){
-    std::stringstream ss(dir);
-    std::vector<std::string> ubi;
-    std::string token = "";
-    while(std::getline(ss, token, '/')){ ubi.push_back(token);}
-    
-    std::string dirSector = "DISCO/Plato" + ubi[0] + "/S" + ubi[1] + "/Pista" + ubi[2] + "/Sector" + ubi[3] + ".txt";
-    return dirSector;
-}
-string getdirBloque(int _nBloque){
-    std::string dir = "DISCO/BLOQUES/Bloque" + std::to_string(_nBloque) + ".txt"; 
-    return dir;
-}
-string getdirPage(int _nPage){
-    std::string dir = "BUFFERPOOL/Page" + to_string(_nPage) + ".txt";
-    return dir;
-}
-// DEVUELVE LA CAPACIDAD LIBRE DE LA PAGINA
+//_______________________________ PAGINA _____________________________
 int getcapacLibrePagina(int idPage){
     std::ifstream pagina(getdirPage(idPage));
     std::string cap = "";
@@ -121,114 +190,7 @@ string getRelacionPagina(int idPage){
     return getNombreRelacion(stoi(tipo.substr(1)));
 }
 
-// FUNCION DEVUELVE NRO DE RELACION (2/2)
-int NroRelacion(std::string _relacion){
-    std::ifstream _diccionario("diccionario.txt");
-    std::string _r; int i=0;
-    while (getline(_diccionario, _r)){
-        i++;
-        std::stringstream strR(_r);
-        getline(strR, _r, '#');
-        if(_relacion == _r){
-            return i;
-        }
-    }
-    return 0; 
-}
-string getNombreRelacion(int nroRelacion){
-    string aux;
-    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
-    for(int i=0; i<nroRelacion; i++){
-        getline(diccionario, aux);
-    }
-    stringstream relacion(aux);
-    getline(relacion, aux, '#');
-    diccionario.close();
-    return aux;
-}
-
-string getEsquema(string _relacion){
-    ifstream relaciones("diccionario.txt");
-    string _esquema;
-    for(int i=0; i<NroRelacion(_relacion); i++){
-        getline(relaciones, _esquema);
-    }
-    relaciones.close();
-    stringstream esquema(_esquema);
-    getline(esquema, _esquema, '_');
-    return _esquema;
-}
-// RETORNA TIPO DE VALOR Y LONGITUD
-std::vector<pair<string,int>> longMaxEsquema(string _relacion) {
-    std::vector<pair<string,int>> longMax; 
-    std::string linea = getEsquema(_relacion);
-    string tipoAtributo;
-    std::stringstream lin(linea); // de nuestro diccionario buscamos la tabla y el #4 y #7  #10 etc (vector) 
-    std::getline(lin, linea, '#');
-    int n=1; //Tabla1#ID#int#4#Name#String#10#Edad#int#2
-    while(std::getline(lin, linea, '#')){
-        if(n%2 == 0){ tipoAtributo = linea; }
-        if(n%3 == 0){ 
-            longMax.push_back(make_pair(tipoAtributo,std::stoi(linea))); 
-            n = 0;
-        }
-        n++;
-    }
-    return longMax;
-} 
-// RETORNA ATRIBUTOS
-std::vector<string> getAtributos(string _relacion){
-    std::vector<string> atributos; 
-    std::string linea = getEsquema(_relacion);
-    string Atributo;
-    std::stringstream lin(linea); // de nuestro diccionario buscamos la tabla y el #4 y #7  #10 etc (vector) 
-    std::getline(lin, linea, '#');
-    int n=1; //Tabla1#ID#int#4#Name#String#10#Edad#int#2
-    while(std::getline(lin, linea, '#')){
-        if(n == 1){ Atributo = linea; }
-        if(n%3 == 0){ 
-            atributos.push_back(Atributo); 
-            n = 0;
-        }
-        n++;
-    }
-    return atributos;
-}
-string getPrimaryKey(string _relacion){
-    string aux;
-    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
-    while (getline(diccionario, aux)){
-        std::stringstream strRelacion(aux);
-        getline(strRelacion,aux, '#');
-        if(_relacion == aux){
-            getline(strRelacion,aux, '_');
-            getline(strRelacion,aux, '_');
-            getline(strRelacion,aux, '#');
-            diccionario.close();
-            return aux;
-        }    
-    }
-    diccionario.close();
-    cout<<"\n! RELACION NO ENCONTRADA !\n";
-    return "";
-}
-pair<string,int> chooseClaveBusqueda(string _relacion){
-    vector<string> atributos = getAtributos(_relacion);
-    cout<<"\n ----- ELIGIENDO CLAVE DE BUSQUEDA ------- \n";
-    cout<<" > OPCIONES:\n";
-    cout<<" (-1) LLAVE PRIMARIA \n"; 
-    for(int i=0; i<atributos.size(); i++){
-        cout<<"  ("<<i<<") "<<atributos[i]<<"\n";
-    }
-    int opcion;
-    cout<<" Ingresar opcion: ";cin>>opcion;
-    if(opcion == -1) return make_pair( getPrimaryKey(_relacion),0);
-    if(opcion < atributos.size()){
-        return make_pair(atributos[opcion], opcion);
-    }
-    cout<<" OPCION NO VALIDA \n";
-    return chooseClaveBusqueda(_relacion);
-}
+//_______________________________ EDICION _____________________________
 // EDITA EL DIRECTORIO O CABEZALES DE ARCHIVOS
 void editarCabeceras(int Linea, int Posicion, std::string _nRelacion,std::string _capacLibre, int _tipoB, std::string _archivo){
     //(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(idPage))
@@ -295,50 +257,27 @@ void editarCabeceras(int Linea, int Posicion, std::string _nRelacion,std::string
     archivo.close();
 }
 
-// Funcion devuelve cap max del registro
-int capacMaxRegistro(std::string _archivo){
-    std::ifstream archivo(_archivo);
-    std::string regis;
-    int max = 0;
-    getline(archivo, regis);
-    while(getline(archivo, regis)){
-        if(regis.size()> max){ /*std::cout<<">"<<regis<<">"<<regis.size()<<"-"<<max<<"\n"; */
-            max = regis.size();
-        }
-    }
-    //std::cout<<" EL MAX ES "<<max<<std::endl;
-    return max;
-}
-int getCapacMaxRegistro(vector<pair<string,int>> _longMaxEsquema){
-    int capac = 0;
-    for(int i=0; i<_longMaxEsquema.size();i++){
-        capac += _longMaxEsquema[i].second;
-    }
-    return capac;
-}
-int GetnroAtributo(string _atributo, int _tipoR, string _relacion){
-    stringstream esquema(getEsquema(_relacion));
-    
-    string atributo; 
-    int n_atributo = 1, n = 0;
-    getline(esquema, atributo, '#'); // SE PASA NOMBRE DE LA RELACION
-    while (getline(esquema, atributo, '#')){
-        n++;
-        //Tabla1# ID#int#4#Name#String#10#Edad#int#2
-        //std::cout<<" A> "<<atributo<<" = "<<condicion[0]<<"? "<<n_atributo<<"-"<<posRLF<<" \n";
-        if(atributo == _atributo){
-            break;
-        }
-        if(n % 3 == 0 ) { 
-            //std::cout<<" en A> "<<atributo<<endl;
-            n_atributo++;
-        }
-    }
-    return n_atributo;
-    
-}
-////////////////////////// RLF //////////////////////////////7
+//_______________________________ ADICION _____________________________
 
+////////////////////////// RLF //////////////////////////////7
+// RETORNA TIPO DE VALOR Y LONGITUD
+std::vector<pair<string,int>> longMaxEsquema(string _relacion) {
+    std::vector<pair<string,int>> longMax; 
+    std::string linea = getEsquema(_relacion);
+    string tipoAtributo;
+    std::stringstream lin(linea); // de nuestro diccionario buscamos la tabla y el #4 y #7  #10 etc (vector) 
+    std::getline(lin, linea, '#');
+    int n=1; //Tabla1#ID#int#4#Name#String#10#Edad#int#2
+    while(std::getline(lin, linea, '#')){
+        if(n%2 == 0){ tipoAtributo = linea; }
+        if(n%3 == 0){ 
+            longMax.push_back(make_pair(tipoAtributo,std::stoi(linea))); 
+            n = 0;
+        }
+        n++;
+    }
+    return longMax;
+} 
 // Funcion para crear un registro de longitud fija de acuerdo a su relcion
 std::string crearRLF(std::string _registro, std::string _relacion){
     std::vector<pair<string,int>> longMax = longMaxEsquema(_relacion);
@@ -369,6 +308,7 @@ void adicionarRLFArchivo(std::string _registro, string _archivo){
     archiv<<_registro;
     archiv.close();
 }   
+
 ////////////////////////// RLV //////////////////////////////7
 // Funcion para crear un registro de longitud variable
 std::string crearRLV(std::string _registro, std::string _relacion){
@@ -422,53 +362,17 @@ void agregarSLOTS(int idPage, int slot){
     output<<nuevo_contenido.str();
     output.close();
 }
-void eliminarSLOTS(int _idPage, vector<int> _slots){
-    std::fstream archiv(getdirPage(_idPage), std::ios::in);
-    string lineaAux = "";
-    std::ostringstream nuevo_contenido;
-    getline(archiv, lineaAux); // HEADER
-    nuevo_contenido<<lineaAux<<endl;
 
-    getline(archiv, lineaAux); // SLOTS
-    stringstream slots(lineaAux);
-    string nuevaLinea = "";
-    int i = 0; // 8|7|5|6|_|
-    while (getline(slots, lineaAux, '|')){
-        if(lineaAux == "_") break;
-        //cout<<" stoi(lineaAux) == _slots[i] "<<stoi(lineaAux)<<" == "<<_slots[i] <<endl;
-        if(stoi(lineaAux) == _slots[i] ) { 
-            i++;
-            if(i == _slots.size()) {break;} 
-        } 
-        else { nuevaLinea += lineaAux + "|"; }
-    }
-    getline(slots, lineaAux);
-    nuevaLinea += lineaAux;
-    nuevo_contenido<<nuevaLinea<<endl;
-
-    getline(archiv, lineaAux); // REGISTROS
-    nuevo_contenido<<lineaAux;
-    archiv.close();
-    //cout<<"\n ------------------\n" ;
-    //cout<<nuevo_contenido.str();
-    //cout<<"\n ------------------\n" ;
-    std::ofstream output(getdirPage(_idPage), std::ios::trunc);
-    output<<nuevo_contenido.str();
-    output.close();
-}
-////////////////////////// PAGINA //////////////////////////////7
-// FUNCION PARA ADICIONAR UN REGISTRO EN UNA TABLA ESPECIFICA
+////////////////////////// ADICIONAR //////////////////////////////7
 int adicionarRegistroPage(int _idPage, std::string _registro, std::string _relacion, bool tipoR){
     // CREAMOS RLV O RLF
     std::string R = ""; 
     if(tipoR) {R +=  crearRLF(_registro, _relacion);  }
     else{ R += crearRLV(_registro, _relacion); } // REGISTRO LONGITUD VARIABLE
 
-    // este codigo no respeta el espac sectores quiere decir un registro puede partirse
     int espacLibrePage = getcapacLibrePagina(_idPage); 
     int tipoPage = getTipoPagina(_idPage); // Tener en consideracion el page
     
-    //cout<<R.size()<<" "<<espacLibrePage<<" "<<tipoR<<" "<<tipoPage<<endl;
     if(R.size() <= espacLibrePage && (tipoR == tipoPage || tipoPage == 2)){  // y si es del mismo tipo de R
         espacLibrePage -= R.size();
         std::string _nroR = std::to_string(NroRelacion(_relacion));
@@ -478,12 +382,39 @@ int adicionarRegistroPage(int _idPage, std::string _registro, std::string _relac
         agregarSLOTS(_idPage, R.size());
         adicionarRLFArchivo(R, getdirPage(_idPage));
         editarCabeceras(1, 0, _nroR ,  std::to_string(espacLibrePage), tipoR ,getdirPage(_idPage));
-        
-        // editar HEAP FILE 
+
         return espacLibrePage;
     }
     return -1;
 }
+
+//_______________________________ CONSULTAR _____________________________
+int getCapacMaxRegistro(vector<pair<string,int>> _longMaxEsquema){
+    int capac = 0;
+    for(int i=0; i<_longMaxEsquema.size();i++){
+        capac += _longMaxEsquema[i].second;
+    }
+    return capac;
+}
+void imprimirArchivo(string _string){
+    cout<<"\nImprimiendo archivo . . . \n\n";
+    std::ifstream archivo(_string);
+    //archivo.seekg(0);
+    std::string cap = "";
+    while(getline(archivo, cap)){
+        cout<<cap<<endl;
+    }
+    cout<<endl;
+    archivo.close();
+}
+void imprimirRegistro(vector<string> _registro, vector<pair<string,int>> _longitudes){
+    for (int i = 0; i < _registro.size(); i++) {
+        int longitud = (i < _longitudes.size()) ? _longitudes[i].second : 0;
+        cout << setw(longitud) << left << _registro[i] << " ";
+    }
+    cout << endl;
+}
+/// REGISTRO /////////////
 vector<string> getVectorRegistro(string _registro){
     vector<string> arrayRegistro;
     string aux;
@@ -529,14 +460,41 @@ vector<string> getVectorRegistro(string _registro, string _relacion, bool _tipoR
     }
     return arrayRegistro;
 }
-bool cumpleCondicion(string _registro, string _condicion, string _relacion, bool _tipoR){
-    // DESGLOSAMOS nuestra condicion
+
+//_______________________________ CONSULTAR _____________________________
+/// CONDICION ////////////
+int GetnroAtributo(string _atributo, int _tipoR, string _relacion){
+    stringstream esquema(getEsquema(_relacion));
+    
+    string atributo; 
+    int n_atributo = 1, n = 0;
+    getline(esquema, atributo, '#'); // SE PASA NOMBRE DE LA RELACION
+    while (getline(esquema, atributo, '#')){
+        n++;
+        //Tabla1# ID#int#4#Name#String#10#Edad#int#2
+        //std::cout<<" A> "<<atributo<<" = "<<condicion[0]<<"? "<<n_atributo<<"-"<<posRLF<<" \n";
+        if(atributo == _atributo){
+            break;
+        }
+        if(n % 3 == 0 ) { 
+            //std::cout<<" en A> "<<atributo<<endl;
+            n_atributo++;
+        }
+    }
+    return n_atributo;  
+}
+vector<std::string> getCondicionVector(string _condicion){
+    std::vector<std::string> condicion;
     std::stringstream cond(_condicion); 
-    std::vector<std::string> condicion; string token;
+    string token;
     getline(cond, token, ' ' ); condicion.push_back(token);
     getline(cond, token, ' ' ); condicion.push_back(token);
     getline(cond, token); condicion.push_back(token);
-
+    return condicion;
+}
+bool cumpleCondicion(string _registro, string _condicion, string _relacion, bool _tipoR){
+    std::vector<std::string> condicion = getCondicionVector(_condicion);
+    
     int nroAtributo = GetnroAtributo(condicion[0], _tipoR, _relacion);
     vector<string> arrayRegistro = getVectorRegistro(_registro, _relacion, _tipoR); // Nuestro registro en un vector de atributos
 
@@ -578,43 +536,47 @@ void eliminarRegistroPage(int _idPage,vector<pair<int,int>> posiciones,bool _tip
     output<<nuevo_contenido.str();
     output.close();
 }
-// FUNCION PARA MODFICAR UN REGISTRO DE LA PAGINA
-void modificarRegistroPage(int _idPage, string _relacion,vector<pair<int,int>> _posiciones, string _atributo, bool _tipoR){
-    fstream pagina(getdirPage(_idPage), std::ios::in);
-    if (!pagina) { std::cerr << "\n\n Page no se encuentra en el buffer \n"<< std::endl; return;} 
+// FUNCION PARA ELIMINAR/MODFICAR UN REGISTRO DE LA PAGINA //ACCION = 0 ELIMINAR  || ACCION = 1 MODIFICAR
+void eliminarSLOTS(int _idPage, vector<int> _slots){
+    std::fstream archiv(getdirPage(_idPage), std::ios::in);
     string lineaAux = "";
     std::ostringstream nuevo_contenido;
-    getline(pagina, lineaAux); // HEADER
+    getline(archiv, lineaAux); // HEADER
     nuevo_contenido<<lineaAux<<endl;
-    getline(pagina, lineaAux); // SLOTS
-    nuevo_contenido<<lineaAux<<endl;
-    getline(pagina, lineaAux); // REGISTROS
-    // MODIFICAR AQUI
-    string nuevalinea = lineaAux.substr(0, _posiciones[0].first);
-    for(int i=0; i<_posiciones.size()-1; i++){
-        int startPos = _posiciones[i].first + _posiciones[i].second;
-        int endPos = _posiciones[i + 1].first;
-        nuevalinea += lineaAux.substr(startPos, endPos - startPos);
-    }
-    nuevalinea += lineaAux.substr(_posiciones[_posiciones.size()-1].first + _posiciones[_posiciones.size()-1].second);
 
-    nuevo_contenido<<nuevalinea;
-    pagina.close();
-    // cout<<"\n ------------------\n" ;
-    // cout<<nuevo_contenido.str();
-    // cout<<"\n ------------------\n" ;
+    getline(archiv, lineaAux); // SLOTS
+    stringstream slots(lineaAux);
+    string nuevaLinea = "";
+    int i = 0; // 8|7|5|6|_|
+    while (getline(slots, lineaAux, '|')){
+        if(lineaAux == "_") break;
+        //cout<<" stoi(lineaAux) == _slots[i] "<<stoi(lineaAux)<<" == "<<_slots[i] <<endl;
+        if(stoi(lineaAux) == _slots[i] ) { 
+            i++;
+            if(i == _slots.size()) {break;} 
+        } 
+        else { nuevaLinea += lineaAux + "|"; }
+    }
+    getline(slots, lineaAux);
+    nuevaLinea += lineaAux;
+    nuevo_contenido<<nuevaLinea<<endl;
+
+    getline(archiv, lineaAux); // REGISTROS
+    nuevo_contenido<<lineaAux;
+    archiv.close();
+    //cout<<"\n ------------------\n" ;
+    //cout<<nuevo_contenido.str();
+    //cout<<"\n ------------------\n" ;
     std::ofstream output(getdirPage(_idPage), std::ios::trunc);
     output<<nuevo_contenido.str();
     output.close();
 }
-// FUNCION PARA ELIMINAR/MODFICAR UN REGISTRO DE LA PAGINA 
-//ACCION = 0 ELIMINAR  || ACCION = 1 MODIFICAR
-void registroPage(int _idPage, string _relacion, string _condicion, string _atributo, bool _accion){
+int registroPage(int _idPage, string _relacion, string _condicion, string _atributo, bool _accion){
     int tipoPage = getTipoPagina(_idPage); // RLV Y RLF
     int espacioLibre = getcapacLibrePagina(_idPage); 
 
     fstream pagina(getdirPage(_idPage), std::ios::in | std::ios::out);
-    if (!pagina) { std::cerr << "\n\n Page no se encuentra en el buffer \n"<< std::endl; return;}
+    if (!pagina) { std::cerr << "\n\n Page no se encuentra en el buffer \n"<< std::endl; return -1;}
     
     // LEYENDO PAGINA
     string registros = "";
@@ -673,7 +635,7 @@ void registroPage(int _idPage, string _relacion, string _condicion, string _atri
             pos += post;
             
         }
-    }else { return; }
+    }else { return -1; }
 
     // IF _ACCION ES 0 ELIMINAR
     if(_accion == 0) { 
@@ -682,5 +644,7 @@ void registroPage(int _idPage, string _relacion, string _condicion, string _atri
         if(tipoPage == 0) {// VARIABLE
             eliminarSLOTS(_idPage, vectorSlots);// EDITAR SLOTS ELIMINAR
         }
+        return espacioLibre;
     }
+    return -1;
 }
