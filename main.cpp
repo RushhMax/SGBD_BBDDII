@@ -78,6 +78,7 @@ void delet(Buffer* _myBuffer) {
     _idPage = _myBuffer->getBloque(relacion, clave_busqueda, stoi(dato_condicion));
     _myBuffer->pinPage(_idPage, 'W', 0);
     registroPage(_idPage, relacion, condicion, "", 0);
+    _myBuffer->addChanges(_idPage, stoi(dato_condicion), 0, relacion, clave_busqueda);
 }
 
 void consultas(Buffer* _myBuffer) {
