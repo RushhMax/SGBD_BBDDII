@@ -55,12 +55,24 @@ std::vector<std::tuple<int, int, int>> get_leaf_to_bplustree(const std::string& 
 }
 
 int main(int argc, char const* argv[]) {
-    BPlusTree<int> bpt(4, "Post", "userid");
-    std::vector<std::tuple<int, int, int>> leaf = get_leaf_to_bplustree("INDICES/Post_userid.txt");
-    for (const auto& dato : leaf)
-        bpt.set(std::get<0>(dato), std::make_pair(std::get<1>(dato), std::get<2>(dato)));
+    BPlusTree<int> bpt("INDICES/Post_userid.txt");
     bpt.print();
-    Node<int>* new_node = bpt.findLeaf(15);
-    if (!new_node) std::cout << "existence" << std::endl;
+    // BPlusTree<int> bpt(4, "Post", "userid");
+    // std::vector<std::tuple<int, int, int>> leaf = get_leaf_to_bplustree("INDICES/Post_userid.txt");
+    // for (const auto& dato : leaf)
+    //     bpt.set(std::get<0>(dato), std::make_pair(std::get<1>(dato), std::get<2>(dato)));
+    // bpt.print();
+    // // Node<int>* new_node = bpt.findLeaf(15);
+    // // if (!new_node) std::cout << "existence" << std::endl;
+    // std::pair<int, int> result = bpt.getRuta(15);
+    // std::cout << "Ruta: " << result.first << " " << result.second << std::endl;
+
+    // std::string proof = "condicion = 1";
+    // std::stringstream ss(proof);
+    // std::string dato_condicion;
+    // getline(ss, dato_condicion, ' ');
+    // getline(ss, dato_condicion, ' ');
+    // getline(ss, dato_condicion, ' ');
+    // std::cout << dato_condicion << std::endl;
     return 0;
 }
