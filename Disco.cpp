@@ -10,6 +10,8 @@
 
 using namespace std;
 
+char is_IntFlo(std::string _dato);
+
 class Disco{
     private:
         std::string nombre; 
@@ -26,27 +28,37 @@ class Disco{
 
     public:
         vector<BPlusTree<int>*> indices;
-        vector<HeapFile*> heapsfiles;
 
         // CONSTRUCTORES
-        //Disco(); // deafult
+        // CONSTRUCTOR DISCO POR PARAMETROS 
         Disco(int _platos = 4, int _pistas = 8, int _sectores = 20, long long int _capacSector = 500, int _capacidadBloque = 2000);
+        // CONSTRUCTOR DE ESTRUCTURA DE DISCO 
         void crearEstructura();
-        void crearBloques(); // FUERA DE CLASE
-        void crearHeapsFiles();
+        // POLITICA CILINDRICA
+        void crearBloques(); 
         ~Disco(){ };
 
+        // CAPACIDAD DEFAULT DE BLOQUE
         int getCapacidadBloque(){ return capacBloque; };
+        // IMPORTAR TABLA MANUAL o AUTOMATICO 
         void adicRelacion(std::string _archivo);
+        // CONSIGUE SECTORES PARA GUARDAR DEL BLOQUE
         vector<string> getSectores(int _nroBloque);
-        void createIndices(int _nBloque);
-        
-        BPlusTree<int>* createNewIndice(string _relacion, string _claveBusqueda);
-        BPlusTree<int>* getIndice(string _relacion, string _claveBusqueda);
-        void addChanges(vector<std::tuple<bool, int, int>> _cambios, string _relacion, string _claveBusqueda);
 
+        //void createIndices(int _nBloque);
+        
+        // CREA NUEVO INDICE Y LO AGREGAR AL VECTOR DE INDICES
+        BPlusTree<int>* createNewIndice(string _relacion, string _claveBusqueda);
+        // RETORNA EL INDICE DE LA RELACION Y CLAVE DE BUSQUEDA
+        BPlusTree<int>* getIndice(string _relacion, string _claveBusqueda);
+        // AÑADE CAMBIOS AL INDICE
+        void addChanges(vector<std::tuple<bool, int, int>> _cambios, string _relacion, string _claveBusqueda);
+        // FUNCION GUARDA BLOQUE EN SECTORES
         void guardarBloqueSector(int nBloque);
+        // FUNCION QUE IMPRIME CARACTERISCAS DE DISCO
         void printDisco();
+        // FUNCION QUE IMPRIME nuestro BPLUS TREE DE LA RELACION
+        void printIndice(string _relacion);
 };
 
 // CONSTRUCTOR DISCO POR PARAMETROS 
@@ -64,7 +76,6 @@ Disco::Disco(int _platos, int _pistas, int _sectores, long long int _capacSector
 
     crearBloques();
     crearEstructura();
-    crearHeapsFiles();
 }
 
 // CONSTRUCTOR DE ESTRUCTURA DE DISCO 
@@ -90,7 +101,6 @@ void Disco::crearEstructura(){
         }
     }
 }
-
 // POLITICA CILINDRICA
 void Disco::crearBloques(){
     std::ofstream _dirBloques(directorioBloques);
@@ -121,28 +131,7 @@ void Disco::crearBloques(){
         nuevoBloque.close();
     }_dirBloques.close(); 
 }
-
-void Disco::crearHeapsFiles(){
-    cout<<" Creando HEAPSFILES \n";
-    string aux;
-    vector<string> relaciones;
-    std::ifstream diccionario("diccionario.txt"); // Abrimos diccionario
-    while(getline(diccionario, aux)){
-        stringstream relacion(aux);
-        getline(relacion, aux, '#');
-        relaciones.push_back(aux);
-    }
-    diccionario.close();
-    for(int i=0; i<relaciones.size(); i++){
-        heapsfiles.push_back(new HeapFile(relaciones[i]));
-    }
-
-    // for(int i=0; i<heapsfiles.size(); i++){
-    //     heapsfiles[i]->print();
-    // }   
-}
-
-// IMPORTAR TABLA MANUAL o AUTOMATICO // asignar numeros de bloque
+// IMPORTAR TABLA MANUAL o AUTOMATICO 
 void Disco::adicRelacion(std::string _archivo){
     std::ofstream _diccionario(diccionario, std::ios::app); // abriendo archivo diccionario
     std::cout<<"\n > Adicionando tabla desde archivo "<<_archivo<<"\n";
@@ -197,6 +186,7 @@ void Disco::adicRelacion(std::string _archivo){
     _diccionario<<std::endl;
     archivo.close();
 }
+// CONSIGUE SECTORES PARA GUARDAR DEL BLOQUE
 vector<string> Disco::getSectores(int _nroBloque){
     std::ifstream directorio("dirBloques.txt");
 
@@ -219,27 +209,26 @@ vector<string> Disco::getSectores(int _nroBloque){
     directorio.close();
     return sectores;
 }
-
+// CREA NUEVO INDICE Y LO AGREGAR AL VECTOR DE INDICES
 BPlusTree<int>*  Disco::createNewIndice(string _relacion, string _claveBusqueda){
     BPlusTree<int>* newIndice = new BPlusTree<int>(8, _relacion, _claveBusqueda);
     indices.push_back(newIndice);
     return newIndice;
 }
-
+// RETORNA EL INDICE DE LA RELACION Y CLAVE DE BUSQUEDA
 BPlusTree<int>* Disco::getIndice(string _relacion, string _claveBusqueda){
     for (int i = 0; i < indices.size(); i++){
-        if (indices[i]->relacion == _relacion && indices[i]->claveBusqueda == _claveBusqueda){
+        if (indices[i]->relacion == _relacion){
             return indices[i];
         }
     }
     return nullptr;
 }
-
+// AÑADE CAMBIOS AL INDICE
 void Disco::addChanges(vector<std::tuple<bool, int, int>> _cambios, string _relacion, string _claveBusqueda){
     BPlusTree<int> *indice = this->getIndice(_relacion, _claveBusqueda);
 
     if (!indice){
-        cout << " INDEICE NO EXISTE " << endl;
         indice = createNewIndice(_relacion, _claveBusqueda);
     }
     for(int i=0; i<_cambios.size(); i++){
@@ -255,71 +244,6 @@ void Disco::addChanges(vector<std::tuple<bool, int, int>> _cambios, string _rela
         }
     }
     indice->print();
-}
-
-void Disco::createIndices(int _nBloque){
-    ifstream Bloque(getdirBloque(_nBloque));
-    string registros;
-    int nSector = 0, capacidadSectori = capacidadS;
-    if(!Bloque.is_open()) std::cout<<" ERROR ARCHIVO ! ";
-
-    std::getline(Bloque, registros); // HEADER
-    vector<string> vectorHeader = getHeader(registros);
-    for(int i=0; i<vectorHeader.size(); i++){
-        cout<<vectorHeader[i]<<endl;
-    }
-    int tipoR = stoi(vectorHeader[1]);
-    int nroRelacion = stoi(vectorHeader[5].substr(1));
-    string nombreRelacion = getNombreRelacion(nroRelacion);
-
-    int nodos;
-    cout<<"> NODOS ";cin>>nodos;
-    BPlusTree<int> BPlusTree_indices(nodos, nombreRelacion, "userid" );
-
-
-    std::getline(Bloque, registros);  // SLOTS
-    //std::getline(Bloque, registros);  // REGISTROS
-    string registro;
-    vector<pair<int,int>> posiciones;
-    vector<int> vectorSlots;
-    if(tipoR == 1) {// FIJA
-        vector<pair<string,int>> longitudes = longMaxEsquema(nombreRelacion);
-        int longitudFija = getCapacMaxRegistro(longitudes);
-        getline(Bloque, registros); // REGISTROS 
-        Bloque.close();
-        int posfinal = registros.size();
-        int pos = 0;
-        while (pos < posfinal){
-            registro = registros.substr(pos,longitudFija);
-            cout<<" REGISTRO >"<<registro<<endl;
-            vector<string> vectorRegistro = getVectorRegistro(registro, nombreRelacion, tipoR);
-            BPlusTree_indices.set(stoi(vectorRegistro[1]), make_pair(_nBloque, pos));
-            pos+=longitudFija;
-        }
-    }
-    else if(tipoR == 0) {// VARIABLE
-        stringstream slots(registros);
-        getline(Bloque, registros); // REGISTROS
-        Bloque.close();
-        string aux;
-        int post;
-        int pos = 0;
-        while(getline(slots, aux, '|')){    
-            if(aux == "_") break;
-            post = stoi(aux);
-            if (pos + post > registros.size()) break;
-            registro = registros.substr(pos,post);
-            cout<<" REGISTRO >"<<registro<<endl;
-            vector<string> vectorRegistro = getVectorRegistro(registro, nombreRelacion, tipoR);
-            BPlusTree_indices.set(stoi(vectorRegistro[1]), make_pair(_nBloque, pos));
-            pos += post;
-        }
-    }else { return; }
-
-    BPlusTree_indices.print(nullptr, "", true, nullptr);
-    ofstream outfile(BPlusTree_indices.archivo);
-    BPlusTree_indices.print(nullptr, "", true, &outfile);
-    Bloque.close();
 }
 // FUNCION GUARDA BLOQUE EN SECTORES
 void Disco::guardarBloqueSector(int nBloque){
@@ -383,10 +307,16 @@ void Disco::printDisco(){
     std::cout<<"  >  Nro de Bloques "<<nroBloques<<std::endl;
     std::cout<<"  >  Capacidad del Bloque "<<capacBloque<<std::endl;
 }
+// FUNCION QUE IMPRIME nuestro BPLUS TREE DE LA RELACION
+void Disco::printIndice(string _relacion){
+    BPlusTree<int> *indice = this->getIndice(_relacion, "");
+    if (indice){indice->print();}
+}
+// MENÚ DEL DISCO
 void MenuDisco(Disco* &Disco1){
     int opcion; 
-    std::string archivo = "", criterio ="", registro = "";
-    int n, R; std::string relacion;
+    std::string archivo = "";
+    int n; std::string relacion;
     std::string nd;
 
     do {
@@ -397,7 +327,8 @@ void MenuDisco(Disco* &Disco1){
         cout << "2. Imprimir Disco "<< endl;
         cout << "3. Consultar Bloque "<< endl;
         cout << "4. Guardar Bloque a sectores "<< endl;
-        cout << "5. Salir del Menu ..."<< endl;
+        cout << "5. Imprimir Indice "<< endl;
+        cout << "6. Salir del Menu ..."<< endl;
         cout << "__________________________________________________\n\n";
         cout << "Elija una opcion: ";
         
@@ -420,12 +351,24 @@ void MenuDisco(Disco* &Disco1){
             case 4: 
                 std::cout<<" Que bloque quiere consultar? > ";std::cin>>n;
                 Disco1->guardarBloqueSector(n);
+                break;
+            case 5:
+                std::cout<<" De que relacion deseas consultar? > ";std::cin>>relacion;
+                Disco1->printIndice(relacion);
                 break;            
-            case 5: 
+            case 6: 
                 std::cout<<" SALIENDO DEL MENU //";
                 break;
             default:
                 cout << "Opcion invalida. Por favor, seleccione una opción valida." << endl;
         }
-    } while(opcion != 5);
+    } while(opcion != 6);
+}
+
+char is_IntFlo(std::string _dato){ //T ENTERO F FLOAT S STRING;
+    for(int i=0; i<_dato.size();i++){
+        if(_dato[i] == '.') return 'F';
+        if(!isdigit(_dato[i])) return 'S';
+    }
+    return 'T';
 }

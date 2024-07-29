@@ -5,10 +5,6 @@
 using namespace std;
 
 void insert(Buffer *_myBuffer){
-    // int _idPage;
-    // cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
-    // cin >> _idPage;   
-    //_myBuffer->pinPage(_idPage, 'W', 0);
     int R = 0; // POLITICA RLV 0 / RLF 1
     string n;
     string archivo, relacion;
@@ -32,52 +28,56 @@ void insert(Buffer *_myBuffer){
  
         vector<string> vector_registro = getVectorRegistro(registro);
 
-        cout<<"Bloque a conseguir";
-
-        int _idPage = _myBuffer->getBloque(relacion,claveBusqueda.first, stoi(vector_registro[claveBusqueda.second]));
-        
-        cout<<" IDE PAGE >"<<_idPage<<endl;
-        
+        int _idPage = _myBuffer->getBloque(relacion,claveBusqueda.first, stoi(vector_registro[claveBusqueda.second])); 
         _myBuffer->pinPage(_idPage, 'W', 0);
-
-        cout<<" IDE PAGE >"<<_idPage<<endl;
 
         int espacioLibre =  adicionarRegistroPage(_idPage, registro, relacion, R);
         if (espacioLibre != -1){
+            // AÑADIR A CAMBIOS
             _myBuffer->addChanges(_idPage, stoi(vector_registro[claveBusqueda.second]), 1, relacion, claveBusqueda.first);
-
-
-            
+            // AÑADIR RUTA
             _myBuffer->addRuta(relacion, claveBusqueda.first, stoi(vector_registro[claveBusqueda.second]), make_pair(_idPage, 0));
+            // EDITAR HEAP FILES
             _myBuffer->updateCapacBloqueHF(relacion, _idPage, espacioLibre);
+        }else{
+            // si no se adiciono
         }
     }
     data.close();
 }
 
 void delet(Buffer *_myBuffer){
-    int _idPage;
-    cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
-    cin >> _idPage;   
-    _myBuffer->pinPage(_idPage, 'W', 0);
     string relacion, condicion;
     std::cout << " Eliminando registro de la (relacion) donde (condicion) >\n";
     std::cout << " Relacion > ";cin >> relacion;
     std::cout << " Condicion > ";getline(std::cin >> std::ws, condicion);
-    registroPage(_idPage, relacion, condicion, "", 0);
+
+    pair<string,int> claveBusqueda = chooseClaveBusqueda(relacion);
+
+    std::vector<std::string> condicionVector = getCondicionVector(condicion);
+    int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, stoi(condicionVector[2]));
+    _myBuffer->pinPage(_idPage, 'W', 0);
+    int espacioLibre = registroPage(_idPage, relacion, condicion, "", 0);
+    // EDITAR HEAP FILES
+    _myBuffer->updateCapacBloqueHF(relacion, _idPage, espacioLibre);
+    // AÑADIR A CAMBIOS
+    _myBuffer->addChanges(_idPage, stoi(condicionVector[2]), 0, relacion, claveBusqueda.first);
+    // ELIMINAR RUTA
+
 }
 
 void consultas(Buffer *_myBuffer){
-    int _idPage;
-    cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
-    cin >> _idPage;   
-    _myBuffer->pinPage(_idPage, 'R', 0);
     string relacion, condicion, atributo;
     std::cout << " Consultando en la (relacion) del registro donde (condicion) >\n";
     std::cout << " Relacion > "; cin >> relacion;
-    std::cout << " Condicion > ";
-    getline(std::cin >> std::ws, condicion);
-    registroPage(_idPage, relacion, condicion, atributo, 1);
+    std::cout << " Condicion > ";getline(std::cin >> std::ws, condicion);
+
+    pair<string,int> claveBusqueda = chooseClaveBusqueda(relacion);
+    std::vector<std::string> condicionVector = getCondicionVector(condicion);
+    
+    int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, stoi(condicionVector[2]));
+    _myBuffer->pinPage(_idPage, 'R', 0);
+    registroPage(_idPage, relacion, condicion, "", 1);
 }
 
 void requerimientos(Buffer* _myBuffer){
