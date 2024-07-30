@@ -243,6 +243,8 @@ void Disco::addChanges(vector<std::tuple<bool, int, int>> _cambios, string _rela
             indice->remove(key);
         }
     }
+
+    cout<<"\n INDICE EN DISCO ACTUALIZADO !\n";
     indice->print();
 }
 // FUNCION GUARDA BLOQUE EN SECTORES
