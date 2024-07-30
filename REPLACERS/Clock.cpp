@@ -57,6 +57,11 @@ class Clock {
             } 
             Frames[nFrame].actualizarDirtyBit();
         }
+        void superUnpin(int nFrame){
+            Frames[nFrame].pinCount = 0;
+            Frames[nFrame].requerimientos.clear();
+            Frames[nFrame].actualizarDirtyBit();
+        }
 
         void newPage(int nFrame, char func, bool pinned){ // buscar si ya existe
             Frames[nFrame].pinCount = 1;

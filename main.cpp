@@ -1,4 +1,5 @@
 #include <iostream>
+#include <set>
 
 #include "Buffer.cpp"
 
@@ -27,6 +28,8 @@ void insert(Buffer* _myBuffer) {
 
     cout << " CLAVE DE BUSQUEDA SELECCIONADA! " << claveBusqueda.first << "-" << claveBusqueda.second << endl;
 
+    vector<int> IDPAGES;
+
     int loopLimit = (n == "*") ? INT_MAX : stoi(n);
     for (int i = 0; i < loopLimit; ++i) {
         if (!std::getline(data, registro)) {
@@ -46,10 +49,16 @@ void insert(Buffer* _myBuffer) {
         _myBuffer->pinPage(_idPage, 'W', 0);
 
         int espacioLibre = adicionarRegistroPage(_idPage, registro, relacion, R);
-        if (espacioLibre != -1) {
+        // if(espacioLibre == -1) {
+        //     key += 30;
+        //     _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, key);
+        //     _myBuffer->pinPage(_idPage, 'W', 0);
+        //     espacioLibre =  adicionarRegistroPage(_idPage, registro, relacion, R);
+        // }
+        if (espacioLibre != -1) {  // si lo inserto
             cout << "\n REGISTRO \n"
                  << registro << " insertado en " << _idPage << endl;
-
+            IDPAGES.push_back(_idPage);
             // AÑADIR A CAMBIOS
             _myBuffer->addChanges(_idPage, key, 1, relacion, claveBusqueda.first);
             // AÑADIR RUTA
@@ -57,11 +66,23 @@ void insert(Buffer* _myBuffer) {
             // EDITAR HEAP FILES
             _myBuffer->updateCapacBloqueHF(relacion, _idPage, espacioLibre);
         } else {
-            // si no se adiciono
+            cout << "\n\n >> LIMITE DE ALMACENAMIENTO ALCANZADO! >> \n\n";
         }
     }
+    // Usar std::set para eliminar duplicados
+    std::set<int> uniqueElements(IDPAGES.begin(), IDPAGES.end());
+    IDPAGES.assign(uniqueElements.begin(), uniqueElements.end());
+
+    _myBuffer->printBuffer();
     _myBuffer->printIndice(relacion);
     cout << "\n SE INSERTARON LOS DATOS CORRECTAMENTE \n";
+    char guardar;
+    cout << " Desea guardar los cambios? (S/N): ";
+    cin >> guardar;
+    for (int i = 0; i < IDPAGES.size(); i++) {
+        _myBuffer->superUnpinPage(IDPAGES[i], guardar);
+    }
+    cout << "\n CAMBIOS GUARDADOS EN EL DISCO EXITOSAMENTE \n";
     data.close();
 }
 
@@ -88,6 +109,13 @@ void delet(Buffer* _myBuffer) {
     _myBuffer->addChanges(_idPage, key, 0, relacion, claveBusqueda.first);
     // ELIMINAR RUTA
     _myBuffer->deleteRuta(relacion, "", key);
+
+    cout << "\n ELIMINANDO DE PAGINA> " << _idPage << endl;
+    char guardar;
+    cout << " Desea guardar los cambios? (S/N): ";
+    cin >> guardar;
+    _myBuffer->superUnpinPage(_idPage, guardar);
+    cout << "\n ELIMINADO GUARDADOS EN EL DISCO EXITOSAMENTE \n";
 }
 
 void consultas(Buffer* _myBuffer) {
