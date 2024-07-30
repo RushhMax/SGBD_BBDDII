@@ -39,7 +39,6 @@ string getEsquema(string _relacion){
     return _esquema;
 }
 
-
 //_______________________________ MAIN _____________________________
 // RETORNA ATRIBUTOS
 std::vector<string> getAtributos(string _relacion){
@@ -95,6 +94,10 @@ pair<string,int> chooseClaveBusqueda(string _relacion){
     }
     cout<<" OPCION NO VALIDA \n";
     return chooseClaveBusqueda(_relacion);
+}
+
+int getIndiceDisperso(int key){
+    return key/20;
 }
 
 
@@ -420,6 +423,7 @@ vector<string> getVectorRegistro(string _registro){
     string aux;
     stringstream registro(_registro);
     while(getline(registro, aux, ';')){
+        if(aux == "") aux = " ";
         arrayRegistro.push_back(aux);
     }
     return arrayRegistro;

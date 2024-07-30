@@ -25,7 +25,6 @@ class Page {
         deque<pair<char,bool>> requerimientos; // COLA DE REQUERIMIENTOS
         std::vector<std::tuple<bool, int, int>> cambios; // cambio (Adicionar o eliminar, clave de Busqueda, ruta)
         string relacion; 
-        string claveBusqueda; 
 
         // CONSTRUCTOR 
         Page(int _id, bool _pinned) :idPage(_id), dirty_bit(false), pin_count(1), pinned(_pinned){
@@ -84,7 +83,6 @@ class Buffer {
         Clock* my_clock; 
         LRU* my_LRU;
         int choice_replacer;
-        string dirPaginas = "dirPaginas.txt";
         vector<BPlusTree<int>*> indices;
         vector<HeapFile*> heapsfiles;
 
@@ -103,7 +101,7 @@ class Buffer {
             }
             else if(choice_replacer == 1) frameVictima = my_clock->victima();
 
-            printBuffer();
+            //printBuffer();
             
             if(choice_replacer == 0 && pagevictima == -1) { cout<<" No podemos eliminar ninguna pagina! Eliminar manualmente! \n ";return false; }
             if(choice_replacer == 1 && frameVictima == -1) {  cout<<" No podemos eliminar ninguna pagina! Eliminar manualmente! \n ";return false;}
@@ -147,13 +145,12 @@ class Buffer {
                 relaciones.push_back(aux);
             }
             diccionario.close();
+            
             for(int i=0; i<relaciones.size(); i++){
+                //cout<<" Creando para la relacion "<<relaciones[i]<<endl;
                 heapsfiles.push_back(new HeapFile(relaciones[i]));
+                //heapsfiles[i]->print();
             }
-
-            for(int i=0; i<heapsfiles.size(); i++){
-                heapsfiles[i]->print();
-            }   
         }
         // RETORNAR PAGINA
         void flushPage(int _idPage){
@@ -199,10 +196,10 @@ class Buffer {
                     if(BufferPool[it->second].page->requerimientos[0].first == 'W' ){
                         cout << "\n Liberando proceso de Escritura >> \n";
                         char guardar;
-                        //cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
-                        guardar = 'S';
+                        cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
+                        //guardar = 'S';
                         if (guardar == 'S' || guardar == 's') { 
-                            my_disk->addChanges(BufferPool[it->second].page->cambios, BufferPool[it->second].page->relacion, BufferPool[it->second].page->claveBusqueda);
+                            my_disk->addChanges(BufferPool[it->second].page->cambios, BufferPool[it->second].page->relacion, "");
                             this->flushPage(idPage); 
                         }   
                     }
@@ -220,7 +217,7 @@ class Buffer {
         // Función para agregar una nueva página al búfer
         Page* newPage(int idPage, char func, bool _pinned) {
             request_count++;
-            this->printBuffer();
+            //this->printBuffer();
             // comprobar que algun frame  este vacio
             for(auto &Frame : BufferPool){
                 if(Frame.page.get()){  // si la pag del frame existe
@@ -269,8 +266,8 @@ class Buffer {
                 if (frame.page) { cout<<"Frame ID: "<<frame.idFrame<<", Page ID: "<<frame.page->getIdPage()<< ", Dity bit: "<< frame.page->getDirtyBit() << ", Pin Count: " << frame.page->getPinCount() << ", Pinned: " <<frame.page->getPinned()<< " \n";
                 }else{ cout<<"Frame ID: "<<frame.idFrame<<" > FRAME VACIO! \n";}
             }
-            if(choice_replacer == 1)my_clock->printClock();
-            else if(choice_replacer == 0) my_LRU->printLRU();
+            //if(choice_replacer == 1)my_clock->printClock();
+            //else if(choice_replacer == 0) my_LRU->printLRU();
         }
         // IMPRIMIR HITS
         void printStats() const {
@@ -451,6 +448,11 @@ class Buffer {
                 }
             }
         }
+        void updateCapacBloqueHF(string _relacion, int _idPage, int _espacioLibre){
+            HeapFile* heapfile = getHeapFile(_relacion);
+            heapfile->editCapacidad(make_pair(_idPage, _espacioLibre));
+        }
+
 
         BPlusTree<int>* getIndice(string _relacion, string _claveBusqueda){
             for(int i=0; i<indices.size(); i++){
@@ -472,14 +474,14 @@ class Buffer {
             HeapFile* heapfile = getHeapFile(_relacion);
 
             if(!indice){
-                cout<<" INDICE NO EXISTE \n"<<endl;
+                // cout<<" INDICE NO EXISTE \n"<<endl;
                 indice = createNewIndice(_relacion, _claveBusqueda);
                 return heapfile->getNewFree();
             }else{
-                cout<<" INDICE EXISTE! \n "<<endl;
+                // cout<<" INDICE EXISTE! \n "<<endl;
                 ruta = indice->getRuta(key);
                 if(ruta.first == 0 && ruta.second == 0){ // quiere decir que no existe un registro con
-                    cout<<"\n RUTA NO ENCONTRADA GET NEW FREE !\n";
+                    // cout<<"\n RUTA NO ENCONTRADA GET NEW FREE !\n";
                     return heapfile->getNewFree();
                 }else{
                     return ruta.first;
@@ -491,16 +493,28 @@ class Buffer {
             BPlusTree<int>* indice = getIndice(_relacion, _claveBusqueda);
 
             if(!indice){
-                cout<<" INDEICE NO EXISTE "<<endl;
                 indice = createNewIndice(_relacion, _claveBusqueda);
             }
             indice->set(key, ruta); 
-            cout<<"\n IMPRIMIENDO INDICE \n";
-            indice->print();
+            // cout<<"\n INDICE EN TEMPORAL DE BUFFER ACTUALIZADO !\n";
+            // indice->print();
         }
-        void updateCapacBloqueHF(string _relacion, int _idPage, int _espacioLibre){
-            HeapFile* heapfile = getHeapFile(_relacion);
-            heapfile->editCapacidad(make_pair(_idPage, _espacioLibre));
+        void deleteRuta(string _relacion, string _claveBusqueda, int key){
+            BPlusTree<int>* indice = getIndice(_relacion, _claveBusqueda);
+
+            if(indice){
+                indice->remove(key);
+                // cout<<"\n INDICE TEMPORAL DE BUFFER ACTUALIZADO !\n";
+                // indice->print();
+            }
+        }
+        void printIndice(string _relacion){
+            BPlusTree<int>* indice = getIndice(_relacion, "");
+
+            if(indice){
+                cout<<"\n INDICE TEMPORAL DE BUFFER ACTUALIZADO !\n";
+                indice->print();
+            }
         }
 
         // AÑADIR CAMBIOS (INSERCIONES - ELIMINACIONES) A PAGINA 
@@ -508,7 +522,6 @@ class Buffer {
             auto it = PageTable.find(_idPage);
             if (it != PageTable.end()) {
                 BufferPool[it->second].page->relacion = _relacion;
-                BufferPool[it->second].page->claveBusqueda = _claveBusqueda;
                 BufferPool[it->second].page->cambios.emplace_back(_change, key, _idPage); //cambio (Adicionar o eliminar, clave de Busqueda, ruta)
             }
         }

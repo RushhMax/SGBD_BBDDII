@@ -178,8 +178,8 @@ class BPlusTree {
     pair<int, int> getRuta(int key){
       Node<int>* NodoHoja = findLeaf(key);
       for (int i = 0; i < NodoHoja->keys.size(); i++){
-        cout << NodoHoja->keys[i] << " (";
-        cout << NodoHoja->rutas[i].first << "-" << NodoHoja->rutas[i].second << ")\n";
+        //cout << NodoHoja->keys[i] << " (";
+        //cout << NodoHoja->rutas[i].first << "-" << NodoHoja->rutas[i].second << ")\n";
         if (NodoHoja->keys[i] == key){
           return make_pair(NodoHoja->rutas[i].first, NodoHoja->rutas[i].second);
         }

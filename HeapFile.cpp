@@ -21,7 +21,7 @@ pair<int,int> getBloques(string _relacion){
             getline(relacion, aux, '_');
             getline(relacion, aux, '#');
             int primerBloqueAsignado = stoi(aux); 
-            getline(relacion, aux, '#');
+            getline(relacion, aux, '_');
             int ultimoBloqueAsignado = stoi(aux); 
             diccionario.close();
             return make_pair(primerBloqueAsignado, ultimoBloqueAsignado);
@@ -54,12 +54,13 @@ struct HeapFile{
     // CONSTRUCTOR HEAP FILE POR NOMBRE DE LA RELACION
     HeapFile(string _nombreRelacion):nombreRelacion(_nombreRelacion) {
         bloquesAsignados = getBloques(_nombreRelacion);
+        //cout<<"Bloques asignados "<<bloquesAsignados.first<<" "<<bloquesAsignados.second;
         Bloque_espacioLibre = getCapacidadLibreBloques(bloquesAsignados.first, bloquesAsignados.second);
     }
     // EDITA LA CAPACIDAD DEL <NRO BLOQUE, ESPACIO LIBRE>
     void editCapacidad(pair<int,int> _Bloque_espacioLibre){
         for(int i=0; i<Bloque_espacioLibre.size(); i++){
-            cout<<"BLOQUE > "<<Bloque_espacioLibre[i].first<<" - "<<Bloque_espacioLibre[i].second<<endl;
+            //cout<<"BLOQUE > "<<Bloque_espacioLibre[i].first<<" - "<<Bloque_espacioLibre[i].second<<endl;
             if(Bloque_espacioLibre[i].first == _Bloque_espacioLibre.first ){
                 Bloque_espacioLibre[i].second = _Bloque_espacioLibre.second;
                 return;
@@ -72,7 +73,7 @@ struct HeapFile{
         for(int i=1; i<Bloque_espacioLibre.size(); i++){
             if(Bloque_espacioLibre[i].second > Bloque_espacioLibre[max].second) max = i;
         }  
-        cout<<" ENCONTRE AL MAXIMO "<<max<<" - "<<Bloque_espacioLibre[max].first<<endl;
+        //cout<<" ENCONTRE AL MAXIMO "<<max<<" - "<<Bloque_espacioLibre[max].first<<endl;
         return Bloque_espacioLibre[max].first;
     }
     // IMPRIMIR EL HEAP FILE

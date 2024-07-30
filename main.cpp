@@ -29,25 +29,31 @@ void insert(Buffer *_myBuffer){
         if (!std::getline(data, registro)){ break; } // Salir del bucle si no hay más registros
  
         vector<string> vector_registro = getVectorRegistro(registro);
+        int key;
+        if (vector_registro[claveBusqueda.second] == " "){ 
+            key = 0;
+        }else{ key = stoi(vector_registro[claveBusqueda.second]); }
+        key = getIndiceDisperso(key);
 
-        cout<<" Insertando registro con clave de bsqueda "<<vector_registro[claveBusqueda.second]<<endl;
-        int _idPage = _myBuffer->getBloque(relacion,claveBusqueda.first, stoi(vector_registro[claveBusqueda.second])); 
-        cout<<" MY ID - PAGE >"<<_idPage<<endl;
+        int _idPage = _myBuffer->getBloque(relacion,claveBusqueda.first, key); 
         _myBuffer->pinPage(_idPage, 'W', 0);
-        cout<<" MY ID - PAGE >"<<_idPage<<endl;
 
         int espacioLibre =  adicionarRegistroPage(_idPage, registro, relacion, R);
         if (espacioLibre != -1){
+            cout<<"\n REGISTRO \n"<<registro<<" insertado en "<<_idPage<<endl;
+
             // AÑADIR A CAMBIOS
-            _myBuffer->addChanges(_idPage, stoi(vector_registro[claveBusqueda.second]), 1, relacion, claveBusqueda.first);
+            _myBuffer->addChanges(_idPage, key , 1, relacion, claveBusqueda.first);
             // AÑADIR RUTA
-            _myBuffer->addRuta(relacion, claveBusqueda.first, stoi(vector_registro[claveBusqueda.second]), make_pair(_idPage, 0));
+            _myBuffer->addRuta(relacion, claveBusqueda.first, key, make_pair(_idPage, 0));
             // EDITAR HEAP FILES
             _myBuffer->updateCapacBloqueHF(relacion, _idPage, espacioLibre);
         }else{
             // si no se adiciono
         }
     }
+    _myBuffer->printIndice(relacion);
+    cout<<"\n SE INSERTARON LOS DATOS CORRECTAMENTE \n";
     data.close();
 }
 
@@ -60,15 +66,18 @@ void delet(Buffer *_myBuffer){
     pair<string,int> claveBusqueda = chooseClaveBusqueda(relacion);
 
     std::vector<std::string> condicionVector = getCondicionVector(condicion);
-    int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, stoi(condicionVector[2]));
+
+    int key = getIndiceDisperso(stoi(condicionVector[2]));
+
+    int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, key);
     _myBuffer->pinPage(_idPage, 'W', 0);
     int espacioLibre = registroPage(_idPage, relacion, condicion, "", 0);
     // EDITAR HEAP FILES
     _myBuffer->updateCapacBloqueHF(relacion, _idPage, espacioLibre);
     // AÑADIR A CAMBIOS
-    _myBuffer->addChanges(_idPage, stoi(condicionVector[2]), 0, relacion, claveBusqueda.first);
+    _myBuffer->addChanges(_idPage, key, 0, relacion, claveBusqueda.first);
     // ELIMINAR RUTA
-
+    _myBuffer->deleteRuta(relacion, "", key);
 }
 
 void consultas(Buffer *_myBuffer){
@@ -80,7 +89,9 @@ void consultas(Buffer *_myBuffer){
     pair<string,int> claveBusqueda = chooseClaveBusqueda(relacion);
     std::vector<std::string> condicionVector = getCondicionVector(condicion);
     
-    int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, stoi(condicionVector[2]));
+    int key = getIndiceDisperso(stoi(condicionVector[2]));
+
+    int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, key);
     _myBuffer->pinPage(_idPage, 'R', 0);
     registroPage(_idPage, relacion, condicion, "", 1);
 }
@@ -140,7 +151,7 @@ int main(){
     // cout << " LRU (0) o CLOCK (1) > ";cin>>choice;
     choice = 1;
 
-    Buffer* myBuffer = new Buffer(Disco1->getCapacidadBloque() *3, Disco1->getCapacidadBloque(), Disco1, choice);
+    Buffer* myBuffer = new Buffer(Disco1->getCapacidadBloque() *5, Disco1->getCapacidadBloque(), Disco1, choice);
     myBuffer->printBuffer();
     
     requerimientos(myBuffer);
