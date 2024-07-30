@@ -95,7 +95,6 @@ pair<string,int> chooseClaveBusqueda(string _relacion){
     cout<<" OPCION NO VALIDA \n";
     return chooseClaveBusqueda(_relacion);
 }
-
 int getIndiceDisperso(int key){
     return key/20;
 }

@@ -31,7 +31,7 @@ class Disco{
 
         // CONSTRUCTORES
         // CONSTRUCTOR DISCO POR PARAMETROS 
-        Disco(int _platos = 4, int _pistas = 8, int _sectores = 20, long long int _capacSector = 500, int _capacidadBloque = 2000);
+        Disco(int _platos = 4, int _pistas = 8, int _sectores = 20, long long int _capacSector = 1000, int _capacidadBloque = 4000);
         // CONSTRUCTOR DE ESTRUCTURA DE DISCO 
         void crearEstructura();
         // POLITICA CILINDRICA
@@ -226,6 +226,7 @@ BPlusTree<int>* Disco::getIndice(string _relacion, string _claveBusqueda){
 }
 // AÑADE CAMBIOS AL INDICE
 void Disco::addChanges(vector<std::tuple<bool, int, int>> _cambios, string _relacion, string _claveBusqueda){
+    cout<<"\n ANADIENDO CAMBIOS EN INDICES ! "<<endl;
     BPlusTree<int> *indice = this->getIndice(_relacion, _claveBusqueda);
 
     if (!indice){
@@ -244,7 +245,7 @@ void Disco::addChanges(vector<std::tuple<bool, int, int>> _cambios, string _rela
         }
     }
 
-    cout<<"\n INDICE EN DISCO ACTUALIZADO !\n";
+    cout<<"> INDICE EN DISCO ACTUALIZADO !\n";
     indice->print();
 }
 // FUNCION GUARDA BLOQUE EN SECTORES

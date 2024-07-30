@@ -48,6 +48,7 @@ class Page {
         void turnDirtyBit() { dirty_bit = true;}
         void incrementPinCount() { pin_count++;} 
         void decrementPinCount() { if (pin_count > 0) pin_count--; }  
+        void resetPinCount() { pin_count = 0; }
         void setDirtyBit(bool _dirtyBit){ dirty_bit = _dirtyBit; }
 
         void actualizarDirtyBit() {
@@ -109,7 +110,9 @@ class Buffer {
             while(BufferPool[frameVictima].page->getPinCount() > 0){
                 int choice = 1;
                 //cout<<" Desea liberar el frame "<<BufferPool[frameVictima].idFrame<<" ? (Y = 1 | N = 0)  ";cin>> choice;
-                if(choice == 1) unpinPage(BufferPool[frameVictima].page->getIdPage());
+                char guardar;
+                cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
+                if(choice == 1) superUnpinPage(BufferPool[frameVictima].page->getIdPage(), guardar);
                 else {cout<< " No podemos eliminar ninguna pagina! Eliminar manualmente! \n"; return false;}//return victima();
             }
             if(choice_replacer == 0) my_LRU->deletePage(pagevictima);
@@ -213,6 +216,40 @@ class Buffer {
                 if(choice_replacer == 1)my_clock->unpin(BufferPool[it->second].idFrame);
                 else if(choice_replacer == 0) my_LRU->unpin(idPage);
             }
+        }
+        
+        void superUnpinPage(int idPage, char guardar){
+            auto it = PageTable.find(idPage);
+            if (it != PageTable.end()) {
+                // PIN COUNT
+                BufferPool[it->second].page->resetPinCount();
+                // LIBERAR PROCESOS
+                
+                //BufferPool[it->second].page->requerimientos.push_back(make_pair('W',changeFuncInt('W')));
+                if(BufferPool[it->second].page->requerimientos.size() == 0){
+                    BufferPool[it->second].page->setDirtyBit(0);
+                    cout<<" No hay requerimiento que eliminar! ";
+                }else{
+                    if(BufferPool[it->second].page->requerimientos[0].first == 'W' ){
+                        BufferPool[it->second].page->requerimientos.clear();
+                        cout << "\n Liberando proceso de Escritura >> \n";
+                        //cout << " Desea guardar los cambios? (S/N): ";// cin >> guardar;
+                        //guardar = 'S';
+                        if (guardar == 'S' || guardar == 's') { 
+                            my_disk->addChanges(BufferPool[it->second].page->cambios, BufferPool[it->second].page->relacion, "");
+                            this->flushPage(idPage); 
+                        }   
+                    }
+                    //else cout << "\n Liberando proceso de Lectura >> \n";
+                    BufferPool[it->second].page->requerimientos.pop_front();
+                    if(BufferPool[it->second].page->requerimientos.size() == 0) BufferPool[it->second].page->setDirtyBit(0);
+                    else BufferPool[it->second].page->actualizarDirtyBit();
+                }
+
+                // REPLACER
+                if(choice_replacer == 1)my_clock->superUnpin(BufferPool[it->second].idFrame);
+                else if(choice_replacer == 0) my_LRU->unpin(idPage);
+            }   
         }
         // Función para agregar una nueva página al búfer
         Page* newPage(int idPage, char func, bool _pinned) {
@@ -456,7 +493,7 @@ class Buffer {
 
         BPlusTree<int>* getIndice(string _relacion, string _claveBusqueda){
             for(int i=0; i<indices.size(); i++){
-                if(indices[i]->relacion == _relacion && indices[i]->claveBusqueda == _claveBusqueda){
+                if(indices[i]->relacion == _relacion){
                     return indices[i];
                 }
             }
@@ -488,6 +525,10 @@ class Buffer {
                 }
             }
         }
+        int getNewBloque(string _relacion){
+            HeapFile* heapfile = getHeapFile(_relacion);
+            return heapfile->getNewFree();
+        }
 
         void addRuta(string _relacion, string _claveBusqueda, int key, pair<int, int> ruta){
             BPlusTree<int>* indice = getIndice(_relacion, _claveBusqueda);
@@ -510,7 +551,6 @@ class Buffer {
         }
         void printIndice(string _relacion){
             BPlusTree<int>* indice = getIndice(_relacion, "");
-
             if(indice){
                 cout<<"\n INDICE TEMPORAL DE BUFFER ACTUALIZADO !\n";
                 indice->print();
