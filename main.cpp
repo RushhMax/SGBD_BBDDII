@@ -5,15 +5,18 @@
 
 using namespace std;
 
-void insert(Buffer *_myBuffer){
-    int R = 0; // POLITICA RLV 0 / RLF 1
+void insert(Buffer* _myBuffer) {
+    int R = 0;  // POLITICA RLV 0 / RLF 1
     string n;
     string archivo, relacion;
     cout << "\n----- ADICIONANDO REGISTROS -----\n";
     std::cout << " Adicionando (n) registros del (archivo) a la (Relacion) >\n";
-    std::cout << " n> (n/*)   \t";cin >> n; /// 1
-    std::cout << " Archivo >  \t ";cin >> archivo;
-    std::cout << " Relacion > \t";cin >> relacion;
+    std::cout << " n> (n/*)   \t";
+    cin >> n;  /// 1
+    std::cout << " Archivo >  \t ";
+    cin >> archivo;
+    std::cout << " Relacion > \t";
+    cin >> relacion;
     archivo = "DATABASE/" + archivo;
     // std::cout<<" Registro Long FIJA (1) O Varible(0) > ";cin>>R;
 
@@ -21,44 +24,49 @@ void insert(Buffer *_myBuffer){
     std::string registro;
     std::getline(data, registro);
 
-    pair<string,int> claveBusqueda = chooseClaveBusqueda(relacion);
+    pair<string, int> claveBusqueda = chooseClaveBusqueda(relacion);
 
-    cout<<" CLAVE DE BUSQUEDA SELECCIONADA! "<<claveBusqueda.first<<"-"<<claveBusqueda.second<<endl;
+    cout << " CLAVE DE BUSQUEDA SELECCIONADA! " << claveBusqueda.first << "-" << claveBusqueda.second << endl;
 
     vector<int> IDPAGES;
 
     int loopLimit = (n == "*") ? INT_MAX : stoi(n);
-    for (int i = 0; i < loopLimit; ++i){
-        if (!std::getline(data, registro)){ break; } // Salir del bucle si no hay más registros
- 
+    for (int i = 0; i < loopLimit; ++i) {
+        if (!std::getline(data, registro)) {
+            break;
+        }  // Salir del bucle si no hay más registros
+
         vector<string> vector_registro = getVectorRegistro(registro);
         int key;
-        if (vector_registro[claveBusqueda.second] == " "){ 
+        if (vector_registro[claveBusqueda.second] == " ") {
             key = 0;
-        }else{ key = stoi(vector_registro[claveBusqueda.second]); }
+        } else {
+            key = stoi(vector_registro[claveBusqueda.second]);
+        }
         key = getIndiceDisperso(key);
 
-        int _idPage = _myBuffer->getBloque(relacion,claveBusqueda.first, key); 
+        int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, key);
         _myBuffer->pinPage(_idPage, 'W', 0);
 
-        int espacioLibre =  adicionarRegistroPage(_idPage, registro, relacion, R); 
+        int espacioLibre = adicionarRegistroPage(_idPage, registro, relacion, R);
         // if(espacioLibre == -1) {
-        //     key += 30; 
+        //     key += 30;
         //     _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, key);
         //     _myBuffer->pinPage(_idPage, 'W', 0);
-        //     espacioLibre =  adicionarRegistroPage(_idPage, registro, relacion, R); 
+        //     espacioLibre =  adicionarRegistroPage(_idPage, registro, relacion, R);
         // }
-        if (espacioLibre != -1){ // si lo inserto
-            cout<<"\n REGISTRO \n"<<registro<<" insertado en "<<_idPage<<endl;
+        if (espacioLibre != -1) {  // si lo inserto
+            cout << "\n REGISTRO \n"
+                 << registro << " insertado en " << _idPage << endl;
             IDPAGES.push_back(_idPage);
             // AÑADIR A CAMBIOS
-            _myBuffer->addChanges(_idPage, key , 1, relacion, claveBusqueda.first);
+            _myBuffer->addChanges(_idPage, key, 1, relacion, claveBusqueda.first);
             // AÑADIR RUTA
             _myBuffer->addRuta(relacion, claveBusqueda.first, key, make_pair(_idPage, 0));
             // EDITAR HEAP FILES
             _myBuffer->updateCapacBloqueHF(relacion, _idPage, espacioLibre);
-        }else{
-            cout<<"\n\n >> LIMITE DE ALMACENAMIENTO ALCANZADO! >> \n\n";
+        } else {
+            cout << "\n\n >> LIMITE DE ALMACENAMIENTO ALCANZADO! >> \n\n";
         }
     }
     // Usar std::set para eliminar duplicados
@@ -67,23 +75,26 @@ void insert(Buffer *_myBuffer){
 
     _myBuffer->printBuffer();
     _myBuffer->printIndice(relacion);
-    cout<<"\n SE INSERTARON LOS DATOS CORRECTAMENTE \n";
+    cout << "\n SE INSERTARON LOS DATOS CORRECTAMENTE \n";
     char guardar;
-    cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
-    for(int i=0; i<IDPAGES.size(); i++){
+    cout << " Desea guardar los cambios? (S/N): ";
+    cin >> guardar;
+    for (int i = 0; i < IDPAGES.size(); i++) {
         _myBuffer->superUnpinPage(IDPAGES[i], guardar);
     }
-    cout<<"\n CAMBIOS GUARDADOS EN EL DISCO EXITOSAMENTE \n";
+    cout << "\n CAMBIOS GUARDADOS EN EL DISCO EXITOSAMENTE \n";
     data.close();
 }
 
-void delet(Buffer *_myBuffer){
+void delet(Buffer* _myBuffer) {
     string relacion, condicion;
     std::cout << " Eliminando registro de la (relacion) donde (condicion) >\n";
-    std::cout << " Relacion > ";cin >> relacion;
-    std::cout << " Condicion > ";getline(std::cin >> std::ws, condicion);
+    std::cout << " Relacion > ";
+    cin >> relacion;
+    std::cout << " Condicion > ";
+    getline(std::cin >> std::ws, condicion);
 
-    pair<string,int> claveBusqueda = chooseClaveBusqueda(relacion);
+    pair<string, int> claveBusqueda = chooseClaveBusqueda(relacion);
 
     std::vector<std::string> condicionVector = getCondicionVector(condicion);
 
@@ -99,22 +110,25 @@ void delet(Buffer *_myBuffer){
     // ELIMINAR RUTA
     _myBuffer->deleteRuta(relacion, "", key);
 
-    cout<<"\n ELIMINANDO DE PAGINA> "<<_idPage<<endl;
+    cout << "\n ELIMINANDO DE PAGINA> " << _idPage << endl;
     char guardar;
-    cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
+    cout << " Desea guardar los cambios? (S/N): ";
+    cin >> guardar;
     _myBuffer->superUnpinPage(_idPage, guardar);
-    cout<<"\n ELIMINADO GUARDADOS EN EL DISCO EXITOSAMENTE \n";
+    cout << "\n ELIMINADO GUARDADOS EN EL DISCO EXITOSAMENTE \n";
 }
 
-void consultas(Buffer *_myBuffer){
+void consultas(Buffer* _myBuffer) {
     string relacion, condicion, atributo;
     std::cout << " Consultando en la (relacion) del registro donde (condicion) >\n";
-    std::cout << " Relacion > "; cin >> relacion;
-    std::cout << " Condicion > ";getline(std::cin >> std::ws, condicion);
+    std::cout << " Relacion > ";
+    cin >> relacion;
+    std::cout << " Condicion > ";
+    getline(std::cin >> std::ws, condicion);
 
-    pair<string,int> claveBusqueda = chooseClaveBusqueda(relacion);
+    pair<string, int> claveBusqueda = chooseClaveBusqueda(relacion);
     std::vector<std::string> condicionVector = getCondicionVector(condicion);
-    
+
     int key = getIndiceDisperso(stoi(condicionVector[2]));
 
     int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, key);
@@ -122,9 +136,9 @@ void consultas(Buffer *_myBuffer){
     registroPage(_idPage, relacion, condicion, "", 1);
 }
 
-void requerimientos(Buffer* _myBuffer){
+void requerimientos(Buffer* _myBuffer) {
     int op;
-    do{
+    do {
         cout << "_______________________ MENU _______________________\n\n";
         cout << "1. INSERT \n";
         cout << "2. DELETE \n";
@@ -133,40 +147,42 @@ void requerimientos(Buffer* _myBuffer){
         cout << "__________________________________________________\n\n";
         cout << "Elija una opcion: ";
         cin >> op;
-   
+
         if (op == 1) {
             insert(_myBuffer);
-        }
-        else if (op == 2){
+        } else if (op == 2) {
             delet(_myBuffer);
-        }
-        else if (op == 3){
+        } else if (op == 3) {
             consultas(_myBuffer);
-        }else if (op == 4){
+        } else if (op == 4) {
             cout << " Saliendo \n ";
-        }
-        else{
+        } else {
             cout << " Ingrese una opción valida! \n ";
             return;
         }
-    }while(op!=4);
+    } while (op != 4);
 }
 
-int main(){
+int main() {
     Disco* Disco1;
-    int opcion; 
+    int opcion;
     int platos, pistas, sectores, bloques, tamSector, tamBloque;
-    //cout << " > Crear DISCO " << endl;
-    //cout << " DEFAULT (0) o MANUAL (1) > ";cin>>opcion;
+    // cout << " > Crear DISCO " << endl;
+    // cout << " DEFAULT (0) o MANUAL (1) > ";cin>>opcion;
     opcion = 0;
-    if(opcion == 0) {  Disco1 = new Disco(); }
-    else if(opcion == 1) {
-        
-        std::cout<<" Cantidad de platos> ";cin>>platos;
-        std::cout<<" Cantidad de pistas> ";cin>>pistas;
-        std::cout<<" Cantidad de Sectores> ";cin>>sectores;
-        std::cout<<" Capacidad de sector> ";cin>>tamSector;
-        std::cout<<" Capacidad de bloque> ";cin>>tamBloque;
+    if (opcion == 0) {
+        Disco1 = new Disco();
+    } else if (opcion == 1) {
+        std::cout << " Cantidad de platos> ";
+        cin >> platos;
+        std::cout << " Cantidad de pistas> ";
+        cin >> pistas;
+        std::cout << " Cantidad de Sectores> ";
+        cin >> sectores;
+        std::cout << " Capacidad de sector> ";
+        cin >> tamSector;
+        std::cout << " Capacidad de bloque> ";
+        cin >> tamBloque;
         Disco1 = new Disco(platos, pistas, sectores, tamSector, tamBloque);
     }
     // std::cout<<" DISCO  CREADO >>\n";
@@ -177,12 +193,11 @@ int main(){
     // cout << " LRU (0) o CLOCK (1) > ";cin>>choice;
     choice = 1;
 
-    Buffer* myBuffer = new Buffer(Disco1->getCapacidadBloque() *5, Disco1->getCapacidadBloque(), Disco1, choice);
+    Buffer* myBuffer = new Buffer(Disco1->getCapacidadBloque() * 5, Disco1->getCapacidadBloque(), Disco1, choice);
     myBuffer->printBuffer();
-    
+
     requerimientos(myBuffer);
     do {
-        
         cout << "\n----- MENU SISTEMA -----\n";
         cout << "1. MENU DISCO \n";
         cout << "2. MENU BUFFER\n";
