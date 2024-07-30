@@ -4,17 +4,8 @@
 
 using namespace std;
 
-<<<<<<< HEAD
 void insert(Buffer* _myBuffer) {
-    // int _idPage;
-    // cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
-    // cin >> _idPage;
-    //_myBuffer->pinPage(_idPage, 'W', 0);
     int R = 0;  // POLITICA RLV 0 / RLF 1
-=======
-void insert(Buffer *_myBuffer){
-    int R = 0; // POLITICA RLV 0 / RLF 1
->>>>>>> 28edd901d939381891111428aea6f9a9250a3bdb
     string n;
     string archivo, relacion;
     cout << "\n----- ADICIONANDO REGISTROS -----\n";
@@ -34,7 +25,7 @@ void insert(Buffer *_myBuffer){
 
     pair<string, int> claveBusqueda = chooseClaveBusqueda(relacion);
 
-    cout<<" CLAVE DE BUSQUEDA SELECCIONADA! "<<claveBusqueda.first<<"-"<<claveBusqueda.second<<endl;
+    cout << " CLAVE DE BUSQUEDA SELECCIONADA! " << claveBusqueda.first << "-" << claveBusqueda.second << endl;
 
     int loopLimit = (n == "*") ? INT_MAX : stoi(n);
     for (int i = 0; i < loopLimit; ++i) {
@@ -44,88 +35,36 @@ void insert(Buffer *_myBuffer){
 
         vector<string> vector_registro = getVectorRegistro(registro);
 
-<<<<<<< HEAD
-        cout << "Bloque a conseguir";
-
+        cout << " Insertando registro con clave de bsqueda " << vector_registro[claveBusqueda.second] << endl;
         int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, stoi(vector_registro[claveBusqueda.second]));
-
-        cout << " IDE PAGE >" << _idPage << endl;
-
+        cout << " MY ID - PAGE >" << _idPage << endl;
         _myBuffer->pinPage(_idPage, 'W', 0);
-
-        cout << " IDE PAGE >" << _idPage << endl;
+        cout << " MY ID - PAGE >" << _idPage << endl;
 
         int espacioLibre = adicionarRegistroPage(_idPage, registro, relacion, R);
         if (espacioLibre != -1) {
-            _myBuffer->addChanges(_idPage, stoi(vector_registro[claveBusqueda.second]), 1, relacion, claveBusqueda.first);
-
-=======
-        cout<<" Insertando registro con clave de bsqueda "<<vector_registro[claveBusqueda.second]<<endl;
-        int _idPage = _myBuffer->getBloque(relacion,claveBusqueda.first, stoi(vector_registro[claveBusqueda.second])); 
-        cout<<" MY ID - PAGE >"<<_idPage<<endl;
-        _myBuffer->pinPage(_idPage, 'W', 0);
-        cout<<" MY ID - PAGE >"<<_idPage<<endl;
-
-        int espacioLibre =  adicionarRegistroPage(_idPage, registro, relacion, R);
-        if (espacioLibre != -1){
             // AÑADIR A CAMBIOS
             _myBuffer->addChanges(_idPage, stoi(vector_registro[claveBusqueda.second]), 1, relacion, claveBusqueda.first);
             // AÑADIR RUTA
->>>>>>> 28edd901d939381891111428aea6f9a9250a3bdb
             _myBuffer->addRuta(relacion, claveBusqueda.first, stoi(vector_registro[claveBusqueda.second]), make_pair(_idPage, 0));
             // EDITAR HEAP FILES
             _myBuffer->updateCapacBloqueHF(relacion, _idPage, espacioLibre);
-        }else{
+        } else {
             // si no se adiciono
         }
     }
     data.close();
 }
 
-<<<<<<< HEAD
 void delet(Buffer* _myBuffer) {
-    int _idPage = 0;
-    // cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
-    // cin >> _idPage;
     string relacion, condicion;
     std::cout << " Eliminando registro de la (relacion) donde (condicion) >\n";
     std::cout << " Relacion > ";
     cin >> relacion;
     std::cout << " Condicion > ";
     getline(std::cin >> std::ws, condicion);
-    string clave_busqueda = getPrimaryKey(relacion);
-    string ayuda_condicion = condicion;
-    stringstream ss(ayuda_condicion);
-    string dato_condicion;
-    getline(ss, dato_condicion, ' ');
-    getline(ss, dato_condicion, ' ');
-    getline(ss, dato_condicion, ' ');
-    _idPage = _myBuffer->getBloque(relacion, clave_busqueda, stoi(dato_condicion));
-    _myBuffer->pinPage(_idPage, 'W', 0);
-    registroPage(_idPage, relacion, condicion, "", 0);
-    _myBuffer->addChanges(_idPage, stoi(dato_condicion), 0, relacion, clave_busqueda);
-}
 
-void consultas(Buffer* _myBuffer) {
-    int _idPage;
-    cout << "---- MODIFICANDO PAGINA  -> Ingrese el ID de la pagina a modificar: ";
-    cin >> _idPage;
-    _myBuffer->pinPage(_idPage, 'R', 0);
-    string relacion, condicion, atributo;
-    std::cout << " Consultando en la (relacion) del registro donde (condicion) >\n";
-    std::cout << " Relacion > ";
-    cin >> relacion;
-    std::cout << " Condicion > ";
-    getline(std::cin >> std::ws, condicion);
-    registroPage(_idPage, relacion, condicion, atributo, 1);
-=======
-void delet(Buffer *_myBuffer){
-    string relacion, condicion;
-    std::cout << " Eliminando registro de la (relacion) donde (condicion) >\n";
-    std::cout << " Relacion > ";cin >> relacion;
-    std::cout << " Condicion > ";getline(std::cin >> std::ws, condicion);
-
-    pair<string,int> claveBusqueda = chooseClaveBusqueda(relacion);
+    pair<string, int> claveBusqueda = chooseClaveBusqueda(relacion);
 
     std::vector<std::string> condicionVector = getCondicionVector(condicion);
     int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, stoi(condicionVector[2]));
@@ -136,22 +75,22 @@ void delet(Buffer *_myBuffer){
     // AÑADIR A CAMBIOS
     _myBuffer->addChanges(_idPage, stoi(condicionVector[2]), 0, relacion, claveBusqueda.first);
     // ELIMINAR RUTA
-
 }
 
-void consultas(Buffer *_myBuffer){
+void consultas(Buffer* _myBuffer) {
     string relacion, condicion, atributo;
     std::cout << " Consultando en la (relacion) del registro donde (condicion) >\n";
-    std::cout << " Relacion > "; cin >> relacion;
-    std::cout << " Condicion > ";getline(std::cin >> std::ws, condicion);
+    std::cout << " Relacion > ";
+    cin >> relacion;
+    std::cout << " Condicion > ";
+    getline(std::cin >> std::ws, condicion);
 
-    pair<string,int> claveBusqueda = chooseClaveBusqueda(relacion);
+    pair<string, int> claveBusqueda = chooseClaveBusqueda(relacion);
     std::vector<std::string> condicionVector = getCondicionVector(condicion);
-    
+
     int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, stoi(condicionVector[2]));
     _myBuffer->pinPage(_idPage, 'R', 0);
     registroPage(_idPage, relacion, condicion, "", 1);
->>>>>>> 28edd901d939381891111428aea6f9a9250a3bdb
 }
 
 void requerimientos(Buffer* _myBuffer) {
