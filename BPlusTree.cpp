@@ -482,6 +482,152 @@ class BPlusTree {
         }
     }
 
+    // void print(Node<T> *node = nullptr, string _prefix = "", bool _rutas = true, ofstream *outfile = nullptr) {
+    //     if (!node) {
+    //         node = root;
+    //         if (outfile) {
+    //             *outfile << maxCapacity << endl;
+    //         } else {
+    //             cout << maxCapacity << endl;
+    //         }
+    //     }
+
+    //     string output = _prefix + "> [";
+    //     for (int i = 0; i < node->keys.size(); i++) {
+    //         output += " [ " + to_string(node->keys[i]) + " ] ";
+    //         if (node->isLeaf && _rutas)
+    //             output += "[Ruta: (" + to_string(node->rutas[i].first) + ", " + to_string(node->rutas[i].second) + ")] ";
+    //     }
+    //     output += "]";
+
+    //     if (outfile) {
+    //         *outfile << output << endl;
+    //     } else {
+    //         cout << output << endl;
+    //     }
+
+    //     _prefix += "|  ";
+
+    //     if (!node->isLeaf) {
+    //         for (int i = 0; i < node->children.size(); i++) {
+    //             // bool _last = (i == node->children.size() - 1);
+    //             print(node->children[i], _prefix, _rutas, outfile);
+    //         }
+    //     }
+    // }
+    // void generateDot(Node<T> *node, ofstream *file) {
+    //     if (!node) return;
+
+    //     string output = "{\n";
+    //     output += "\"items\" : [";
+    //     for (int i = 0; i < node->keys.size(); i++) {
+    //         if (i == node->keys.size() - 1)
+    //             output += to_string(node->keys[i]);
+    //         else
+    //             output += to_string(node->keys[i]) + ",";
+    //     }
+    //     output += "]";
+
+    //     *file << output;
+    //     if (!node->isLeaf && node->children.size() > 0) {
+    //         *file << ",\n\"children\" : [";
+    //         for (int i = 0; i < node->children.size(); i++) {
+    //             if (i > 0) *file << ",";
+    //             generateDot(node->children[i], file);
+    //         }
+    //         *file << "]\n";
+    //     }
+    //     *file << "}";
+    // }
+    // void printToJson(ofstream *file) {
+    //     *file << "{\n";
+    //     *file << "\"q\": " << maxCapacity << ",\n";
+    //     *file << "\"root\":";
+    //     generateDot(root, file);
+    //     *file << "}\n";
+    // }
+
+    // void generateDot(Node<T> *node, ofstream &outfile, int &nodeCount) {
+    //     if (!node) return;
+
+    //     int currentId = nodeCount++;
+    //     outfile << "node" << currentId << " [label=\"";
+
+    //     // Añade campos para las claves
+    //     for (size_t i = 0; i < node->keys.size(); ++i) {
+    //         outfile << "<f" << i << "> " << node->keys[i];
+    //         if (i < node->keys.size() - 1) outfile << " | ";
+    //     }
+
+    //     outfile << "\"];\n";
+
+    //     if (!node->isLeaf) {
+    //         // Conecta los hijos
+    //         for (size_t i = 0; i <= node->keys.size(); ++i) {
+    //             int childId = nodeCount;  // ID para el hijo
+
+    //             if (i < node->children.size()) {  // Verifica que el hijo existe
+    //                 outfile << "node" << currentId << ":f" << i << " -> node" << childId << ";\n";
+    //                 generateDot(node->children[i], outfile, nodeCount);
+    //             }
+    //         }
+    //     }
+    // }
+
+    // void exportToDot(const string &filename) {
+    //     ofstream outfile(filename);
+    //     if (!outfile.is_open()) {
+    //         cerr << "Error opening file for writing: " << filename << endl;
+    //         return;
+    //     }
+    //     outfile << "digraph BPlusTree {\n";
+    //     outfile << "node [shape=record];\n";
+    //     int nodeCount = 0;
+    //     generateDot(root, outfile, nodeCount);
+    //     outfile << "}\n";
+    //     outfile.close();
+    // }
+    void generateDotFromPrint(Node<T> *node, ofstream &outfile, int &nodeCount) {
+        if (!node) return;
+
+        int currentId = nodeCount++;
+        outfile << "node" << currentId << " [label=\"";
+
+        // Añade campos para las claves y sus puertos
+        for (size_t i = 0; i < node->keys.size(); ++i) {
+            outfile << "<f" << i << "> " << node->keys[i];
+            if (i < node->keys.size() - 1) outfile << " | ";
+        }
+        outfile << "\"];\n";
+
+        if (!node->isLeaf) {
+            // Conecta los hijos
+            for (size_t i = 0; i <= node->keys.size(); ++i) {  // +1 para los hijos en los nodos internos
+                int childId = nodeCount;                       // ID para el hijo
+
+                if (i < node->children.size()) {  // Verifica que el hijo existe
+                    outfile << "node" << currentId << ":f" << i << " -> node" << childId << ";\n";
+                    generateDotFromPrint(node->children[i], outfile, nodeCount);
+                }
+            }
+        }
+    }
+
+    void exportToDotFromPrint(const string &filename) {
+        ofstream outfile(filename);
+        if (!outfile.is_open()) {
+            cerr << "Error opening file for writing: " << filename << endl;
+            return;
+        }
+        outfile << "digraph BPlusTree {\n";
+        outfile << "node [shape=record];\n";
+        int nodeCount = 0;
+        generateDotFromPrint(root, outfile, nodeCount);
+        outfile << "}\n";
+        outfile.close();
+        system(("dot -Tpng " + filename + " -o " + filename + ".png").c_str());
+    }
+
     void print(Node<T> *node = nullptr, string _prefix = "", bool _rutas = true, ofstream *outfile = nullptr) {
         if (!node) {
             node = root;
@@ -510,41 +656,9 @@ class BPlusTree {
 
         if (!node->isLeaf) {
             for (int i = 0; i < node->children.size(); i++) {
-                // bool _last = (i == node->children.size() - 1);
                 print(node->children[i], _prefix, _rutas, outfile);
             }
         }
-    }
-    void generateDot(Node<T> *node, ofstream *file) {
-        if (!node) return;
-
-        string output = "{\n";
-        output += "\"items\" : [";
-        for (int i = 0; i < node->keys.size(); i++) {
-            if (i == node->keys.size() - 1)
-                output += to_string(node->keys[i]);
-            else
-                output += to_string(node->keys[i]) + ",";
-        }
-        output += "]";
-
-        *file << output;
-        if (!node->isLeaf && node->children.size() > 0) {
-            *file << ",\n\"children\" : [";
-            for (int i = 0; i < node->children.size(); i++) {
-                if (i > 0) *file << ",";
-                generateDot(node->children[i], file);
-            }
-            *file << "]\n";
-        }
-        *file << "}";
-    }
-    void printToJson(ofstream *file) {
-        *file << "{\n";
-        *file << "\"q\": " << maxCapacity << ",\n";
-        *file << "\"root\":";
-        generateDot(root, file);
-        *file << "}\n";
     }
 };
 

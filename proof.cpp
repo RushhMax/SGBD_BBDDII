@@ -56,7 +56,8 @@ std::vector<std::tuple<int, int, int>> get_leaf_to_bplustree(const std::string& 
 
 int main(int argc, char const* argv[]) {
     BPlusTree<int> bpt("INDICES/Post_userid.txt");
-    bpt.print();
+    // bpt.print();
+    bpt.exportToDotFromPrint("INDICES/Post_userid.dot");
     // BPlusTree<int> bpt(4, "Post", "userid");
     // std::vector<std::tuple<int, int, int>> leaf = get_leaf_to_bplustree("INDICES/Post_userid.txt");
     // for (const auto& dato : leaf)
