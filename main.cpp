@@ -38,19 +38,16 @@ void insert(Buffer* _myBuffer) {
 
         vector<string> vector_registro = getVectorRegistro(registro);
         int key;
-        if (vector_registro[claveBusqueda.second] == " ") {
-            key = 0;
-        } else {
-            key = stoi(vector_registro[claveBusqueda.second]);
-        }
+        if (vector_registro[claveBusqueda.second] == " ") key = 0;
+        else key = stoi(vector_registro[claveBusqueda.second]);
         key = getIndiceDisperso(key);
-
+        
         int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, key);
         _myBuffer->pinPage(_idPage, 'W', 0);
 
         int espacioLibre = adicionarRegistroPage(_idPage, registro, relacion, R);
         // if(espacioLibre == -1) {
-        //     key += 30;
+        //     key += 10;
         //     _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, key);
         //     _myBuffer->pinPage(_idPage, 'W', 0);
         //     espacioLibre =  adicionarRegistroPage(_idPage, registro, relacion, R);
@@ -65,7 +62,8 @@ void insert(Buffer* _myBuffer) {
             _myBuffer->addRuta(relacion, claveBusqueda.first, key, make_pair(_idPage, 0));
             // EDITAR HEAP FILES
             _myBuffer->updateCapacBloqueHF(relacion, _idPage, espacioLibre);
-        } else {
+        } 
+        else {
             cout << "\n\n >> LIMITE DE ALMACENAMIENTO ALCANZADO! >> \n\n";
         }
     }
@@ -99,6 +97,7 @@ void delet(Buffer* _myBuffer) {
     std::vector<std::string> condicionVector = getCondicionVector(condicion);
 
     int key = getIndiceDisperso(stoi(condicionVector[2]));
+    //int key = stoi(condicionVector[2]);
 
     int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, key);
     _myBuffer->pinPage(_idPage, 'W', 0);
@@ -108,7 +107,7 @@ void delet(Buffer* _myBuffer) {
     // AÑADIR A CAMBIOS
     _myBuffer->addChanges(_idPage, key, 0, relacion, claveBusqueda.first);
     // ELIMINAR RUTA
-    _myBuffer->deleteRuta(relacion, "", key);
+    //_myBuffer->deleteRuta(relacion, "", key);
 
     cout << "\n ELIMINANDO DE PAGINA> " << _idPage << endl;
     char guardar;
@@ -130,6 +129,7 @@ void consultas(Buffer* _myBuffer) {
     std::vector<std::string> condicionVector = getCondicionVector(condicion);
 
     int key = getIndiceDisperso(stoi(condicionVector[2]));
+    //int key = stoi(condicionVector[2]);
 
     int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, key);
     _myBuffer->pinPage(_idPage, 'R', 0);
@@ -193,7 +193,7 @@ int main() {
     // cout << " LRU (0) o CLOCK (1) > ";cin>>choice;
     choice = 1;
 
-    Buffer* myBuffer = new Buffer(Disco1->getCapacidadBloque() * 5, Disco1->getCapacidadBloque(), Disco1, choice);
+    Buffer* myBuffer = new Buffer(Disco1->getCapacidadBloque() * 10, Disco1->getCapacidadBloque(), Disco1, choice);
     myBuffer->printBuffer();
 
     requerimientos(myBuffer);

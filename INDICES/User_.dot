@@ -1,0 +1,12 @@
+digraph BPlusTree {
+node [shape=record];
+node0 [label="<f0> 4 | <f1> 7 | <f2> 10"];
+node0:f0 -> node1;
+node1 [label="<f0> 1 | <f1> 2 | <f2> 3"];
+node0:f1 -> node2;
+node2 [label="<f0> 4 | <f1> 5 | <f2> 6"];
+node0:f2 -> node3;
+node3 [label="<f0> 7 | <f1> 8 | <f2> 9"];
+node0:f3 -> node4;
+node4 [label="<f0> 10 | <f1> 11 | <f2> 12 | <f3> 13 | <f4> 14 | <f5> 15"];
+}

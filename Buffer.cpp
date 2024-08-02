@@ -110,8 +110,8 @@ class Buffer {
             while(BufferPool[frameVictima].page->getPinCount() > 0){
                 int choice = 1;
                 //cout<<" Desea liberar el frame "<<BufferPool[frameVictima].idFrame<<" ? (Y = 1 | N = 0)  ";cin>> choice;
-                char guardar;
-                cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
+                char guardar = 'S';
+                //cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
                 if(choice == 1) superUnpinPage(BufferPool[frameVictima].page->getIdPage(), guardar);
                 else {cout<< " No podemos eliminar ninguna pagina! Eliminar manualmente! \n"; return false;}//return victima();
             }
@@ -199,8 +199,8 @@ class Buffer {
                     if(BufferPool[it->second].page->requerimientos[0].first == 'W' ){
                         cout << "\n Liberando proceso de Escritura >> \n";
                         char guardar;
-                        cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
-                        //guardar = 'S';
+                        //cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
+                        guardar = 'S';
                         if (guardar == 'S' || guardar == 's') { 
                             my_disk->addChanges(BufferPool[it->second].page->cambios, BufferPool[it->second].page->relacion, "");
                             this->flushPage(idPage); 
@@ -500,7 +500,7 @@ class Buffer {
             return nullptr;
         }
         BPlusTree<int>*  createNewIndice(string _relacion, string _claveBusqueda){
-            BPlusTree<int>* newIndice = new BPlusTree<int>(8, _relacion, _claveBusqueda);
+            BPlusTree<int>* newIndice = new BPlusTree<int>(6, _relacion, _claveBusqueda);
             indices.push_back(newIndice);
             return newIndice;
         }

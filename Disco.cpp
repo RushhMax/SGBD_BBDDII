@@ -235,7 +235,7 @@ vector<string> Disco::getSectores(int _nroBloque) {
 }
 // CREA NUEVO INDICE Y LO AGREGAR AL VECTOR DE INDICES
 BPlusTree<int>* Disco::createNewIndice(string _relacion, string _claveBusqueda) {
-    BPlusTree<int>* newIndice = new BPlusTree<int>(8, _relacion, _claveBusqueda);
+    BPlusTree<int>* newIndice = new BPlusTree<int>(6, _relacion, _claveBusqueda);
     indices.push_back(newIndice);
     return newIndice;
 }
@@ -272,6 +272,7 @@ void Disco::addChanges(vector<std::tuple<bool, int, int>> _cambios, string _rela
     cout << "> INDICE EN DISCO ACTUALIZADO !\n";
     indice->print();
     indice->exportToDotFromPrint("INDICES/" + _relacion + "_" + _claveBusqueda + ".dot");
+    
 }
 // FUNCION GUARDA BLOQUE EN SECTORES
 void Disco::guardarBloqueSector(int nBloque) {

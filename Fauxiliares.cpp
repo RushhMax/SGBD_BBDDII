@@ -96,7 +96,7 @@ pair<string,int> chooseClaveBusqueda(string _relacion){
     return chooseClaveBusqueda(_relacion);
 }
 int getIndiceDisperso(int key){
-    return key/20;
+    return key;
 }
 
 
@@ -501,9 +501,13 @@ bool cumpleCondicion(string _registro, string _condicion, string _relacion, bool
     int nroAtributo = GetnroAtributo(condicion[0], _tipoR, _relacion);
     vector<string> arrayRegistro = getVectorRegistro(_registro, _relacion, _tipoR); // Nuestro registro en un vector de atributos
 
+    string atributo = arrayRegistro[nroAtributo-1];
     //cout<<"->"<<condicion[0]<<" "<<nroAtributo<<"-"<<arrayRegistro[nroAtributo-1];
-    if(condicion[1] == "="){ if(arrayRegistro[nroAtributo-1] == condicion[2] ) return true;}
-    //else if(condicion[1] == ">="){ if(r >= condicion[2] ) critCUM = true;}
+    if(condicion[1] == "="){ if(stoi(atributo)== stoi(condicion[2]) ) return true;}
+    else if(condicion[1] == ">="){ if(stoi(atributo) >= stoi(condicion[2]) ) return true;}
+    else if(condicion[1] == "<="){ if(stoi(atributo) <= stoi(condicion[2]) ) return true;}
+    else if(condicion[1] == ">"){ if(stoi(atributo) > stoi(condicion[2]) ) return true;}
+    else if(condicion[1] == "<"){ if(stoi(atributo) < stoi(condicion[2]) ) return true;}
     //else if(condicion[1] == "<="){ if(r <= condicion[2] ) critCUM = true;}
     //else if(condicion[1] == "<"){ if(r < condicion[2] ) critCUM = true;}
     //else if(condicion[1] == ">"){ if(r >condicion[2] ) critCUM = true;}
