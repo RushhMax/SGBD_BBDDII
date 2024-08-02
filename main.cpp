@@ -38,10 +38,12 @@ void insert(Buffer* _myBuffer) {
 
         vector<string> vector_registro = getVectorRegistro(registro);
         int key;
-        if (vector_registro[claveBusqueda.second] == " ") key = 0;
-        else key = stoi(vector_registro[claveBusqueda.second]);
+        if (vector_registro[claveBusqueda.second] == " ")
+            key = 0;
+        else
+            key = stoi(vector_registro[claveBusqueda.second]);
         key = getIndiceDisperso(key);
-        
+
         int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, key);
         _myBuffer->pinPage(_idPage, 'W', 0);
 
@@ -62,8 +64,7 @@ void insert(Buffer* _myBuffer) {
             _myBuffer->addRuta(relacion, claveBusqueda.first, key, make_pair(_idPage, 0));
             // EDITAR HEAP FILES
             _myBuffer->updateCapacBloqueHF(relacion, _idPage, espacioLibre);
-        } 
-        else {
+        } else {
             cout << "\n\n >> LIMITE DE ALMACENAMIENTO ALCANZADO! >> \n\n";
         }
     }
@@ -97,7 +98,7 @@ void delet(Buffer* _myBuffer) {
     std::vector<std::string> condicionVector = getCondicionVector(condicion);
 
     int key = getIndiceDisperso(stoi(condicionVector[2]));
-    //int key = stoi(condicionVector[2]);
+    // int key = stoi(condicionVector[2]);
 
     int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, key);
     _myBuffer->pinPage(_idPage, 'W', 0);
@@ -129,11 +130,24 @@ void consultas(Buffer* _myBuffer) {
     std::vector<std::string> condicionVector = getCondicionVector(condicion);
 
     int key = getIndiceDisperso(stoi(condicionVector[2]));
-    //int key = stoi(condicionVector[2]);
-
-    int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, key);
-    _myBuffer->pinPage(_idPage, 'R', 0);
-    registroPage(_idPage, relacion, condicion, "", 1);
+    // int key = stoi(condicionVector[2]);
+    vector<int> datas_;
+    datas_.push_back(key);
+    vector<int> datas;
+    if (condicionVector[1] == ">" || condicionVector[1] == ">=") {
+        BPlusTree<int>* indice = _myBuffer->getIndice(relacion, claveBusqueda.first);
+        datas = indice->getAllGreaterThan(key);
+        datas_.insert(datas_.end(), datas.begin(), datas.end());
+    } else if (condicionVector[1] == "<" || condicionVector[1] == "<=") {
+        BPlusTree<int>* indice = _myBuffer->getIndice(relacion, claveBusqueda.first);
+        datas = indice->getAllLessThan(key);
+        datas_.insert(datas_.end(), datas.begin(), datas.end());
+    }
+    for (const auto i : datas_) {
+        int _idPage = _myBuffer->getBloque(relacion, claveBusqueda.first, i);
+        _myBuffer->pinPage(_idPage, 'R', 0);
+        registroPage(_idPage, relacion, condicion, "", 1);
+    }
 }
 
 void requerimientos(Buffer* _myBuffer) {
