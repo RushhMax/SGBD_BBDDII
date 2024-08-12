@@ -57,8 +57,7 @@ void insert(Buffer* _myBuffer, string relacion, vector<pair<string, int>> claves
 
             // EDITAR HEAP FILES
             _myBuffer->updateCapacBloqueHF(relacion, _idPage, espacioLibre);
-        } 
-        else {
+        } else {
             cout << "\n\n >> LIMITE DE ALMACENAMIENTO ALCANZADO! >> \n\n";
         }
     }
