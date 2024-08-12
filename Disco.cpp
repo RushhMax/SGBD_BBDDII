@@ -53,13 +53,13 @@ class Disco {
     // RETORNA EL INDICE DE LA RELACION Y CLAVE DE BUSQUEDA
     BPlusTree<int>* getIndice(string _relacion, string _claveBusqueda);
     // AÑADE CAMBIOS AL INDICE
-    void addChanges(vector<std::tuple<bool, int, int>> _cambios, string _relacion, string _claveBusqueda);
+    void addChanges(std::vector<pair<string, vector<Cambios>>> _cambios, string _relacion);
     // FUNCION GUARDA BLOQUE EN SECTORES
     void guardarBloqueSector(int nBloque);
     // FUNCION QUE IMPRIME CARACTERISCAS DE DISCO
     void printDisco();
     // FUNCION QUE IMPRIME nuestro BPLUS TREE DE LA RELACION
-    void printIndice(string _relacion);
+    void printIndice(string _relacion, string _claveBusqueda);
 };
 
 // CONSTRUCTOR DISCO POR PARAMETROS
@@ -242,38 +242,43 @@ BPlusTree<int>* Disco::createNewIndice(string _relacion, string _claveBusqueda) 
 // RETORNA EL INDICE DE LA RELACION Y CLAVE DE BUSQUEDA
 BPlusTree<int>* Disco::getIndice(string _relacion, string _claveBusqueda) {
     for (int i = 0; i < indices.size(); i++) {
-        if (indices[i]->relacion == _relacion) {
+        if (indices[i]->relacion == _relacion && indices[i]->claveBusqueda == _claveBusqueda) {
             return indices[i];
         }
     }
     return nullptr;
 }
 // AÑADE CAMBIOS AL INDICE
-void Disco::addChanges(vector<std::tuple<bool, int, int>> _cambios, string _relacion, string _claveBusqueda) {
+void Disco::addChanges(std::vector<pair<string, vector<Cambios>>> _cambios, string _relacion) {
     cout << "\n ANADIENDO CAMBIOS EN INDICES ! " << endl;
-    BPlusTree<int>* indice = this->getIndice(_relacion, _claveBusqueda);
 
-    if (!indice) {
-        indice = createNewIndice(_relacion, _claveBusqueda);
-    }
-    for (int i = 0; i < _cambios.size(); i++) {
-        bool change;  // 1 adicionar 0 eliminar
-        int key;
-        int ubicacion;
+    for(int j=0; j<_cambios.size(); j++){
+        cout<<" EN CAMBIOS "<<_cambios[j].first<<"\n";
+        BPlusTree<int>* indice = this->getIndice(_relacion, _cambios[j].first);
 
-        tie(change, key, ubicacion) = _cambios[i];
-        if (change == 1) {
-            indice->set(key, make_pair(ubicacion, 0));
-        } else if (change == 0) {
-            indice->remove(key);
+        if (!indice) {
+            indice = createNewIndice(_relacion, _cambios[j].first);
         }
-    }
+        for (int i = 0; i < _cambios[j].second.size(); i++) {
+            bool change = _cambios[j].second[i].change;  // 1 adicionar 0 eliminar
+            int key =  _cambios[j].second[i].key;
+            int ubicacion =  _cambios[j].second[i].ruta;
 
-    cout << "> INDICE EN DISCO ACTUALIZADO !\n";
-    indice->print();
-    indice->exportToDotFromPrint("INDICES/" + _relacion + "_" + _claveBusqueda + ".dot");
-    
+            cout<<" En Vector "<<change<<" "<<key<<" "<<ubicacion<<endl;
+
+            if (change == 1) {
+                indice->set(key, make_pair(ubicacion, 0));
+            } else if (change == 0) {
+                indice->remove(key);
+            }
+        }
+
+        cout << "> INDICE EN DISCO ACTUALIZADO !\n";
+        indice->print();
+        indice->exportToDotFromPrint("INDICES/" + _relacion + "_" + _cambios[j].first + ".dot");
+    }
 }
+
 // FUNCION GUARDA BLOQUE EN SECTORES
 void Disco::guardarBloqueSector(int nBloque) {
     // RECOPILAR SECTORES
@@ -337,8 +342,8 @@ void Disco::printDisco() {
     std::cout << "  >  Capacidad del Bloque " << capacBloque << std::endl;
 }
 // FUNCION QUE IMPRIME nuestro BPLUS TREE DE LA RELACION
-void Disco::printIndice(string _relacion) {
-    BPlusTree<int>* indice = this->getIndice(_relacion, "");
+void Disco::printIndice(string _relacion, string _claveBusqueda) {
+    BPlusTree<int>* indice = this->getIndice(_relacion, _claveBusqueda);
     if (indice) {
         indice->print();
     }
@@ -348,7 +353,7 @@ void MenuDisco(Disco*& Disco1) {
     int opcion;
     std::string archivo = "";
     int n;
-    std::string relacion;
+    std::string relacion, claveBusqueda;
     std::string nd;
 
     do {
@@ -390,7 +395,9 @@ void MenuDisco(Disco*& Disco1) {
             case 5:
                 std::cout << " De que relacion deseas consultar? > ";
                 std::cin >> relacion;
-                Disco1->printIndice(relacion);
+                std::cout << " De que clave de busqueda deseas consultar? > ";
+                std::cin >> claveBusqueda;
+                Disco1->printIndice(relacion, claveBusqueda);
                 break;
             case 6:
                 std::cout << " SALIENDO DEL MENU //";

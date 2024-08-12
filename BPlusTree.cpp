@@ -660,6 +660,43 @@ class BPlusTree {
             }
         }
     }
+    vector<T> getAllLessThan(T key) {
+        vector<T> result;
+        Node<T> *leaf = findLeaf(key);
+        Node<T> *current = leaf;
+
+        // Recorrer hacia atrás desde la hoja actual hasta el principio
+        while (current) {
+            for (int i = 0; i < current->keys.size(); i++) {
+                if (current->keys[i] < key) {
+                    result.push_back(current->keys[i]);
+                } else {
+                    // Salir del bucle si encontramos una clave no menor
+                    break;
+                }
+            }
+            current = current->prev;
+        }
+        return result;
+    }
+
+    vector<T> getAllGreaterThan(T key) {
+        vector<T> result;
+        Node<T> *leaf = findLeaf(key);
+        Node<T> *current = leaf;
+
+        // Recorrer hacia adelante desde la hoja actual hasta el final
+        while (current) {
+            for (int i = 0; i < current->keys.size(); i++) {
+                if (current->keys[i] > key) {
+                    result.push_back(current->keys[i]);
+                }
+            }
+            current = current->next;
+        }
+        return result;
+    }
+
 };
 
 // int main() {

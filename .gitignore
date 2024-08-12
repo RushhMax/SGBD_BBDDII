@@ -4,3 +4,5 @@ BUFFERPOOL/
 *.exe
 .excalidraw
 INFORME/
+*.dot
+*.png

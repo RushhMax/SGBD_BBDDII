@@ -13,6 +13,7 @@
 
 using namespace std;
 
+
 class Page {
     private:
         int idPage;
@@ -23,7 +24,7 @@ class Page {
     
     public:
         deque<pair<char,bool>> requerimientos; // COLA DE REQUERIMIENTOS
-        std::vector<std::tuple<bool, int, int>> cambios; // cambio (Adicionar o eliminar, clave de Busqueda, ruta)
+        std::vector<pair<string, vector<Cambios>>> cambios; // cambio (Adicionar o eliminar, clave de Busqueda, ruta)
         string relacion; 
 
         // CONSTRUCTOR 
@@ -92,7 +93,7 @@ class Buffer {
         int request_count;
 
         bool Delete_Page(){
-            cout<<" ELIMINANDO ! ";
+            //cout<<" ELIMINANDO ! ";
             int frameVictima = -1, pagevictima = -1;
             
             //if(choice_replacer == 0 && pagevictima != -1) frameVictima = PageTable[pagevictima];
@@ -202,7 +203,7 @@ class Buffer {
                         //cout << " Desea guardar los cambios? (S/N): "; cin >> guardar;
                         guardar = 'S';
                         if (guardar == 'S' || guardar == 's') { 
-                            my_disk->addChanges(BufferPool[it->second].page->cambios, BufferPool[it->second].page->relacion, "");
+                            my_disk->addChanges(BufferPool[it->second].page->cambios, BufferPool[it->second].page->relacion);
                             this->flushPage(idPage); 
                         }   
                     }
@@ -236,7 +237,7 @@ class Buffer {
                         //cout << " Desea guardar los cambios? (S/N): ";// cin >> guardar;
                         //guardar = 'S';
                         if (guardar == 'S' || guardar == 's') { 
-                            my_disk->addChanges(BufferPool[it->second].page->cambios, BufferPool[it->second].page->relacion, "");
+                            my_disk->addChanges(BufferPool[it->second].page->cambios, BufferPool[it->second].page->relacion);
                             this->flushPage(idPage); 
                         }   
                     }
@@ -490,19 +491,24 @@ class Buffer {
             heapfile->editCapacidad(make_pair(_idPage, _espacioLibre));
         }
 
-
         BPlusTree<int>* getIndice(string _relacion, string _claveBusqueda){
             for(int i=0; i<indices.size(); i++){
-                if(indices[i]->relacion == _relacion){
+                if(indices[i]->relacion == _relacion && indices[i]->claveBusqueda == _claveBusqueda){
                     return indices[i];
                 }
             }
             return nullptr;
         }
+
         BPlusTree<int>*  createNewIndice(string _relacion, string _claveBusqueda){
             BPlusTree<int>* newIndice = new BPlusTree<int>(6, _relacion, _claveBusqueda);
             indices.push_back(newIndice);
             return newIndice;
+        }
+
+        void addIndice(string _relacion, string _claveBusqueda){
+            BPlusTree<int>* indice = getIndice(_relacion, _claveBusqueda);
+            if(!indice) createNewIndice(_relacion, _claveBusqueda);
         }
 
         int getBloque(string _relacion, string _claveBusqueda, int key){
@@ -537,8 +543,8 @@ class Buffer {
                 indice = createNewIndice(_relacion, _claveBusqueda);
             }
             indice->set(key, ruta); 
-            // cout<<"\n INDICE EN TEMPORAL DE BUFFER ACTUALIZADO !\n";
-            // indice->print();
+            cout<<"\n INDICE EN TEMPORAL DE BUFFER ACTUALIZADO !\n";
+            indice->print();
         }
         void deleteRuta(string _relacion, string _claveBusqueda, int key){
             BPlusTree<int>* indice = getIndice(_relacion, _claveBusqueda);
@@ -559,10 +565,22 @@ class Buffer {
 
         // AÑADIR CAMBIOS (INSERCIONES - ELIMINACIONES) A PAGINA 
         void addChanges(int _idPage, int key ,bool _change, string _relacion, string _claveBusqueda){ // change 1 -adicionar /  0 - eliminar
+            
+            cout<<" CHANGES > "<<_change<<endl;
             auto it = PageTable.find(_idPage);
             if (it != PageTable.end()) {
                 BufferPool[it->second].page->relacion = _relacion;
-                BufferPool[it->second].page->cambios.emplace_back(_change, key, _idPage); //cambio (Adicionar o eliminar, clave de Busqueda, ruta)
-            }
+                for(int j=0; j<BufferPool[it->second].page->cambios.size(); j++){
+                    cout<<" CLAV DE BSUSQEUDA "<<BufferPool[it->second].page->cambios[j].first<<endl;
+                    if(BufferPool[it->second].page->cambios[j].first == _claveBusqueda){
+                        BufferPool[it->second].page->cambios[j].second.push_back(Cambios(_change, key, _idPage));
+                        return;
+                    }
+                }
+                vector<Cambios> vector;
+                vector.push_back(Cambios(_change, key, _idPage));
+                cout<<" creando "<<endl;
+                BufferPool[it->second].page->cambios.push_back(make_pair(_claveBusqueda, vector));
+            }else{ cout<<" NO ENCONTRE "<<endl; }
         }
 };

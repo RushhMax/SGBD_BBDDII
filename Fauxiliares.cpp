@@ -78,23 +78,33 @@ string getPrimaryKey(string _relacion){
     return "";
 }
 // Retorna clave de busqueda (nombre de la clave de busqueda, nro de atributo (clave de busqueda))
-pair<string,int> chooseClaveBusqueda(string _relacion){ 
+vector<pair<string,int>> chooseClavesBusquedas(string _relacion){ 
+    vector<pair<string,int>> claves;
     vector<string> atributos = getAtributos(_relacion);
-    cout<<"\n ----- ELIGIENDO CLAVE DE BUSQUEDA ------- \n";
-    cout<<" > OPCIONES:\n";
-    cout<<" (-1) LLAVE PRIMARIA \n"; 
-    for(int i=0; i<atributos.size(); i++){
-        cout<<"  ("<<i<<") "<<atributos[i]<<"\n";
-    }
     int opcion;
-    cout<<" Ingresar opcion: ";cin>>opcion;
-    if(opcion == -1) return make_pair( getPrimaryKey(_relacion),0);
-    if(opcion < atributos.size()){
-        return make_pair(atributos[opcion], opcion);
+    while(opcion != -1){
+        cout<<"\n ----- ELIGIENDO CLAVE DE BUSQUEDA ------- \n";
+        cout<<" > OPCIONES:\n";
+        for(int i=0; i<atributos.size(); i++){
+            cout<<"  ("<<i<<") "<<atributos[i]<<"\n";
+        }
+        cout<<" (-1) SALIR \n"; 
+        
+        cout<<" Ingresar opcion: ";cin>>opcion;
+        if(opcion == -1) break;
+        if(opcion < atributos.size()){
+            claves.push_back(make_pair(atributos[opcion], opcion));
+        }else{
+            cout<<" OPCION NO VALIDA \n";
+        }
     }
-    cout<<" OPCION NO VALIDA \n";
-    return chooseClaveBusqueda(_relacion);
+    return claves;
 }
+void crearIndices(vector<pair<string,int>> claves){
+
+}
+
+
 int getIndiceDisperso(int key){
     return key;
 }
@@ -655,3 +665,12 @@ int registroPage(int _idPage, string _relacion, string _condicion, string _atrib
     }
     return -1;
 }
+
+
+struct Cambios{
+    bool change;
+    int key;
+    int ruta;
+
+    Cambios(bool _change, int _key, int _ruta): change(_change), key(_key), ruta(_ruta) {}
+};
